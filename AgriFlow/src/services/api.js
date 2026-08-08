@@ -43,7 +43,14 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
-      if (originalRequest.url.includes('/auth/login/') || originalRequest.url.includes('/auth/refresh/')) {
+      // Don't retry auth-related endpoints or if already on the login page
+      if (
+        originalRequest.url.includes('/auth/login/') ||
+        originalRequest.url.includes('/auth/refresh/') ||
+        originalRequest.url.includes('/auth/profile/') ||
+        window.location.pathname === '/login'
+      ) {
+        clearAuthTokens();
         return Promise.reject(error);
       }
 

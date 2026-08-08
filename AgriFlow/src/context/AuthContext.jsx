@@ -4,6 +4,7 @@ import {
   registerUser as apiRegister,
   logoutUser as apiLogout,
   getUserProfile,
+  clearAuthTokens,
 } from '../services/api';
 
 // Role → Dashboard route mapping
@@ -18,31 +19,34 @@ export const ROLE_PATHS = {
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('agriflow_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Re-validate the saved JWT on page load
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (token) {
-      getUserProfile()
-        .then((profile) => {
-          const normProfile = {
-            ...profile,
-            name: profile.full_name || profile.name || profile.username,
-            full_name: profile.full_name || profile.name || profile.username,
-          };
-          setUser(normProfile);
-          localStorage.setItem('agriflow_user', JSON.stringify(normProfile));
-        })
-        .catch(() => {
-          // Token expired / invalid — session cleared by interceptor
-        });
+    if (!token) {
+      setLoading(false);
+      return;
     }
+    getUserProfile()
+      .then((profile) => {
+        const normProfile = {
+          ...profile,
+          name: profile.full_name || profile.name || profile.username,
+          full_name: profile.full_name || profile.name || profile.username,
+        };
+        setUser(normProfile);
+        localStorage.setItem('agriflow_user', JSON.stringify(normProfile));
+      })
+      .catch(() => {
+        // Token expired / invalid — silently clear session, don't show error
+        clearAuthTokens();
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   // ─── Register ───────────────────────────────────────────────────────────────
