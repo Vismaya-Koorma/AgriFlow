@@ -14,6 +14,10 @@ import SupervisorDashboard from './pages/Supervisor/SupervisorDashboard';
 import WaterManagerDashboard from './pages/WaterManager/WaterManagerDashboard';
 import MaintenanceDashboard from './pages/Maintenance/MaintenanceDashboard';
 import AdminDashboard from './pages/Admin/AdminDashboard';
+import Profile from './pages/Farmer/Profile';
+import FarmManagement from './pages/Farmer/FarmManagement';
+import FieldManagement from './pages/Farmer/FieldManagement';
+import IrrigationHistory from './pages/Farmer/IrrigationHistory';
 
 function App() {
   return (
@@ -28,6 +32,18 @@ function App() {
 
             <Route path="/farmer" element={
               <ProtectedRoute role="farmer"><FarmerDashboard /></ProtectedRoute>
+            } />
+            <Route path="/farmer/farms" element={
+              <ProtectedRoute role="farmer"><FarmManagement /></ProtectedRoute>
+            } />
+            <Route path="/farmer/fields" element={
+              <ProtectedRoute role="farmer"><FieldManagement /></ProtectedRoute>
+            } />
+            <Route path="/farmer/irrigation-history" element={
+              <ProtectedRoute role="farmer"><IrrigationHistory /></ProtectedRoute>
+            } />
+            <Route path="/farmer/profile" element={
+              <ProtectedRoute role="farmer"><Profile /></ProtectedRoute>
             } />
             <Route path="/supervisor" element={
               <ProtectedRoute role="supervisor"><SupervisorDashboard /></ProtectedRoute>

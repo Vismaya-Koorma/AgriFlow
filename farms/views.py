@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Farm, Field
@@ -34,5 +35,5 @@ class FieldViewSet(viewsets.ModelViewSet):
         # Ensure field belongs to a farm owned by the user
         farm = serializer.validated_data.get('farm')
         if farm and farm.user != self.request.user:
-            raise permissions.PermissionDenied("You don't own this farm.")
+            raise PermissionDenied("You don't own this farm.")
         serializer.save()

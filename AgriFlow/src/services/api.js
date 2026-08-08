@@ -229,4 +229,39 @@ export const deleteField = async (id) => {
   return response.data;
 };
 
+// ─── Master APIs ──────────────────────────────────────────────────────────
+
+export const getCropTypes = async () => {
+  const response = await api.get('/crop-types/');
+  return response.data;
+};
+
+export const getSoilTypes = async () => {
+  const response = await api.get('/soil-types/');
+  return response.data;
+};
+
+// ─── Irrigation History APIs ───────────────────────────────────────────────
+
+export const getIrrigationHistory = async (fieldId = null) => {
+  const url = fieldId ? `/irrigation/?field=${fieldId}` : '/irrigation/';
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const createIrrigationHistory = async (data) => {
+  const response = await api.post('/irrigation/', data);
+  return response.data;
+};
+
+export const updateIrrigationHistory = async (id, data) => {
+  const response = await api.put(`/irrigation/${id}/`, data);
+  return response.data;
+};
+
+export const deleteIrrigationHistory = async (id) => {
+  const response = await api.delete(`/irrigation/${id}/`);
+  return response.data;
+};
+
 export default api;

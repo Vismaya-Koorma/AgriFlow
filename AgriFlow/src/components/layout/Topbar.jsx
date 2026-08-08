@@ -1,9 +1,10 @@
 import React from 'react';
 import {
   AppBar, Toolbar, IconButton, Typography, Box, Badge,
-  Avatar, Tooltip, useTheme, useMediaQuery,
+  Avatar, Tooltip, useTheme, useMediaQuery, TextField, InputAdornment,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import SearchIcon from '@mui/icons-material/Search';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -45,8 +46,48 @@ const Topbar = ({ onMenuClick, title }) => {
           </IconButton>
         )}
 
-        <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b', flex: 1, fontSize: '1rem' }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            color: '#1e293b',
+            fontSize: '1rem',
+            display: { xs: 'block', md: 'none' },
+            mr: 1,
+          }}
+        >
           {title || 'Dashboard'}
+        </Typography>
+
+        <TextField
+          placeholder="Search fields or data..."
+          size="small"
+          sx={{
+            flex: 1,
+            maxWidth: 420,
+            display: { xs: 'none', md: 'block' },
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '24px',
+              bgcolor: '#f8fafc',
+              fontSize: '0.875rem',
+            },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: '#94a3b8', fontSize: 20 }} />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <Box sx={{ flex: 1, display: { xs: 'block', md: 'none' } }} />
+
+        <Typography
+          variant="body2"
+          sx={{ color: '#64748b', fontWeight: 500, display: { xs: 'none', lg: 'block' }, whiteSpace: 'nowrap' }}
+        >
+          {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </Typography>
 
         <Tooltip title="Notifications">
