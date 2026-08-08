@@ -18,6 +18,8 @@ import Profile from './pages/Farmer/Profile';
 import FarmManagement from './pages/Farmer/FarmManagement';
 import FieldManagement from './pages/Farmer/FieldManagement';
 import IrrigationHistory from './pages/Farmer/IrrigationHistory';
+import Reports from './pages/Farmer/Reports';
+import AlertsPage from './pages/Farmer/Alerts';
 
 function App() {
   return (
@@ -41,6 +43,12 @@ function App() {
             } />
             <Route path="/farmer/irrigation-history" element={
               <ProtectedRoute role="farmer"><IrrigationHistory /></ProtectedRoute>
+            } />
+            <Route path="/farmer/reports" element={
+              <ProtectedRoute role="farmer"><Reports /></ProtectedRoute>
+            } />
+            <Route path="/farmer/alerts" element={
+              <ProtectedRoute role="farmer"><AlertsPage /></ProtectedRoute>
             } />
             <Route path="/farmer/profile" element={
               <ProtectedRoute role="farmer"><Profile /></ProtectedRoute>

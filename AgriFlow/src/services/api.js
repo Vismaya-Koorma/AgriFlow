@@ -243,8 +243,18 @@ export const getSoilTypes = async () => {
 
 // ─── Irrigation History APIs ───────────────────────────────────────────────
 
-export const getIrrigationHistory = async (fieldId = null) => {
-  const url = fieldId ? `/irrigation/?field=${fieldId}` : '/irrigation/';
+export const getIrrigationHistory = async (params = {}) => {
+  let url = '/irrigation/';
+  const queryParams = new URLSearchParams();
+  if (typeof params === 'object' && params !== null) {
+    if (params.field) queryParams.append('field', params.field);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.start_date) queryParams.append('start_date', params.start_date);
+    if (params.end_date) queryParams.append('end_date', params.end_date);
+  } else if (params) {
+    queryParams.append('field', params);
+  }
+  if (queryParams.toString()) url += `?${queryParams.toString()}`;
   const response = await api.get(url);
   return response.data;
 };
@@ -261,6 +271,80 @@ export const updateIrrigationHistory = async (id, data) => {
 
 export const deleteIrrigationHistory = async (id) => {
   const response = await api.delete(`/irrigation/${id}/`);
+  return response.data;
+};
+
+// ─── Weather APIs ──────────────────────────────────────────────────────────
+
+export const getCurrentWeather = async (fieldId = null) => {
+  const url = fieldId ? `/weather/current/?field_id=${fieldId}` : '/weather/current/';
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getWeatherForecast = async (fieldId = null) => {
+  const url = fieldId ? `/weather/forecast/?field_id=${fieldId}` : '/weather/forecast/';
+  const response = await api.get(url);
+  return response.data;
+};
+
+// ─── Rainfall Confirmation APIs ───────────────────────────────────────────
+
+export const getLatestRainfallConfirmation = async () => {
+  const response = await api.get('/rainfall/latest/');
+  return response.data;
+};
+
+export const submitRainfallConfirmation = async (data) => {
+  const response = await api.post('/rainfall/', data);
+  return response.data;
+};
+
+// ─── Irrigation Recommendation APIs ───────────────────────────────────────
+
+export const getLatestRecommendation = async (fieldId = null) => {
+  const url = fieldId ? `/recommendation/latest/?field_id=${fieldId}` : '/recommendation/latest/';
+  const response = await api.get(url);
+  return response.data;
+};
+
+// ─── Reports APIs ─────────────────────────────────────────────────────────
+
+export const getReportSummary = async () => {
+  const response = await api.get('/reports/summary/');
+  return response.data;
+};
+
+export const exportReportCSV = async () => {
+  const response = await api.get('/reports/export-csv/', { responseType: 'blob' });
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'AgriFlow_Irrigation_Report.csv');
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};
+
+// ─── Alerts APIs ──────────────────────────────────────────────────────────
+
+export const getAlerts = async (params = {}) => {
+  let url = '/alerts/';
+  const queryParams = new URLSearchParams();
+  if (params.severity) queryParams.append('severity', params.severity);
+  if (params.alert_type) queryParams.append('alert_type', params.alert_type);
+  if (queryParams.toString()) url += `?${queryParams.toString()}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getUnreadAlertCount = async () => {
+  const response = await api.get('/alerts/unread_count/');
+  return response.data;
+};
+
+export const resolveAlert = async (id) => {
+  const response = await api.patch(`/alerts/${id}/resolve/`);
   return response.data;
 };
 

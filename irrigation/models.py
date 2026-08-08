@@ -39,8 +39,17 @@ class IrrigationHistory(models.Model):
 class RainfallConfirmation(models.Model):
     """tbl_rainfall_confirmation"""
 
+    class RainfallOption(models.TextChoices):
+        NO_RAIN = 'no_rain', 'No Rain'
+        LIGHT_RAIN = 'light_rain', 'Light Rain'
+        MODERATE_RAIN = 'moderate_rain', 'Moderate Rain'
+        HEAVY_RAIN = 'heavy_rain', 'Heavy Rain'
+
     field = models.ForeignKey('farms.Field', on_delete=models.CASCADE, related_name='rainfall_confirmations')
-    rainfall_mm = models.DecimalField(max_digits=7, decimal_places=2)
+    rainfall_option = models.CharField(
+        max_length=20, choices=RainfallOption.choices, default=RainfallOption.NO_RAIN
+    )
+    rainfall_mm = models.DecimalField(max_digits=7, decimal_places=2, default=0.00)
     confirmed_at = models.DateTimeField(auto_now_add=True)
     confirmed_by = models.ForeignKey(
         'accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='rainfall_confirmations'
@@ -52,4 +61,4 @@ class RainfallConfirmation(models.Model):
         ordering = ['-confirmed_at']
 
     def __str__(self):
-        return f"{self.field.name} — {self.rainfall_mm}mm on {self.confirmed_at.date()}"
+        return f"{self.field.name} — {self.get_rainfall_option_display()} on {self.confirmed_at.date()}"

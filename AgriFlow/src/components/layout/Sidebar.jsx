@@ -29,6 +29,8 @@ const NAV_CONFIG = {
     { label: 'My Farms', path: '/farmer/farms', icon: <AgricultureIcon /> },
     { label: 'My Fields', path: '/farmer/fields', icon: <GrassIcon /> },
     { label: 'Irrigation History', path: '/farmer/irrigation-history', icon: <WaterDropIcon /> },
+    { label: 'Reports', path: '/farmer/reports', icon: <BarChartIcon /> },
+    { label: 'Alerts', path: '/farmer/alerts', icon: <NotificationsIcon /> },
     { label: 'Profile', path: '/farmer/profile', icon: <PersonIcon /> },
   ],
   supervisor: [
