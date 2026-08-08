@@ -27,11 +27,8 @@ const NAV_CONFIG = {
   farmer: [
     { label: 'Dashboard', path: '/farmer', icon: <DashboardIcon /> },
     { label: 'My Farms', path: '/farmer/farms', icon: <AgricultureIcon /> },
-    { label: 'Irrigation Recommendation', path: '/farmer/irrigation', icon: <WaterDropIcon /> },
-    { label: 'Crop Stress', path: '/farmer/crop-stress', icon: <GrassIcon /> },
-    { label: 'Weather Forecast', path: '/farmer/weather', icon: <CloudIcon /> },
-    { label: 'Reports', path: '/farmer/reports', icon: <BarChartIcon /> },
-    { label: 'Notifications', path: '/farmer/notifications', icon: <NotificationsIcon /> },
+    { label: 'My Fields', path: '/farmer/fields', icon: <GrassIcon /> },
+    { label: 'Irrigation History', path: '/farmer/irrigation-history', icon: <WaterDropIcon /> },
     { label: 'Profile', path: '/farmer/profile', icon: <PersonIcon /> },
   ],
   supervisor: [
@@ -147,12 +144,12 @@ const Sidebar = ({ open, onClose }) => {
                 mx: 1,
                 mb: 0.3,
                 borderRadius: '8px',
-                bgcolor: active ? `${color}15` : 'transparent',
-                color: active ? color : '#475569',
-                '&:hover': { bgcolor: `${color}10` },
+                bgcolor: active ? color : 'transparent',
+                color: active ? '#fff' : '#475569',
+                '&:hover': { bgcolor: active ? color : `${color}10` },
               }}
             >
-              <ListItemIcon sx={{ color: active ? color : '#94a3b8', minWidth: 36 }}>
+              <ListItemIcon sx={{ color: active ? '#fff' : '#94a3b8', minWidth: 36 }}>
                 {item.icon}
               </ListItemIcon>
               <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: active ? 600 : 400 }} />

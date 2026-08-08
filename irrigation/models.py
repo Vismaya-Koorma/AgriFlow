@@ -23,6 +23,8 @@ class IrrigationHistory(models.Model):
     water_source = models.CharField(max_length=20, choices=Source.choices, default=Source.CANAL)
     volume_litres = models.DecimalField(max_digits=10, decimal_places=2)
     duration_minutes = models.PositiveIntegerField()
+    field_condition = models.CharField(max_length=255, blank=True, null=True)
+    created_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, related_name='irrigation_records')
     irrigated_at = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True, null=True)
 

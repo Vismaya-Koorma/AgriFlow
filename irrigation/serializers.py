@@ -9,9 +9,9 @@ class IrrigationHistorySerializer(serializers.ModelSerializer):
         model = IrrigationHistory
         fields = [
             'id', 'field', 'field_name', 'method', 'water_source',
-            'volume_litres', 'duration_minutes', 'irrigated_at', 'notes',
+            'volume_litres', 'duration_minutes', 'field_condition', 'created_by', 'irrigated_at', 'notes',
         ]
-        read_only_fields = ['id', 'irrigated_at']
+        read_only_fields = ['id', 'irrigated_at', 'created_by']
 
 
 class RainfallConfirmationSerializer(serializers.ModelSerializer):

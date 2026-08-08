@@ -101,7 +101,9 @@ export const AuthProvider = ({ children }) => {
       const errData = err.response?.data;
       let errorMsg = 'Invalid username/email or password.';
 
-      if (errData) {
+      if (!err.response) {
+        errorMsg = 'Cannot reach the server. Please make sure the backend is running on http://localhost:8000';
+      } else if (errData) {
         if (errData.detail) {
           errorMsg = errData.detail;
         } else if (errData.non_field_errors) {
