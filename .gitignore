@@ -40,3 +40,9 @@ dist/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Datasets and Media
+ml_models/plantvillage_dataset/
+crop_health_leaves/
+media/
+

@@ -10,16 +10,18 @@ import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import AgricultureIcon from '@mui/icons-material/Agriculture';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { getReportSummary, exportReportCSV } from '../../services/api';
+import { getReportSummary, exportReportCSV, getAIRecommendationLogs } from '../../services/api';
 
 const Reports = () => {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState(null);
+  const [aiLogs, setAiLogs] = useState([]);
 
   useEffect(() => {
     fetchSummary();
+    fetchAiLogs();
   }, []);
 
   const fetchSummary = async () => {
@@ -32,6 +34,15 @@ const Reports = () => {
       setError('Failed to fetch report metrics.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAiLogs = async () => {
+    try {
+      const logs = await getAIRecommendationLogs();
+      setAiLogs(Array.isArray(logs) ? logs : []);
+    } catch (e) {
+      console.error('AI logs error:', e);
     }
   };
 
@@ -266,6 +277,71 @@ const Reports = () => {
                     <TableCell>{act.date}</TableCell>
                   </TableRow>
                 ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+
+      {/* AI Prediction History */}
+      <Card elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0', mt: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Box sx={{ p: 1, borderRadius: '10px', bgcolor: '#ede9fe', color: '#6366f1' }}>
+            <AutoAwesomeIcon fontSize="small" />
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>
+            AI Irrigation Prediction History
+          </Typography>
+        </Box>
+        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+          <Table>
+            <TableHead sx={{ bgcolor: '#f8fafc' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Field / Farm</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Recommendation</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Water Required</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Crop Stress</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Confidence</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Date</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {aiLogs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                    No AI prediction logs yet. Visit the dashboard to generate predictions.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                aiLogs.map((log) => {
+                  const stressColors = { Low: { bg: '#dcfce7', color: '#16a34a' }, Medium: { bg: '#fef3c7', color: '#d97706' }, High: { bg: '#fee2e2', color: '#dc2626' } };
+                  const sc = stressColors[log.crop_stress] || stressColors.Low;
+                  return (
+                    <TableRow key={log.id} hover>
+                      <TableCell sx={{ fontWeight: 600 }}>{log.field_name || log.farm_name || '—'}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={log.irrigation_needed ? '✔ Irrigate' : '✖ No Irrigation'}
+                          size="small"
+                          sx={{
+                            bgcolor: log.irrigation_needed ? '#4f46e5' : '#16a34a',
+                            color: '#fff', fontWeight: 700, fontSize: '0.72rem'
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: '#0284c7' }}>
+                        {log.recommended_water_l_m2 > 0 ? `${log.recommended_water_l_m2} L/m²` : '—'}
+                      </TableCell>
+                      <TableCell>
+                        <Chip label={log.crop_stress} size="small" sx={{ bgcolor: sc.bg, color: sc.color, fontWeight: 700 }} />
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>{log.confidence}%</TableCell>
+                      <TableCell sx={{ color: '#64748b' }}>
+                        {new Date(log.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

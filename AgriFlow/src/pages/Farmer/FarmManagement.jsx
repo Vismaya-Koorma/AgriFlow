@@ -15,7 +15,7 @@ const FarmManagement = () => {
   const [currentId, setCurrentId] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
   
-  const [formData, setFormData] = useState({ name: '', location: '', district: '', state: 'Kerala', total_area: '' });
+  const [formData, setFormData] = useState({ name: '', location: '', district: '', state: '', total_area: '' });
 
   useEffect(() => {
     fetchFarms();
@@ -43,7 +43,7 @@ const FarmManagement = () => {
     } else {
       setIsEditing(false);
       setCurrentId(null);
-      setFormData({ name: '', location: '', district: '', state: 'Kerala', total_area: '' });
+      setFormData({ name: '', location: '', district: '', state: '', total_area: '' });
     }
     setOpen(true);
   };

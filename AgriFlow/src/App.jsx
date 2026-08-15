@@ -20,6 +20,9 @@ import FieldManagement from './pages/Farmer/FieldManagement';
 import IrrigationHistory from './pages/Farmer/IrrigationHistory';
 import Reports from './pages/Farmer/Reports';
 import AlertsPage from './pages/Farmer/Alerts';
+import CropHealthAssistant from './pages/Farmer/CropHealthAssistant';
+
+import AdminFarmManagement from './pages/Admin/AdminFarmManagement';
 
 function App() {
   return (
@@ -37,6 +40,9 @@ function App() {
             } />
             <Route path="/farmer/farms" element={
               <ProtectedRoute role="farmer"><FarmManagement /></ProtectedRoute>
+            } />
+            <Route path="/farmer/crop-health" element={
+              <ProtectedRoute role="farmer"><CropHealthAssistant /></ProtectedRoute>
             } />
             <Route path="/farmer/fields" element={
               <ProtectedRoute role="farmer"><FieldManagement /></ProtectedRoute>
@@ -62,8 +68,28 @@ function App() {
             <Route path="/maintenance" element={
               <ProtectedRoute role="maintenance"><MaintenanceDashboard /></ProtectedRoute>
             } />
+
+            {/* Admin Portal Top Functionalities */}
             <Route path="/admin" element={
-              <ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>
+              <ProtectedRoute role="admin"><AdminDashboard initialTab={0} /></ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute role="admin"><AdminDashboard initialTab={1} /></ProtectedRoute>
+            } />
+            <Route path="/admin/farms" element={
+              <ProtectedRoute role="admin"><AdminFarmManagement /></ProtectedRoute>
+            } />
+            <Route path="/admin/analytics" element={
+              <ProtectedRoute role="admin"><AdminDashboard initialTab={2} /></ProtectedRoute>
+            } />
+            <Route path="/admin/alerts" element={
+              <ProtectedRoute role="admin"><AlertsPage /></ProtectedRoute>
+            } />
+            <Route path="/admin/settings" element={
+              <ProtectedRoute role="admin"><AdminDashboard initialTab={0} /></ProtectedRoute>
+            } />
+            <Route path="/admin/profile" element={
+              <ProtectedRoute role="admin"><Profile /></ProtectedRoute>
             } />
 
             <Route path="*" element={<Navigate to="/" replace />} />

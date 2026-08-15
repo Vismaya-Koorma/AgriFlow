@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'weather',
     'irrigation',
     'recommendation',
+    'ai_recommendation',
+    'crop_health',
     'alerts',
     'maintenance',
     'reports',

@@ -22,12 +22,29 @@ class FieldSerializer(serializers.ModelSerializer):
     crop_type_name = serializers.CharField(source='crop_type.name', read_only=True)
     soil_type_name = serializers.CharField(source='soil_type.name', read_only=True)
     farm_name = serializers.CharField(source='farm.name', read_only=True)
+    effective_district = serializers.ReadOnlyField()
+    effective_state = serializers.ReadOnlyField()
+    location_display = serializers.SerializerMethodField()
 
     class Meta:
         model = Field
         fields = [
             'id', 'farm', 'farm_name', 'crop_type', 'crop_type_name',
             'soil_type', 'soil_type_name', 'name', 'area', 'planting_date', 'crop_stage',
-            'latitude', 'longitude', 'status', 'is_active', 'created_at', 'updated_at',
+            'district', 'state', 'latitude', 'longitude',
+            'effective_district', 'effective_state', 'location_display',
+            'status', 'is_active', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_location_display(self, obj):
+        dist = obj.effective_district
+        st = obj.effective_state
+        if dist and st:
+            return f"{dist}, {st}"
+        elif dist:
+            return dist
+        elif st:
+            return st
+        return None
+

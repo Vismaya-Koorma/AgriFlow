@@ -22,10 +22,12 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import GrassIcon from '@mui/icons-material/Grass';
 import MenuIcon from '@mui/icons-material/Menu';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 
 const NAV_CONFIG = {
   farmer: [
     { label: 'Dashboard', path: '/farmer', icon: <DashboardIcon /> },
+    { label: 'Crop Health AI', path: '/farmer/crop-health', icon: <MedicalServicesIcon /> },
     { label: 'My Farms', path: '/farmer/farms', icon: <AgricultureIcon /> },
     { label: 'My Fields', path: '/farmer/fields', icon: <GrassIcon /> },
     { label: 'Irrigation History', path: '/farmer/irrigation-history', icon: <WaterDropIcon /> },

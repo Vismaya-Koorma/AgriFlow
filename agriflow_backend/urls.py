@@ -20,6 +20,8 @@ urlpatterns = [
     path('api/', include('weather.urls')),
     path('api/', include('irrigation.urls')),
     path('api/', include('recommendation.urls')),
+    path('api/', include('ai_recommendation.urls')),
+    path('api/', include('crop_health.urls')),
     path('api/', include('alerts.urls')),
     path('api/', include('maintenance.urls')),
     path('api/', include('reports.urls')),

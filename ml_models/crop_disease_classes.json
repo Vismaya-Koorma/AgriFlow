@@ -1,0 +1,16 @@
+{
+  "Apple___Black_Rot": 0,
+  "Apple___Healthy": 1,
+  "Corn___Common_Rust": 2,
+  "Corn___Healthy": 3,
+  "Potato___Early_Blight": 4,
+  "Potato___Healthy": 5,
+  "Potato___Late_Blight": 6,
+  "Rice___Bacterial_Blight": 7,
+  "Rice___Brown_Spot": 8,
+  "Rice___Healthy": 9,
+  "Tomato___Early_Blight": 10,
+  "Tomato___Healthy": 11,
+  "Tomato___Late_Blight": 12,
+  "Tomato___Leaf_Mold": 13
+}

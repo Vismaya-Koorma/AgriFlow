@@ -1,0 +1,42 @@
+Accuracy: 21.43%
+Precision: 13.07%
+Recall: 21.43%
+F1-Score: 14.81%
+
+Confusion Matrix:
+[[2 0 0 0 3 0 0 0 1 0 0 0 0 0]
+ [0 1 0 0 0 0 0 0 0 5 0 0 0 0]
+ [0 0 6 0 0 0 0 0 0 0 0 0 0 0]
+ [0 2 0 1 0 0 0 0 0 2 0 1 0 0]
+ [1 0 0 0 4 0 0 0 1 0 0 0 0 0]
+ [0 0 0 2 0 0 0 0 0 3 0 1 0 0]
+ [3 0 0 0 2 0 0 0 1 0 0 0 0 0]
+ [2 0 0 0 4 0 0 0 0 0 0 0 0 0]
+ [2 0 0 0 4 0 0 0 0 0 0 0 0 0]
+ [0 0 0 3 0 0 0 0 0 2 0 1 0 0]
+ [2 0 0 0 2 0 0 0 2 0 0 0 0 0]
+ [0 0 0 1 0 0 0 0 0 3 0 2 0 0]
+ [1 0 0 0 5 0 0 0 0 0 0 0 0 0]
+ [0 0 6 0 0 0 0 0 0 0 0 0 0 0]]
+
+Classification Report:
+                         precision    recall  f1-score   support
+
+      Apple___Black_Rot       0.15      0.33      0.21         6
+        Apple___Healthy       0.33      0.17      0.22         6
+     Corn___Common_Rust       0.50      1.00      0.67         6
+         Corn___Healthy       0.14      0.17      0.15         6
+  Potato___Early_Blight       0.17      0.67      0.27         6
+       Potato___Healthy       0.00      0.00      0.00         6
+   Potato___Late_Blight       0.00      0.00      0.00         6
+Rice___Bacterial_Blight       0.00      0.00      0.00         6
+      Rice___Brown_Spot       0.00      0.00      0.00         6
+         Rice___Healthy       0.13      0.33      0.19         6
+  Tomato___Early_Blight       0.00      0.00      0.00         6
+       Tomato___Healthy       0.40      0.33      0.36         6
+   Tomato___Late_Blight       0.00      0.00      0.00         6
+     Tomato___Leaf_Mold       0.00      0.00      0.00         6
+
+               accuracy                           0.21        84
+              macro avg       0.13      0.21      0.15        84
+           weighted avg       0.13      0.21      0.15        84
