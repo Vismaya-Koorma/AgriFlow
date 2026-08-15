@@ -78,7 +78,7 @@ const Register = () => {
       email: '',
       phoneNumber: '',
       district: '',
-      state: 'Kerala',
+      state: '',
       password: '',
       confirmPassword: '',
       termsAccepted: false,
@@ -292,21 +292,7 @@ const Register = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="State"
-                    disabled
-                    value="Kerala"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <MapOutlinedIcon color="primary" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
+
 
                 <Grid item xs={12} sm={6}>
                   <TextField

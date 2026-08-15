@@ -25,6 +25,7 @@ import { getFarms, getFields, getIrrigationHistory } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import WeatherCard from '../../components/cards/WeatherCard';
 import RecommendationCard from '../../components/cards/RecommendationCard';
+import AIRecommendationCard from '../../components/cards/AIRecommendationCard';
 
 const FarmerDashboard = () => {
   const navigate = useNavigate();
@@ -36,6 +37,48 @@ const FarmerDashboard = () => {
   const [fieldHealthPct, setFieldHealthPct] = useState(0);
   const [loading, setLoading] = useState(true);
   const [yearFilter, setYearFilter] = useState('2026');
+
+  // Field/Farm selection for location-based weather
+  const [userFarms, setUserFarms] = useState([]);
+  const [userFields, setUserFields] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState({ fieldId: null, farmId: null });
+
+  // Live weather: master refresh trigger (incremented to cause child re-fetch)
+  const [weatherRefreshKey, setWeatherRefreshKey] = useState(0);
+  const [liveWeather, setLiveWeather] = useState(null);
+
+  const handleMasterRefresh = () => {
+    setWeatherRefreshKey(prev => prev + 1);
+  };
+
+  const locationOptions = [
+    ...userFields.map((f) => ({
+      key: `field-${f.id}`,
+      fieldId: f.id,
+      farmId: null,
+      title: f.name,
+      subtitle: `${f.farm_name || 'Farm'} (${f.location_display || f.effective_district || 'Kerala'})`
+    })),
+    ...userFarms
+      .filter((fm) => !userFields.some((f) => f.farm === fm.id))
+      .map((fm) => ({
+        key: `farm-${fm.id}`,
+        fieldId: null,
+        farmId: fm.id,
+        title: `${fm.name} (Farm)`,
+        subtitle: `${fm.location || fm.district || 'Kerala'}`
+      }))
+  ];
+
+  const handleLocationChange = (e) => {
+    const selectedKey = e.target.value;
+    const opt = locationOptions.find((o) => o.key === selectedKey);
+    if (opt) {
+      setSelectedLocation({ fieldId: opt.fieldId, farmId: opt.farmId });
+      setLiveWeather(null); // Reset live temp stat while new field weather loads
+      setWeatherRefreshKey(prev => prev + 1);
+    }
+  };
 
   const locationLabel = [user?.district, user?.state].filter(Boolean).join(', ') || 'Kerala, India';
 
@@ -64,6 +107,15 @@ const FarmerDashboard = () => {
         const farmsList = Array.isArray(farmsData) ? farmsData : (farmsData?.results || []);
         const fieldsList = Array.isArray(fieldsData) ? fieldsData : (fieldsData?.results || []);
         const historyList = Array.isArray(historyData) ? historyData : (historyData?.results || []);
+
+        // Populate farms and fields selector
+        setUserFarms(farmsList);
+        setUserFields(fieldsList);
+        if (fieldsList.length > 0) {
+          setSelectedLocation({ fieldId: fieldsList[0].id, farmId: null });
+        } else if (farmsList.length > 0) {
+          setSelectedLocation({ fieldId: null, farmId: farmsList[0].id });
+        }
 
         const activeFields = fieldsList.filter((f) => f.status).length;
         const now = Date.now();
@@ -315,32 +367,83 @@ const FarmerDashboard = () => {
             </Card>
           </Grid>
 
-          {/* Card 4: Weather Overview */}
+          {/* Card 4: Live Weather (dynamic) */}
           <Grid item xs={12} sm={6} md={3}>
-            <Card elevation={0} sx={{ p: 2.5, borderRadius: '20px', bgcolor: '#ffffff', border: '1px solid #e2e8f0' }}>
+            <Card elevation={0} sx={{ p: 2.5, borderRadius: '20px', bgcolor: '#ffffff', border: '1px solid #e2e8f0', cursor: 'pointer' }} onClick={handleMasterRefresh}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
                 <Box sx={{ p: 1.2, borderRadius: '12px', bgcolor: '#fff7ed', color: '#f97316' }}>
                   <WbSunnyIcon />
                 </Box>
-                <Chip label="Partly Cloudy" size="small" sx={{ bgcolor: '#fff7ed', color: '#f97316', fontWeight: 600, fontSize: '0.75rem' }} />
+                <Chip
+                  label={liveWeather ? liveWeather.condition : 'Live'}
+                  size="small"
+                  sx={{ bgcolor: '#fff7ed', color: '#f97316', fontWeight: 600, fontSize: '0.75rem' }}
+                />
               </Box>
               <Typography variant="h3" sx={{ fontWeight: 800, color: '#1e293b', mb: 0.5 }}>
-                29.5°C
+                {liveWeather ? `${liveWeather.temperature}°C` : '...'}
               </Typography>
               <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                Local Temp ({user?.district || 'Alappuzha'})
+                Live Temp · Click to Refresh
               </Typography>
             </Card>
           </Grid>
         </Grid>
 
-        {/* ── 3. PHASE 1 INTEGRATION: RECOMMENDATION ENGINE & WEATHER CARD ──────── */}
+        {/* ── 3. FIELD & FARM LOCATION SELECTOR + LIVE WEATHER & RECOMMENDATION ──────── */}
+        {locationOptions.length > 0 && (
+          <Card elevation={0} sx={{ p: 2, mb: 2, borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <LocationOnIcon sx={{ color: '#2e7d32' }} />
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap' }}>View Weather For:</Typography>
+            <FormControl size="small" sx={{ minWidth: 260 }}>
+              <Select
+                value={
+                  selectedLocation.fieldId
+                    ? `field-${selectedLocation.fieldId}`
+                    : selectedLocation.farmId
+                    ? `farm-${selectedLocation.farmId}`
+                    : (locationOptions[0]?.key || '')
+                }
+                onChange={handleLocationChange}
+                displayEmpty
+                sx={{ borderRadius: '12px', fontWeight: 600 }}
+              >
+                {locationOptions.map((opt) => (
+                  <MenuItem key={opt.key} value={opt.key}>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>{opt.title}</Typography>
+                      {opt.subtitle && (
+                        <Typography variant="caption" sx={{ color: '#64748b' }}>{opt.subtitle}</Typography>
+                      )}
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Typography variant="caption" sx={{ color: '#64748b' }}>Weather and smart advice will update for selected field / farm location</Typography>
+          </Card>
+        )}
+
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} md={6}>
-            <RecommendationCard />
+            <RecommendationCard fieldId={selectedLocation.fieldId} farmId={selectedLocation.farmId} refreshTrigger={weatherRefreshKey} />
           </Grid>
           <Grid item xs={12} md={6}>
-            <WeatherCard />
+            <WeatherCard
+              fieldId={selectedLocation.fieldId}
+              farmId={selectedLocation.farmId}
+              onRefresh={(weather) => {
+                if (weather && weather.temperature) setLiveWeather(weather);
+              }}
+              refreshTrigger={weatherRefreshKey}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <AIRecommendationCard
+              fieldId={selectedLocation.fieldId}
+              farmId={selectedLocation.farmId}
+              refreshTrigger={weatherRefreshKey}
+            />
           </Grid>
         </Grid>
 

@@ -20,7 +20,8 @@ const FieldManagement = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
   
   const [formData, setFormData] = useState({
-    name: '', area: '', farm: '', crop_type: '', soil_type: '', crop_stage: 'germination', planting_date: '', status: true
+    name: '', area: '', farm: '', crop_type: '', soil_type: '', crop_stage: 'germination',
+    planting_date: '', district: '', state: 'Kerala', latitude: '', longitude: '', status: true
   });
 
   useEffect(() => {
@@ -52,12 +53,18 @@ const FieldManagement = () => {
       setCurrentId(field.id);
       setFormData({
         name: field.name, area: field.area, farm: field.farm, crop_type: field.crop_type || '',
-        soil_type: field.soil_type || '', crop_stage: field.crop_stage, planting_date: field.planting_date || '', status: field.status
+        soil_type: field.soil_type || '', crop_stage: field.crop_stage, planting_date: field.planting_date || '',
+        district: field.district || '', state: field.state || 'Kerala',
+        latitude: field.latitude || '', longitude: field.longitude || '', status: field.status
       });
     } else {
       setIsEditing(false);
       setCurrentId(null);
-      setFormData({ name: '', area: '', farm: farms[0]?.id || '', crop_type: '', soil_type: '', crop_stage: 'germination', planting_date: '', status: true });
+      setFormData({
+        name: '', area: '', farm: farms[0]?.id || '', crop_type: '', soil_type: '', crop_stage: 'germination',
+        planting_date: '', district: farms[0]?.district || '', state: farms[0]?.state || 'Kerala',
+        latitude: '', longitude: '', status: true
+      });
     }
     setOpen(true);
   };
@@ -71,7 +78,14 @@ const FieldManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = { ...formData, planting_date: formData.planting_date || null };
+    const payload = {
+      ...formData,
+      planting_date: formData.planting_date || null,
+      latitude: formData.latitude !== '' ? parseFloat(formData.latitude) : null,
+      longitude: formData.longitude !== '' ? parseFloat(formData.longitude) : null,
+      district: formData.district || null,
+      state: formData.state || 'Kerala',
+    };
     try {
       if (isEditing) {
         await updateField(currentId, payload);
@@ -116,9 +130,9 @@ const FieldManagement = () => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Field Name</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Farm</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Location (District, State)</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Crop Type</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Soil Type</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Planting Date</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Area (Acres)</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
@@ -131,9 +145,9 @@ const FieldManagement = () => {
                   <TableRow key={field.id} hover>
                     <TableCell sx={{ fontWeight: 500 }}>{field.name}</TableCell>
                     <TableCell>{field.farm_name}</TableCell>
+                    <TableCell>{field.location_display || field.effective_district || '-'}</TableCell>
                     <TableCell>{field.crop_type_name || '-'}</TableCell>
                     <TableCell>{field.soil_type_name || '-'}</TableCell>
-                    <TableCell>{field.planting_date || '-'}</TableCell>
                     <TableCell>{field.area}</TableCell>
                     <TableCell>{field.status ? 'Active' : 'Inactive'}</TableCell>
                     <TableCell align="right">

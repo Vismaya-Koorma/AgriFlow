@@ -47,6 +47,8 @@ class Field(models.Model):
     crop_stage = models.CharField(max_length=20, choices=CropStage.choices, default=CropStage.GERMINATION)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    district = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, default='Kerala', blank=True, null=True)
     status = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -55,6 +57,22 @@ class Field(models.Model):
     class Meta:
         db_table = 'tbl_field'
         ordering = ['-created_at']
+
+    @property
+    def effective_district(self):
+        if self.district:
+            return self.district
+        if self.farm:
+            return self.farm.location or self.farm.district
+        return None
+
+    @property
+    def effective_state(self):
+        if self.state:
+            return self.state
+        if self.farm:
+            return self.farm.state or 'Kerala'
+        return 'Kerala'
 
     def __str__(self):
         return f"{self.name} @ {self.farm.name}"

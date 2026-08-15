@@ -125,7 +125,7 @@ export const registerUser = async (formData) => {
     full_name: formData.fullName || formData.full_name || formData.name,
     phone_number: formData.phoneNumber || formData.phone_number || '',
     district: formData.district || '',
-    state: formData.state || 'Kerala',
+    state: formData.state || '',
     role: formData.role || 'farmer',
     password: formData.password,
     confirm_password: formData.confirmPassword || formData.password,
@@ -283,14 +283,30 @@ export const deleteIrrigationHistory = async (id) => {
 
 // ─── Weather APIs ──────────────────────────────────────────────────────────
 
-export const getCurrentWeather = async (fieldId = null) => {
-  const url = fieldId ? `/weather/current/?field_id=${fieldId}` : '/weather/current/';
+export const getCurrentWeather = async (param = null) => {
+  let url = '/weather/current/';
+  if (typeof param === 'object' && param !== null) {
+    const qp = new URLSearchParams();
+    if (param.fieldId) qp.append('field_id', param.fieldId);
+    if (param.farmId) qp.append('farm_id', param.farmId);
+    if (qp.toString()) url += `?${qp.toString()}`;
+  } else if (param) {
+    url += `?field_id=${param}`;
+  }
   const response = await api.get(url);
   return response.data;
 };
 
-export const getWeatherForecast = async (fieldId = null) => {
-  const url = fieldId ? `/weather/forecast/?field_id=${fieldId}` : '/weather/forecast/';
+export const getWeatherForecast = async (param = null) => {
+  let url = '/weather/forecast/';
+  if (typeof param === 'object' && param !== null) {
+    const qp = new URLSearchParams();
+    if (param.fieldId) qp.append('field_id', param.fieldId);
+    if (param.farmId) qp.append('farm_id', param.farmId);
+    if (qp.toString()) url += `?${qp.toString()}`;
+  } else if (param) {
+    url += `?field_id=${param}`;
+  }
   const response = await api.get(url);
   return response.data;
 };
@@ -309,8 +325,16 @@ export const submitRainfallConfirmation = async (data) => {
 
 // ─── Irrigation Recommendation APIs ───────────────────────────────────────
 
-export const getLatestRecommendation = async (fieldId = null) => {
-  const url = fieldId ? `/recommendation/latest/?field_id=${fieldId}` : '/recommendation/latest/';
+export const getLatestRecommendation = async (param = null) => {
+  let url = '/recommendation/latest/';
+  if (typeof param === 'object' && param !== null) {
+    const qp = new URLSearchParams();
+    if (param.fieldId) qp.append('field_id', param.fieldId);
+    if (param.farmId) qp.append('farm_id', param.farmId);
+    if (qp.toString()) url += `?${qp.toString()}`;
+  } else if (param) {
+    url += `?field_id=${param}`;
+  }
   const response = await api.get(url);
   return response.data;
 };
@@ -355,4 +379,45 @@ export const resolveAlert = async (id) => {
   return response.data;
 };
 
+// ─── AI Irrigation Recommendation APIs ────────────────────────────────────
+
+export const getAIRecommendation = async (param = null) => {
+  let url = '/ai/recommendation/';
+  if (typeof param === 'object' && param !== null) {
+    const qp = new URLSearchParams();
+    if (param.fieldId) qp.append('field_id', param.fieldId);
+    if (param.farmId) qp.append('farm_id', param.farmId);
+    if (qp.toString()) url += `?${qp.toString()}`;
+  } else if (param) {
+    url += `?field_id=${param}`;
+  }
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getAIRecommendationLogs = async () => {
+  const response = await api.get('/ai/logs/');
+  return response.data;
+};
+
+// ─── AI Crop Health Assistant APIs ────────────────────────────────────────
+
+export const analyzeCropHealth = async (data) => {
+  const response = await api.post('/crop-health/analyze/', data);
+  return response.data;
+};
+
+export const getCropHealthHistory = async (params = {}) => {
+  let url = '/crop-health/history/';
+  const qp = new URLSearchParams();
+  if (params.crop) qp.append('crop_type', params.crop);
+  if (params.search) qp.append('search', params.search);
+  if (params.dateFrom) qp.append('date_from', params.dateFrom);
+  if (params.dateTo) qp.append('date_to', params.dateTo);
+  if (qp.toString()) url += `?${qp.toString()}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
 export default api;
+

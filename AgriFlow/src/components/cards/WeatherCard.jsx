@@ -1,33 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Card, Typography, Grid, CircularProgress, Chip, Stack, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import {
+  Box, Card, Typography, Grid, CircularProgress, Chip, Stack,
+  Accordion, AccordionSummary, AccordionDetails, Button, Alert, IconButton
+} from '@mui/material';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import OpacityIcon from '@mui/icons-material/Opacity';
 import AirIcon from '@mui/icons-material/Air';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ThunderstormIcon from '@mui/icons-material/Thunderstorm';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
+import RefreshIcon from '@mui/icons-material/Refresh';
+
 import { getCurrentWeather, getWeatherForecast } from '../../services/api';
 
-const WeatherCard = ({ fieldId = null }) => {
+const WeatherCard = ({ fieldId = null, farmId = null, onRefresh = null, refreshTrigger = 0 }) => {
   const [currentWeather, setCurrentWeather] = useState(null);
   const [forecast, setForecast] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchWeatherData();
-  }, [fieldId]);
+  }, [fieldId, farmId, refreshTrigger]);
 
   const fetchWeatherData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [curr, fc] = await Promise.all([
-        getCurrentWeather(fieldId),
-        getWeatherForecast(fieldId),
+        getCurrentWeather({ fieldId, farmId }),
+        getWeatherForecast({ fieldId, farmId }),
       ]);
       setCurrentWeather(curr);
       setForecast(fc.forecast || fc || []);
+      // Pass the fetched weather object to parent for the stat card
+      if (onRefresh && curr) onRefresh(curr);
     } catch (e) {
-      console.error('Error fetching weather:', e);
+      console.error('Error fetching live weather:', e);
+      setError('Failed to load live weather data from Open-Meteo. Please try refreshing.');
     } finally {
       setLoading(false);
     }
@@ -35,33 +45,85 @@ const WeatherCard = ({ fieldId = null }) => {
 
   if (loading) {
     return (
-      <Card elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-        <CircularProgress color="success" size={32} />
+      <Card elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: 220 }}>
+        <CircularProgress color="success" size={36} />
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 2, fontWeight: 500 }}>
+          Fetching Live Weather from Open-Meteo API...
+        </Typography>
+      </Card>
+    );
+  }
+
+  if (error && !currentWeather) {
+    return (
+      <Card elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #fee2e2', bgcolor: '#fff5f5' }}>
+        <Alert severity="error" action={
+          <Button color="inherit" size="small" onClick={fetchWeatherData} startIcon={<RefreshIcon />}>
+            Retry
+          </Button>
+        }>
+          {error}
+        </Alert>
+      </Card>
+    );
+  }
+
+  if (currentWeather && currentWeather.has_location === false) {
+    return (
+      <Card elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #fde68a', bgcolor: '#fffbeb' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <WbSunnyIcon sx={{ color: '#d97706', fontSize: 28 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#92400e' }}>
+              Weather Forecast
+            </Typography>
+          </Box>
+          <Button size="small" startIcon={<RefreshIcon />} onClick={fetchWeatherData} sx={{ textTransform: 'none' }}>
+            Refresh
+          </Button>
+        </Box>
+        <Alert severity="warning" sx={{ fontWeight: 500 }}>
+          Please add the field location to view weather.
+        </Alert>
       </Card>
     );
   }
 
   const weather = currentWeather || {
-    city: 'Alappuzha',
-    temperature: 29.5,
-    humidity: 78,
-    rain_probability: 65,
-    wind_speed: 12.4,
-    condition: 'Partly Cloudy',
-    icon: '02d'
+    city: '',
+    temperature: '--',
+    humidity: '--',
+    rain_probability: '--',
+    wind_speed: '--',
+    condition: 'Unknown'
   };
 
   return (
     <Card elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0', background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)' }}>
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <WbSunnyIcon sx={{ color: '#eab308', fontSize: 28 }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#166534' }}>
-            Weather Forecast ({weather.city || 'Alappuzha'})
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <WbSunnyIcon sx={{ color: '#eab308', fontSize: 28 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#166534' }}>
+              Weather Forecast
+            </Typography>
+          </Box>
+          <Typography variant="subtitle2" sx={{ color: '#475569', fontWeight: 600, mt: 0.5, ml: 4.5 }}>
+            {weather.city || weather.field_name || 'Selected Field Location'}
           </Typography>
         </Box>
-        <Chip label={weather.condition || 'Clear'} color="success" size="small" variant="outlined" sx={{ fontWeight: 600 }} />
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Chip label={weather.condition || 'Clear'} color="success" size="small" variant="outlined" sx={{ fontWeight: 600 }} />
+          <Button
+            size="small"
+            startIcon={<RefreshIcon />}
+            onClick={fetchWeatherData}
+            sx={{ textTransform: 'none', color: '#166534', fontWeight: 600 }}
+          >
+            Refresh
+          </Button>
+        </Stack>
       </Box>
 
       {/* Primary Metrics Grid */}
@@ -107,10 +169,10 @@ const WeatherCard = ({ fieldId = null }) => {
           <Stack spacing={1}>
             {forecast.map((day, idx) => (
               <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1, borderBottom: idx !== forecast.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                <Typography variant="body2" sx={{ fontWeight: 600, width: 80 }}>{day.day || day.date}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600, width: 90 }}>{day.day || day.date}</Typography>
                 <Typography variant="body2" color="text.secondary">{day.condition}</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>{day.temp_max}° / {day.temp_min}°C</Typography>
-                <Chip label={`${day.rain_prob}% rain`} size="small" color={day.rain_prob > 50 ? "info" : "default"} variant="outlined" />
+                <Chip label={`${day.rain_prob || day.rain_probability}% rain`} size="small" color={(day.rain_prob || day.rain_probability) > 50 ? "info" : "default"} variant="outlined" />
               </Box>
             ))}
           </Stack>
