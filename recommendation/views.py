@@ -286,6 +286,8 @@ class SoilMoistureViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 from weather.utils import fetch_open_meteo_data, get_location_coords
+from irrigation.services import calculate_crop_water_deficit
+
 
 
 class RecommendationViewSet(viewsets.ModelViewSet):
@@ -299,7 +301,7 @@ class RecommendationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='latest')
     def latest(self, request):
-        """Rule-based Smart Irrigation Recommendation powered by Live Open-Meteo Weather."""
+        """Smart Irrigation Recommendation powered by Scientific Water Demand & Deficit Engine."""
         user_fields = get_user_fields(request.user)
         field_id = request.query_params.get('field_id') or request.query_params.get('field')
         farm_id = request.query_params.get('farm_id') or request.query_params.get('farm')
@@ -342,57 +344,29 @@ class RecommendationViewSet(viewsets.ModelViewSet):
 
         live_weather, _ = fetch_open_meteo_data(lat, lon, city_name=city_name)
 
-        temp = live_weather.get('temperature', 29.5)
-        humidity = live_weather.get('humidity', 75.0)
-        wind_speed = live_weather.get('wind_speed', 14.0)
-        rain_prob = live_weather.get('rain_probability', 20.0)
-        condition = live_weather.get('condition', 'Partly Cloudy')
+        # Run Scientific Calculation Engine
+        calc_res = calculate_crop_water_deficit(field=target_field, farm=target_farm, weather_data=live_weather)
 
-        # Mandatory Rule-Based Engine
-        # Rule 1: Rain Probability > 70% -> Postpone Irrigation
-        if rain_prob > 70:
-            rec_text = "Postpone Irrigation"
-            status_code = "postpone"
-            priority = "Low"
-            water_requirement_str = "0 Liters"
-            water_litres = 0
-            reason = f"Heavy rain expected ({rain_prob}% probability). Natural rainfall will meet crop water requirements."
+        rec_text = calc_res['recommendation']
+        priority = calc_res['priority']
+        water_litres = calc_res['recommended_water_liters']
+        water_requirement_str = f"{water_litres:,} Liters" if water_litres > 0 else "0 Liters"
+        status_code = "irrigate" if calc_res['irrigation_needed'] else "no_irrigation"
 
-        # Rule 2: Temp > 32°C and Rain Probability < 20% -> Irrigate Today
-        elif temp > 32 and rain_prob < 20:
-            rec_text = "Irrigate Today"
-            status_code = "irrigate"
-            priority = "High"
-            water_requirement_str = "45,000 Liters"
-            water_litres = 45000
-            reason = f"High temperature ({temp}°C) and low rainfall probability ({rain_prob}%). Immediate irrigation required to prevent crop heat stress."
-
-        # Rule 3: Humidity > 80% -> Reduce Water Quantity
-        elif humidity > 80:
-            rec_text = "Reduce Water Quantity"
-            status_code = "reduce_water"
-            priority = "Medium"
-            water_requirement_str = "20,000 Liters"
-            water_litres = 20000
-            reason = f"High atmospheric humidity ({humidity}%). Evapotranspiration rate is low."
-
-        # Rule 4: Wind Speed > 25 km/h -> Avoid Sprinkler Irrigation
-        elif wind_speed > 25:
-            rec_text = "Avoid Sprinkler Irrigation"
-            status_code = "avoid_sprinkler"
-            priority = "High"
-            water_requirement_str = "25,000 Liters"
-            water_litres = 25000
-            reason = f"High wind speed ({wind_speed} km/h). Sprinkler drift will cause uneven water distribution. Use drip irrigation instead."
-
-        # Rule 5: Default Moderate Weather -> Normal Irrigation Schedule
-        else:
-            rec_text = "Normal Irrigation Schedule"
-            status_code = "normal"
-            priority = "Medium"
-            water_requirement_str = "30,000 Liters"
-            water_litres = 30000
-            reason = f"Optimal weather conditions ({temp}°C, {humidity}% humidity, {wind_speed} km/h wind). Maintain regular watering schedule."
+        # Create Alert Notification if target_field is present and priority is MEDIUM or HIGH
+        if target_field:
+            try:
+                from alerts.services import create_irrigation_notification
+                create_irrigation_notification(
+                    field=target_field,
+                    priority=priority,
+                    recommended_water_liters=water_litres,
+                    recommendation_title=rec_text,
+                    reason=calc_res.get('reason', '')
+                )
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to create irrigation alert: {e}")
 
         return Response({
             'recommendation': rec_text,
@@ -403,20 +377,32 @@ class RecommendationViewSet(viewsets.ModelViewSet):
             'estimated_water_requirement': water_requirement_str,
             'water_volume_litres': water_litres,
             'estimated_water_litres': water_litres,
-            'reason': reason,
+            'recommended_water_liters': water_litres,
+            'irrigation_needed': calc_res['irrigation_needed'],
+            'reason': calc_res['reason'],
             'field_id': target_field.id if target_field else None,
             'field_name': field_name,
             'crop_type': crop_type,
+            'crop_stage': calc_res['crop_stage'],
+            'area_acres': calc_res['area_acres'],
+            'field_area_m2': calc_res['field_area_m2'],
+            'today_crop_demand_liters': calc_res['today_crop_demand_liters'],
+            'previous_unmet_deficit_liters': calc_res['previous_unmet_deficit_liters'],
+            'useful_carryover_liters': calc_res['useful_carryover_liters'],
+            'effective_rainfall_liters': calc_res['effective_rainfall_liters'],
+            'net_water_deficit_liters': calc_res['net_water_deficit_liters'],
+            'confidence': calc_res['confidence'],
             'weather': {
-                'temperature': temp,
-                'humidity': humidity,
-                'wind_speed': wind_speed,
-                'rain_probability': rain_prob,
-                'condition': condition,
+                'temperature': calc_res['weather_snapshot']['temperature'],
+                'humidity': calc_res['weather_snapshot']['humidity'],
+                'wind_speed': calc_res['weather_snapshot']['wind_speed'],
+                'rain_probability': live_weather.get('rain_probability', 0.0),
+                'condition': live_weather.get('condition', 'Partly Cloudy'),
                 'city': city_name
             },
             'generated_at': timezone.now().isoformat()
         })
+
 
 
 class CropStressViewSet(viewsets.ReadOnlyModelViewSet):

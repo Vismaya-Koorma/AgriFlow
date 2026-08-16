@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Grid, Card, Chip, Button, Table, TableHead,
   TableBody, TableRow, TableCell, TableContainer, Stack, Avatar,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
   MenuItem, Select, FormControl, InputLabel, Tabs, Tab, IconButton,
-  InputAdornment, Snackbar, Alert, Tooltip, Paper, Divider
+  InputAdornment, Snackbar, Alert, Paper, CircularProgress, Switch, Tooltip
 } from '@mui/material';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -19,23 +19,29 @@ import AgricultureIcon from '@mui/icons-material/Agriculture';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import DevicesIcon from '@mui/icons-material/Devices';
 import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import CloseIcon from '@mui/icons-material/Close';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import CategoryIcon from '@mui/icons-material/Category';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import StorageIcon from '@mui/icons-material/Storage';
+import CloudIcon from '@mui/icons-material/Cloud';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 
-import { users as defaultUsers } from '../../data/users';
-import { analytics } from '../../data/analytics';
-import { farms } from '../../data/farms';
+import {
+  getAdminDashboardSummary,
+  getAdminUsers,
+  toggleUserStatus,
+  createAdminUser,
+  getAdminFarmsOverview
+} from '../../services/api';
 
 const ROLE_COLOR = {
   farmer: '#2E7D32',
@@ -45,21 +51,7 @@ const ROLE_COLOR = {
   admin: '#6A1B9A'
 };
 
-const PIE_COLORS = ['#2E7D32', '#1565C0', '#00695C', '#E65100', '#6A1B9A'];
-
-const DISTRICTS = [
-  'Thrissur', 'Ernakulam', 'Thiruvananthapuram', 'Alappuzha',
-  'Kollam', 'Palakkad', 'Wayanad', 'Kottayam', 'Idukki',
-  'Kozhikode', 'Malappuram', 'Kannur', 'Kasaragod'
-];
-
-const INITIAL_AUDIT_LOGS = [
-  { id: 'LOG-109', action: 'User Restored', target: 'Ramesh Kumar (farmer)', user: 'System Admin', time: 'Just now', status: 'Success' },
-  { id: 'LOG-108', action: 'Login Success', target: 'System Dashboard', user: 'admin', time: '10 mins ago', status: 'Success' },
-  { id: 'LOG-107', action: 'Farm Registered', target: 'Green Valley Farm', user: 'Anil Menon', time: '1 hour ago', status: 'Success' },
-  { id: 'LOG-106', action: 'Alert Resolved', target: 'Pump Failure C-002', user: 'Suresh Pillai', time: '3 hours ago', status: 'Resolved' },
-  { id: 'LOG-105', action: 'Water Schedule', target: 'Block A Thrissur', user: 'Priya Nair', time: '5 hours ago', status: 'Approved' },
-];
+const PIE_COLORS = ['#2E7D32', '#1565C0', '#00695C', '#E65100', '#6A1B9A', '#D81B60', '#8E24AA'];
 
 const AdminDashboard = ({ initialTab = 0 }) => {
   const location = useLocation();
@@ -67,11 +59,101 @@ const AdminDashboard = ({ initialTab = 0 }) => {
 
   const getTabFromPath = () => {
     if (location.pathname === '/admin/users') return 1;
-    if (location.pathname === '/admin/analytics') return 2;
+    if (location.pathname === '/admin/farms') return 2;
     return initialTab;
   };
 
   const [tabIndex, setTabIndex] = useState(getTabFromPath);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [summaryData, setSummaryData] = useState(null);
+
+  // Users Tab State
+  const [usersList, setUsersList] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRole, setSelectedRole] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+
+  // Farms Tab State
+  const [farmsOverview, setFarmsOverview] = useState([]);
+  const [farmsLoading, setFarmsLoading] = useState(false);
+
+  // Dialogs & Toasts
+  const [openAddDialog, setOpenAddDialog] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [formData, setFormData] = useState({
+    full_name: '',
+    username: '',
+    email: '',
+    password: 'password123',
+    role: 'farmer',
+    district: 'Kottayam'
+  });
+
+  const showNotification = (message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  // Fetch Dashboard Aggregated Data
+  const fetchSummary = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getAdminDashboardSummary();
+      setSummaryData(data);
+    } catch (err) {
+      console.error("Failed to load admin summary:", err);
+      if (err.response?.status === 403) {
+        setError("Access Denied: You do not have Administrator permissions.");
+      } else {
+        setError("Unable to load Admin Dashboard. Please check backend connection.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch Users List
+  const fetchUsers = useCallback(async () => {
+    setUsersLoading(true);
+    try {
+      const res = await getAdminUsers({
+        search: searchQuery,
+        role: selectedRole,
+        status: selectedStatus
+      });
+      const list = Array.isArray(res) ? res : (res.results || []);
+      setUsersList(list);
+    } catch (err) {
+      console.error("Failed to load user management list:", err);
+      showNotification("Failed to load user accounts list.", "error");
+    } finally {
+      setUsersLoading(false);
+    }
+  }, [searchQuery, selectedRole, selectedStatus]);
+
+  // Fetch Platform Farms Directory
+  const fetchFarms = useCallback(async () => {
+    setFarmsLoading(true);
+    try {
+      const res = await getAdminFarmsOverview();
+      setFarmsOverview(res.farms || []);
+    } catch (err) {
+      console.error("Failed to load farms overview:", err);
+    } finally {
+      setFarmsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
+
+  useEffect(() => {
+    if (tabIndex === 1) fetchUsers();
+    if (tabIndex === 2) fetchFarms();
+  }, [tabIndex, fetchUsers, fetchFarms]);
 
   useEffect(() => {
     setTabIndex(getTabFromPath());
@@ -81,196 +163,80 @@ const AdminDashboard = ({ initialTab = 0 }) => {
     setTabIndex(val);
     if (val === 0) navigate('/admin');
     else if (val === 1) navigate('/admin/users');
-    else if (val === 2) navigate('/admin/analytics');
+    else if (val === 2) navigate('/admin/farms');
   };
 
-  // User Management State with persistence
-  const [userList, setUserList] = useState(() => {
-    const saved = localStorage.getItem('agriflow_admin_users');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Guarantee Ramesh Kumar exists if missing (undo deletion)
-        const hasRamesh = parsed.some(u => u.name?.toLowerCase().includes('ramesh kumar') || u.username === 'farmer');
-        if (!hasRamesh) {
-          const ramesh = defaultUsers.find(u => u.name === 'Ramesh Kumar') || {
-            id: 1, username: 'farmer', name: 'Ramesh Kumar', role: 'farmer',
-            district: 'Thrissur', phone: '9876543210', email: 'ramesh@agriflow.in', status: 'active'
-          };
-          return [ramesh, ...parsed];
-        }
-        return parsed;
-      } catch (e) {
-        console.error("Failed to parse saved users", e);
-      }
+  // Toggle User Active Status
+  const handleToggleStatus = async (user) => {
+    try {
+      const res = await toggleUserStatus(user.id);
+      showNotification(res.message || `Status updated for ${user.username}`);
+      fetchUsers();
+      fetchSummary();
+    } catch (err) {
+      console.error("Failed to toggle status:", err);
+      showNotification("Could not update user status.", "error");
     }
-    return defaultUsers;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('agriflow_admin_users', JSON.stringify(userList));
-  }, [userList]);
-
-  // Filters & Search
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRole, setSelectedRole] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-
-  // Modals & Dialogs
-  const [openAddDialog, setOpenAddDialog] = useState(false);
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [openViewDialog, setOpenViewDialog] = useState(false);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-
-  // Selected User targets
-  const [currentUser, setCurrentUser] = useState(null);
-  const [confirmDeleteUser, setConfirmDeleteUser] = useState(null);
-
-  // Form State
-  const [formData, setFormData] = useState({
-    name: '',
-    username: '',
-    email: '',
-    phone: '',
-    role: 'farmer',
-    district: 'Thrissur',
-    status: 'active'
-  });
-
-  // Notification Toast
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-
-  const showNotification = (message, severity = 'success') => {
-    setSnackbar({ open: true, message, severity });
   };
 
-  // Form Change Handler
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  // CREATE User
-  const handleOpenAdd = () => {
-    setFormData({
-      name: '',
-      username: '',
-      email: '',
-      phone: '',
-      role: 'farmer',
-      district: 'Thrissur',
-      status: 'active'
-    });
-    setOpenAddDialog(true);
-  };
-
-  const handleAddUserSubmit = (e) => {
+  // Create User Submit
+  const handleAddUserSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.username || !formData.email) {
-      showNotification('Please fill in all required fields (Name, Username, Email).', 'error');
+    if (!formData.username || !formData.email || !formData.full_name) {
+      showNotification("Please fill in Name, Username, and Email.", "error");
       return;
     }
-
-    const newUser = {
-      id: Date.now(),
-      name: formData.name.trim(),
-      username: formData.username.trim().toLowerCase(),
-      email: formData.email.trim().toLowerCase(),
-      phone: formData.phone || '9876500000',
-      role: formData.role,
-      district: formData.district,
-      status: formData.status
-    };
-
-    setUserList(prev => [newUser, ...prev]);
-    setOpenAddDialog(false);
-    showNotification(`User "${newUser.name}" created successfully!`);
-  };
-
-  // READ / VIEW User
-  const handleViewClick = (user) => {
-    setCurrentUser(user);
-    setOpenViewDialog(true);
-  };
-
-  // UPDATE / EDIT User
-  const handleEditClick = (user) => {
-    setCurrentUser(user);
-    setFormData({
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      phone: user.phone || '',
-      role: user.role,
-      district: user.district || 'Thrissur',
-      status: user.status || 'active'
-    });
-    setOpenEditDialog(true);
-  };
-
-  const handleEditUserSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.name || !formData.username || !formData.email) {
-      showNotification('Name, Username, and Email are required.', 'error');
-      return;
+    try {
+      await createAdminUser(formData);
+      showNotification(`User "${formData.username}" created successfully!`);
+      setOpenAddDialog(false);
+      setFormData({ full_name: '', username: '', email: '', password: 'password123', role: 'farmer', district: 'Kottayam' });
+      fetchUsers();
+      fetchSummary();
+    } catch (err) {
+      console.error("User creation error:", err);
+      const errMsg = err.response?.data?.username?.[0] || err.response?.data?.email?.[0] || "Failed to create user.";
+      showNotification(errMsg, "error");
     }
-
-    setUserList(prev => prev.map(u => u.id === currentUser.id ? {
-      ...u,
-      name: formData.name.trim(),
-      username: formData.username.trim().toLowerCase(),
-      email: formData.email.trim().toLowerCase(),
-      phone: formData.phone,
-      role: formData.role,
-      district: formData.district,
-      status: formData.status
-    } : u));
-
-    setOpenEditDialog(false);
-    showNotification(`User "${formData.name}" updated successfully!`);
   };
 
-  // DELETE User with Confirmation
-  const handleDeleteClick = (user) => {
-    setConfirmDeleteUser(user);
-    setOpenDeleteDialog(true);
-  };
+  if (loading) {
+    return (
+      <DashboardLayout title="System Administrator Dashboard">
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', flexDirection: 'column', gap: 2 }}>
+          <CircularProgress color="primary" />
+          <Typography color="text.secondary">Loading Platform Administration Analytics...</Typography>
+        </Box>
+      </DashboardLayout>
+    );
+  }
 
-  const handleConfirmDelete = () => {
-    if (!confirmDeleteUser) return;
-    setUserList(prev => prev.filter(u => u.id !== confirmDeleteUser.id));
-    setOpenDeleteDialog(false);
-    showNotification(`User "${confirmDeleteUser.name}" deleted successfully.`, 'info');
-    setConfirmDeleteUser(null);
-  };
+  if (error) {
+    return (
+      <DashboardLayout title="System Administrator Dashboard">
+        <Alert severity="error" sx={{ borderRadius: '12px', mb: 3 }}>
+          {error}
+        </Alert>
+        <Button variant="contained" startIcon={<RefreshIcon />} onClick={fetchSummary}>
+          Retry Loading
+        </Button>
+      </DashboardLayout>
+    );
+  }
 
-  // UNDO / RESTORE DEFAULT USERS (Including Ramesh Kumar)
-  const handleRestoreDefaults = () => {
-    setUserList(defaultUsers);
-    localStorage.setItem('agriflow_admin_users', JSON.stringify(defaultUsers));
-    showNotification('System users restored to default state (including Farmer Ramesh Kumar)!', 'success');
-  };
-
-  // Filtered Users
-  const filteredUsers = userList.filter(u => {
-    const matchesSearch =
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.district.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = selectedRole === 'all' || u.role === selectedRole;
-    const matchesStatus = selectedStatus === 'all' || u.status === selectedStatus;
-    return matchesSearch && matchesRole && matchesStatus;
-  });
-
-  // Aggregates for Analytics
-  const roleDistribution = Object.entries(
-    userList.reduce((acc, u) => { acc[u.role] = (acc[u.role] || 0) + 1; return acc; }, {})
-  ).map(([name, value]) => ({ name: name.toUpperCase(), value }));
+  const cards = summaryData?.summary_cards || {};
+  const userOverview = summaryData?.user_overview || {};
+  const farmField = summaryData?.farm_field_overview || {};
+  const crops = summaryData?.crop_distribution || [];
+  const activityTrend = summaryData?.platform_activity_7_days || [];
+  const aiStats = summaryData?.ai_system_overview || {};
+  const notifStats = summaryData?.notification_statistics || {};
+  const health = summaryData?.system_health || {};
+  const recentActivity = summaryData?.recent_activity || [];
 
   return (
     <DashboardLayout title="System Administrator Dashboard">
-      {/* Top Header Tabs */}
+      {/* Navigation Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs
           value={tabIndex}
@@ -281,70 +247,95 @@ const AdminDashboard = ({ initialTab = 0 }) => {
             '& .MuiTab-root': { fontWeight: 700, fontSize: '0.95rem', textTransform: 'none', px: 3 }
           }}
         >
-          <Tab icon={<AssessmentIcon />} iconPosition="start" label="Overview" />
-          <Tab icon={<PeopleIcon />} iconPosition="start" label={`Users Management (${userList.length})`} />
-          <Tab icon={<TrendingUpIcon />} iconPosition="start" label="Analytics & Reports" />
+          <Tab icon={<AssessmentIcon />} iconPosition="start" label="Platform Monitoring" />
+          <Tab icon={<PeopleIcon />} iconPosition="start" label={`User Accounts (${cards.total_users || 0})`} />
+          <Tab icon={<AgricultureIcon />} iconPosition="start" label={`Platform Farms & Fields (${cards.total_farms || 0})`} />
         </Tabs>
       </Box>
 
-      {/* TAB 0: OVERVIEW */}
+      {/* TAB 0: PLATFORM OVERVIEW & MONITORING */}
       {tabIndex === 0 && (
         <Box>
+          {/* 1. SUMMARY CARDS */}
           <Grid container spacing={2.5} sx={{ mb: 3 }}>
-            {[
-              { title: 'Total Registered Users', value: String(userList.length), icon: <PeopleIcon />, color: '#6A1B9A' },
-              { title: 'Registered Farms', value: String(farms.length), icon: <AgricultureIcon />, color: '#2E7D32' },
-              { title: 'System Health', value: '99.8%', icon: <MonitorHeartIcon />, color: '#00695C' },
-              { title: 'Active Sessions', value: '5', icon: <DevicesIcon />, color: '#1565C0' },
-            ].map((c) => (
-              <Grid item xs={12} sm={6} lg={3} key={c.title}>
-                <StatCard {...c} />
-              </Grid>
-            ))}
+            <Grid item xs={12} sm={6} md={4} lg={2}>
+              <StatCard title="Total Users" value={String(cards.total_users || 0)} icon={<PeopleIcon />} color="#6A1B9A" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4} lg={2}>
+              <StatCard title="Farmers" value={String(cards.farmers || 0)} icon={<VerifiedUserIcon />} color="#2E7D32" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4} lg={2}>
+              <StatCard title="Water Managers" value={String(cards.water_resource_managers || 0)} icon={<MonitorHeartIcon />} color="#00695C" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4} lg={2}>
+              <StatCard title="Total Farms" value={String(cards.total_farms || 0)} icon={<AgricultureIcon />} color="#1565C0" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4} lg={2}>
+              <StatCard title="Total Fields" value={String(cards.total_fields || 0)} icon={<LocationOnIcon />} color="#E65100" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4} lg={2}>
+              <StatCard title="Crop Types" value={String(cards.registered_crop_types || 0)} icon={<CategoryIcon />} color="#D81B60" />
+            </Grid>
           </Grid>
 
           <Grid container spacing={2.5}>
-            {/* User Growth Chart */}
+            {/* 2. PLATFORM ACTIVITY (LAST 7 DAYS) */}
             <Grid item xs={12} md={8}>
               <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                    User Growth & Platform Onboarding
-                  </Typography>
-                  <Chip label="+24% this month" color="success" size="small" />
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                      Platform Growth & Activity (Last 7 Days)
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Tracks real-time additions of farmers, farms, fields, and AI recommendations
+                    </Typography>
+                  </Box>
+                  <Button size="small" startIcon={<RefreshIcon />} onClick={fetchSummary}>Refresh</Button>
                 </Stack>
-                <ResponsiveContainer width="100%" height={260}>
-                  <LineChart data={analytics.userGrowth}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <RechartsTooltip />
-                    <Line type="monotone" dataKey="users" stroke="#6A1B9A" strokeWidth={3} dot={{ r: 5 }} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {activityTrend.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <LineChart data={activityTrend}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                      <RechartsTooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="farmers" name="New Farmers" stroke="#2E7D32" strokeWidth={2.5} dot={{ r: 4 }} />
+                      <Line type="monotone" dataKey="farms" name="New Farms" stroke="#1565C0" strokeWidth={2.5} dot={{ r: 4 }} />
+                      <Line type="monotone" dataKey="fields" name="New Fields" stroke="#E65100" strokeWidth={2.5} dot={{ r: 4 }} />
+                      <Line type="monotone" dataKey="ai_recommendations" name="AI Recommendations" stroke="#6A1B9A" strokeWidth={2.5} dot={{ r: 4 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Box sx={{ p: 4, textAlign: 'center' }}>
+                    <Typography color="text.secondary">No platform activity recorded yet.</Typography>
+                  </Box>
+                )}
               </Card>
             </Grid>
 
-            {/* Users by Role Breakdown */}
+            {/* 3. USER OVERVIEW & ROLE BREAKDOWN */}
             <Grid item xs={12} md={4}>
               <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0', height: '100%' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#1e293b' }}>
-                  Users Distribution by Role
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, color: '#1e293b' }}>
+                  User Role Distribution
                 </Typography>
-                <Stack spacing={2} sx={{ mt: 1 }}>
-                  {Object.entries(
-                    userList.reduce((acc, u) => { acc[u.role] = (acc[u.role] || 0) + 1; return acc; }, {})
-                  ).map(([role, count]) => (
-                    <Box key={role}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                  Active Users: {userOverview.active || 0} / {userOverview.total || 0}
+                </Typography>
+                <Stack spacing={2}>
+                  {(userOverview.role_distribution || []).map((item) => (
+                    <Box key={item.role}>
                       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
                         <Stack direction="row" alignItems="center" spacing={1}>
-                          <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: ROLE_COLOR[role] || '#666' }} />
-                          <Typography variant="body2" sx={{ textTransform: 'capitalize', fontWeight: 600 }}>{role}</Typography>
+                          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color }} />
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{item.role}</Typography>
                         </Stack>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{count} users</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{item.count}</Typography>
                       </Stack>
                       <Box sx={{ width: '100%', bgcolor: '#f1f5f9', height: 8, borderRadius: 4, overflow: 'hidden' }}>
-                        <Box sx={{ width: `${(count / userList.length) * 100}%`, bgcolor: ROLE_COLOR[role] || '#666', height: '100%' }} />
+                        <Box sx={{ width: `${cards.total_users ? (item.count / cards.total_users) * 100 : 0}%`, bgcolor: item.color, height: '100%' }} />
                       </Box>
                     </Box>
                   ))}
@@ -352,57 +343,199 @@ const AdminDashboard = ({ initialTab = 0 }) => {
               </Card>
             </Grid>
 
-            {/* Quick Actions & Recent System Activity */}
+            {/* 4. FARM & FIELD OVERVIEW (FIELDS BY LOCATION) */}
             <Grid item xs={12} md={6}>
               <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#1e293b' }}>
-                  Admin Quick Actions
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, color: '#1e293b' }}>
+                  Fields Distribution by Location / District
                 </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                  Aggregated fields coverage across registered Kerala districts
+                </Typography>
+                {(farmField.location_distribution || []).length > 0 ? (
+                  <ResponsiveContainer width="100%" height={230}>
+                    <BarChart data={farmField.location_distribution}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="location" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                      <RechartsTooltip />
+                      <Bar dataKey="fields" name="Fields Count" fill="#00695C" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Box sx={{ p: 4, textAlign: 'center' }}>
+                    <Typography color="text.secondary">No farm locations registered yet.</Typography>
+                  </Box>
+                )}
+              </Card>
+            </Grid>
+
+            {/* 5. CROP DISTRIBUTION CHART */}
+            <Grid item xs={12} md={6}>
+              <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5, color: '#1e293b' }}>
+                  Registered Crop Types Distribution
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                  Share of registered fields per crop variety
+                </Typography>
+                {crops.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={230}>
+                    <PieChart>
+                      <Pie data={crops} dataKey="count" nameKey="crop" cx="50%" cy="50%" outerRadius={80} label={(e) => `${e.crop} (${e.percentage}%)`}>
+                        {crops.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Box sx={{ p: 4, textAlign: 'center' }}>
+                    <Typography color="text.secondary">No crop data available yet.</Typography>
+                  </Box>
+                )}
+              </Card>
+            </Grid>
+
+            {/* 6. AI SYSTEM OVERVIEW */}
+            <Grid item xs={12} md={6}>
+              <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                  <AutoAwesomeIcon sx={{ color: '#6A1B9A' }} />
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                    AI Recommendation Engine Overview
+                  </Typography>
+                </Stack>
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      startIcon={<PersonAddIcon />}
-                      onClick={() => { setTabIndex(1); handleOpenAdd(); }}
-                      sx={{ py: 1.2, borderRadius: '10px', bgcolor: '#6A1B9A', '&:hover': { bgcolor: '#4A148C' } }}
-                    >
-                      Add User
-                    </Button>
+                  <Grid item xs={6} sm={3}>
+                    <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#f3e5f5', borderRadius: '10px', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#4a148c' }}>{aiStats.today || 0}</Typography>
+                      <Typography variant="caption" color="text.secondary">Today</Typography>
+                    </Paper>
                   </Grid>
-                  <Grid item xs={6}>
-                    <Button
-                      fullWidth
-                      variant="outlined"
-                      color="secondary"
-                      startIcon={<RefreshIcon />}
-                      onClick={handleRestoreDefaults}
-                      sx={{ py: 1.2, borderRadius: '10px' }}
-                    >
-                      Restore Defaults
-                    </Button>
+                  <Grid item xs={6} sm={3}>
+                    <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#e8eaf6', borderRadius: '10px', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#1a237e' }}>{aiStats.this_month || 0}</Typography>
+                      <Typography variant="caption" color="text.secondary">This Month</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={6} sm={3}>
+                    <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#e8f5e9', borderRadius: '10px', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#1b5e20' }}>{aiStats.average_confidence || 90}%</Typography>
+                      <Typography variant="caption" color="text.secondary">Avg Confidence</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={6} sm={3}>
+                    <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#e0f2f1', borderRadius: '10px', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#004d40' }}>{aiStats.success_rate || 100}%</Typography>
+                      <Typography variant="caption" color="text.secondary">Success Rate</Typography>
+                    </Paper>
                   </Grid>
                 </Grid>
               </Card>
             </Grid>
 
+            {/* 7. NOTIFICATION SYSTEM STATISTICS */}
             <Grid item xs={12} md={6}>
               <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5, color: '#1e293b' }}>
-                  System Audit Logs
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                  <NotificationsIcon sx={{ color: '#E65100' }} />
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                    Notification System Statistics
+                  </Typography>
+                </Stack>
+                <Grid container spacing={2}>
+                  <Grid item xs={6} sm={3}>
+                    <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#fff3e0', borderRadius: '10px', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#e65100' }}>{notifStats.total_notifications || 0}</Typography>
+                      <Typography variant="caption" color="text.secondary">Total Sent</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={6} sm={3}>
+                    <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#fbe9e7', borderRadius: '10px', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#d84315' }}>{notifStats.today || 0}</Typography>
+                      <Typography variant="caption" color="text.secondary">Today</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={6} sm={3}>
+                    <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#ffebee', borderRadius: '10px', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#c62828' }}>{notifStats.unread || 0}</Typography>
+                      <Typography variant="caption" color="text.secondary">Unresolved</Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={6} sm={3}>
+                    <Paper elevation={0} sx={{ p: 1.5, bgcolor: '#f1f8e9', borderRadius: '10px', textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: '#33691e' }}>{notifStats.read || 0}</Typography>
+                      <Typography variant="caption" color="text.secondary">Resolved</Typography>
+                    </Paper>
+                  </Grid>
+                </Grid>
+              </Card>
+            </Grid>
+
+            {/* 8. SYSTEM HEALTH */}
+            <Grid item xs={12} md={6}>
+              <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#1e293b' }}>
+                  Platform Services Health Monitor
                 </Typography>
-                <Stack spacing={1}>
-                  {INITIAL_AUDIT_LOGS.slice(0, 3).map((log) => (
-                    <Paper key={log.id} elevation={0} sx={{ p: 1.2, bgcolor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <Stack spacing={1.5}>
+                  {[
+                    { name: 'Django REST API Backend', icon: <StorageIcon />, status: health.django_api?.status, label: health.django_api?.label },
+                    { name: 'PostgreSQL Database Engine', icon: <StorageIcon />, status: health.postgresql?.status, label: health.postgresql?.label },
+                    { name: 'AI Recommendation Service', icon: <AutoAwesomeIcon />, status: health.ai_service?.status, label: health.ai_service?.label },
+                    { name: 'Live Weather API Integration', icon: <CloudIcon />, status: health.weather_service?.status, label: health.weather_service?.label },
+                    { name: 'Alert & Notification Service', icon: <NotificationsIcon />, status: health.notification_service?.status, label: health.notification_service?.label },
+                  ].map((service) => (
+                    <Paper key={service.name} elevation={0} sx={{ p: 1.2, px: 2, bgcolor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b' }}>{log.action}: {log.target}</Typography>
-                          <Typography variant="caption" color="text.secondary">By {log.user} • {log.time}</Typography>
-                        </Box>
-                        <Chip label={log.status} color="success" size="small" sx={{ fontSize: '0.7rem', height: 20 }} />
+                        <Stack direction="row" alignItems="center" spacing={1.5}>
+                          <Box sx={{ color: '#475569' }}>{service.icon}</Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b' }}>{service.name}</Typography>
+                        </Stack>
+                        <Chip
+                          icon={<CheckCircleIcon />}
+                          label={service.label || 'Healthy'}
+                          color={service.status === 'offline' ? 'error' : 'success'}
+                          size="small"
+                          sx={{ fontWeight: 700, fontSize: '0.75rem' }}
+                        />
                       </Stack>
                     </Paper>
                   ))}
+                </Stack>
+              </Card>
+            </Grid>
+
+            {/* 9. RECENT PLATFORM ACTIVITY */}
+            <Grid item xs={12} md={6}>
+              <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#1e293b' }}>
+                  Recent System Audit Activity Stream
+                </Typography>
+                <Stack spacing={1.2}>
+                  {recentActivity.length > 0 ? (
+                    recentActivity.slice(0, 5).map((log) => (
+                      <Paper key={log.id} elevation={0} sx={{ p: 1.2, px: 2, bgcolor: '#fafafa', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                              {log.action}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {log.details}
+                            </Typography>
+                          </Box>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#64748b' }}>
+                            {log.timestamp}
+                          </Typography>
+                        </Stack>
+                      </Paper>
+                    ))
+                  ) : (
+                    <Typography color="text.secondary">No recent platform activity recorded.</Typography>
+                  )}
                 </Stack>
               </Card>
             </Grid>
@@ -410,17 +543,16 @@ const AdminDashboard = ({ initialTab = 0 }) => {
         </Box>
       )}
 
-      {/* TAB 1: USERS MANAGEMENT (CRUD) */}
+      {/* TAB 1: USERS MANAGEMENT */}
       {tabIndex === 1 && (
         <Box>
           <Card elevation={0} sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', p: 2.5, mb: 3 }}>
             <Grid container spacing={2} alignItems="center">
-              {/* Search Bar */}
               <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
                   size="small"
-                  placeholder="Search user by name, email, district..."
+                  placeholder="Search by name, username, email, district..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   InputProps={{
@@ -434,15 +566,10 @@ const AdminDashboard = ({ initialTab = 0 }) => {
                 />
               </Grid>
 
-              {/* Role Filter */}
               <Grid item xs={6} sm={3} md={2}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Role</InputLabel>
-                  <Select
-                    value={selectedRole}
-                    label="Role"
-                    onChange={(e) => setSelectedRole(e.target.value)}
-                  >
+                  <Select value={selectedRole} label="Role" onChange={(e) => setSelectedRole(e.target.value)}>
                     <MenuItem value="all">All Roles</MenuItem>
                     <MenuItem value="farmer">Farmer</MenuItem>
                     <MenuItem value="supervisor">Supervisor</MenuItem>
@@ -453,43 +580,23 @@ const AdminDashboard = ({ initialTab = 0 }) => {
                 </FormControl>
               </Grid>
 
-              {/* Status Filter */}
               <Grid item xs={6} sm={3} md={2}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Status</InputLabel>
-                  <Select
-                    value={selectedStatus}
-                    label="Status"
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                  >
+                  <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
                     <MenuItem value="all">All Status</MenuItem>
                     <MenuItem value="active">Active</MenuItem>
                     <MenuItem value="inactive">Inactive</MenuItem>
-                    <MenuItem value="pending">Pending</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
 
-              {/* Action Buttons */}
               <Grid item xs={12} md={4} sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  size="small"
-                  startIcon={<RefreshIcon />}
-                  onClick={handleRestoreDefaults}
-                  sx={{ borderRadius: '8px' }}
-                >
-                  Restore Defaults
+                <Button variant="outlined" size="small" startIcon={<RefreshIcon />} onClick={fetchUsers}>
+                  Refresh
                 </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  size="small"
-                  onClick={handleOpenAdd}
-                  sx={{ borderRadius: '8px', bgcolor: '#6A1B9A', '&:hover': { bgcolor: '#4A148C' } }}
-                >
-                  Add New User
+                <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setOpenAddDialog(true)} sx={{ bgcolor: '#6A1B9A', '&:hover': { bgcolor: '#4A148C' } }}>
+                  Add User
                 </Button>
               </Grid>
             </Grid>
@@ -497,541 +604,192 @@ const AdminDashboard = ({ initialTab = 0 }) => {
 
           {/* User Management Table */}
           <Card elevation={0} sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-            <Box sx={{ px: 3, py: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
+            <Box sx={{ px: 3, py: 2, bgcolor: '#fafafa', borderBottom: '1px solid #f0f0f0' }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                System User Accounts ({filteredUsers.length} found)
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Actions include Edit, View Details, and Delete with Confirmation
+                System User Directory ({usersList.length} Accounts in PostgreSQL)
               </Typography>
             </Box>
-            <TableContainer>
-              <Table>
-                <TableHead sx={{ bgcolor: '#f8fafc' }}>
-                  <TableRow>
-                    {['User', 'Username', 'Role', 'District', 'Email', 'Status', 'Actions'].map((h) => (
-                      <TableCell key={h} sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.8rem' }}>{h}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredUsers.length === 0 ? (
+            {usersLoading ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress size={30} /></Box>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead sx={{ bgcolor: '#f8fafc' }}>
                     <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                        <Typography color="text.secondary">No matching users found.</Typography>
-                        <Button size="small" onClick={handleRestoreDefaults} sx={{ mt: 1 }}>Restore Default Users</Button>
-                      </TableCell>
+                      {['User', 'Username', 'Role', 'District', 'Email', 'Status Toggle', 'Actions'].map((h) => (
+                        <TableCell key={h} sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.8rem' }}>{h}</TableCell>
+                      ))}
                     </TableRow>
-                  ) : (
-                    filteredUsers.map((u) => (
-                      <TableRow key={u.id} hover>
-                        <TableCell>
-                          <Stack direction="row" alignItems="center" spacing={1.5}>
-                            <Avatar sx={{ bgcolor: ROLE_COLOR[u.role] || '#666', width: 34, height: 34, fontSize: '0.85rem', fontWeight: 700 }}>
-                              {u.name ? u.name[0].toUpperCase() : 'U'}
-                            </Avatar>
-                            <Box>
-                              <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b' }}>{u.name}</Typography>
-                              <Typography variant="caption" color="text.secondary">{u.phone || 'No phone'}</Typography>
-                            </Box>
-                          </Stack>
-                        </TableCell>
-                        <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{u.username}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={u.role}
-                            size="small"
-                            sx={{
-                              bgcolor: `${ROLE_COLOR[u.role] || '#666'}15`,
-                              color: ROLE_COLOR[u.role] || '#666',
-                              fontWeight: 700,
-                              textTransform: 'uppercase',
-                              fontSize: '0.7rem'
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>{u.district}</TableCell>
-                        <TableCell sx={{ color: '#64748b', fontSize: '0.85rem' }}>{u.email}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={u.status || 'active'}
-                            color={u.status === 'inactive' ? 'default' : u.status === 'pending' ? 'warning' : 'success'}
-                            size="small"
-                            sx={{ fontSize: '0.7rem', height: 22 }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={0.5}>
-                            <Tooltip title="View Details">
-                              <IconButton size="small" color="primary" onClick={() => handleViewClick(u)}>
-                                <VisibilityIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Edit User">
-                              <IconButton size="small" color="info" onClick={() => handleEditClick(u)}>
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete User">
-                              <IconButton size="small" color="error" onClick={() => handleDeleteClick(u)}>
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Stack>
+                  </TableHead>
+                  <TableBody>
+                    {usersList.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                          <Typography color="text.secondary">No matching user accounts found in PostgreSQL.</Typography>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                    ) : (
+                      usersList.map((u) => (
+                        <TableRow key={u.id} hover>
+                          <TableCell>
+                            <Stack direction="row" alignItems="center" spacing={1.5}>
+                              <Avatar sx={{ bgcolor: ROLE_COLOR[u.role] || '#666', width: 34, height: 34, fontSize: '0.85rem', fontWeight: 700 }}>
+                                {u.full_name ? u.full_name[0].toUpperCase() : u.username[0].toUpperCase()}
+                              </Avatar>
+                              <Box>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b' }}>{u.full_name || u.username}</Typography>
+                                <Typography variant="caption" color="text.secondary">{u.phone_number || 'No phone'}</Typography>
+                              </Box>
+                            </Stack>
+                          </TableCell>
+                          <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{u.username}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={u.role}
+                              size="small"
+                              sx={{
+                                bgcolor: `${ROLE_COLOR[u.role] || '#666'}15`,
+                                color: ROLE_COLOR[u.role] || '#666',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                fontSize: '0.7rem'
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>{u.district || 'Kerala'}</TableCell>
+                          <TableCell sx={{ color: '#64748b', fontSize: '0.85rem' }}>{u.email}</TableCell>
+                          <TableCell>
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                              <Switch
+                                size="small"
+                                checked={u.is_active !== false}
+                                onChange={() => handleToggleStatus(u)}
+                                color="success"
+                              />
+                              <Typography variant="caption" sx={{ fontWeight: 600, color: u.is_active !== false ? '#2E7D32' : '#d32f2f' }}>
+                                {u.is_active !== false ? 'Active' : 'Inactive'}
+                              </Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={u.is_active !== false ? "Active" : "Disabled"}
+                              color={u.is_active !== false ? "success" : "default"}
+                              size="small"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </Card>
         </Box>
       )}
 
-      {/* TAB 2: ANALYTICS & REPORTS */}
+      {/* TAB 2: PLATFORM FARMS & FIELDS DIRECTORY */}
       {tabIndex === 2 && (
         <Box>
-          <Grid container spacing={2.5}>
-            {/* Water Consumption Chart */}
-            <Grid item xs={12} md={6}>
-              <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#1e293b' }}>
-                  Monthly Regional Water Consumption (Liters)
-                </Typography>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={analytics.waterConsumption}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <RechartsTooltip />
-                    <Bar dataKey="volume" fill="#1565C0" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Grid>
-
-            {/* Verification Progress */}
-            <Grid item xs={12} md={6}>
-              <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#1e293b' }}>
-                  Field Verification Status
-                </Typography>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie data={analytics.verificationProgress} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} label>
-                      {analytics.verificationProgress.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card>
-            </Grid>
-
-            {/* Crop Stress Trend */}
-            <Grid item xs={12} md={6}>
-              <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#1e293b' }}>
-                  Crop Stress Index Trend (Weekly)
-                </Typography>
-                <ResponsiveContainer width="100%" height={220}>
-                  <LineChart data={analytics.cropStressTrend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="week" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <RechartsTooltip />
-                    <Line type="monotone" dataKey="stress" stroke="#E65100" strokeWidth={3} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </Card>
-            </Grid>
-
-            {/* Priority Distribution */}
-            <Grid item xs={12} md={6}>
-              <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#1e293b' }}>
-                  Irrigation Priority Distribution
-                </Typography>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={analytics.priorityDist}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <RechartsTooltip />
-                    <Bar dataKey="value" fill="#00695C" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Grid>
-
-            {/* Audit Logs Table */}
-            <Grid item xs={12}>
-              <Card elevation={0} sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', p: 2.5 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#1e293b' }}>
-                  Comprehensive System Activity & Audit Trail
-                </Typography>
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead sx={{ bgcolor: '#f8fafc' }}>
+          <Card elevation={0} sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', p: 2.5, mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: '#1e293b' }}>
+              Platform Farms & Registered Fields Directory
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+              High-level administrative directory of all farms and fields in PostgreSQL across Kerala districts
+            </Typography>
+            {farmsLoading ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress size={30} /></Box>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700 }}>Farm Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Owner Farmer</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>District / State</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Fields Count</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Registered Crops</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {farmsOverview.length === 0 ? (
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 700 }}>Log ID</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Target Entity</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Performed By</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Time</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                        <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                          <Typography color="text.secondary">No registered farms found in PostgreSQL.</Typography>
+                        </TableCell>
                       </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {INITIAL_AUDIT_LOGS.map((row) => (
-                        <TableRow key={row.id}>
-                          <TableCell sx={{ fontFamily: 'monospace' }}>{row.id}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.action}</TableCell>
-                          <TableCell>{row.target}</TableCell>
-                          <TableCell>{row.user}</TableCell>
-                          <TableCell color="text.secondary">{row.time}</TableCell>
+                    ) : (
+                      farmsOverview.map((farm) => (
+                        <TableRow key={farm.id} hover>
+                          <TableCell sx={{ fontWeight: 700, color: '#1e293b' }}>{farm.name}</TableCell>
+                          <TableCell>{farm.owner} (<em>{farm.owner_username}</em>)</TableCell>
+                          <TableCell>{farm.district || 'Kottayam'}, {farm.state || 'Kerala'}</TableCell>
+                          <TableCell><Chip label={`${farm.fields_count} Fields`} color="primary" size="small" /></TableCell>
                           <TableCell>
-                            <Chip label={row.status} color="success" size="small" sx={{ fontSize: '0.7rem' }} />
+                            <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
+                              {(farm.fields || []).map((f) => (
+                                <Chip key={f.id} label={`${f.name} (${f.crop_type || 'Crop'})`} size="small" variant="outlined" />
+                              ))}
+                            </Stack>
                           </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Card>
-            </Grid>
-          </Grid>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Card>
         </Box>
       )}
 
-      {/* ─── MODAL DIALOGS ────────────────────────────────────────────────── */}
-
-      {/* DELETE CONFIRMATION MODAL */}
-      <Dialog
-        open={openDeleteDialog}
-        onClose={() => setOpenDeleteDialog(false)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: '14px', p: 1 } }}
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#d32f2f', fontWeight: 700 }}>
-          <WarningIcon color="error" /> Confirm Delete User
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ mt: 1, color: '#1e293b' }}>
-            Are you sure you want to delete user <strong>{confirmDeleteUser?.name}</strong> (<em>{confirmDeleteUser?.username}</em>)?
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: 'block' }}>
-            This action will remove the user from the active directory list. You can restore default users anytime using the "Restore Defaults" button.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 2, pt: 1 }}>
-          <Button onClick={() => setOpenDeleteDialog(false)} color="inherit" variant="outlined" sx={{ borderRadius: '8px' }}>
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained" sx={{ borderRadius: '8px', fontWeight: 700 }}>
-            Confirm Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ADD USER MODAL */}
-      <Dialog
-        open={openAddDialog}
-        onClose={() => setOpenAddDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: '16px', p: 1 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 700, color: '#1e293b' }}>
-          Create New System User
-        </DialogTitle>
+      {/* CREATE USER DIALOG */}
+      <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Create System User</DialogTitle>
         <form onSubmit={handleAddUserSubmit}>
           <DialogContent dividers>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Full Name *"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleFormChange}
-                  fullWidth
-                  required
-                  size="small"
-                />
+                <TextField label="Full Name *" fullWidth required size="small" value={formData.full_name} onChange={(e) => setFormData({ ...formData, full_name: e.target.value })} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Username *"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleFormChange}
-                  fullWidth
-                  required
-                  size="small"
-                />
+                <TextField label="Username *" fullWidth required size="small" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Email *"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleFormChange}
-                  fullWidth
-                  required
-                  size="small"
-                />
+                <TextField label="Email *" type="email" fullWidth required size="small" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Phone Number"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleFormChange}
-                  fullWidth
-                  size="small"
-                />
+                <TextField label="Password *" type="password" fullWidth required size="small" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Role</InputLabel>
-                  <Select label="Role" name="role" value={formData.role} onChange={handleFormChange}>
+                  <Select value={formData.role} label="Role" onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
                     <MenuItem value="farmer">Farmer</MenuItem>
                     <MenuItem value="supervisor">Supervisor</MenuItem>
                     <MenuItem value="manager">Water Manager</MenuItem>
                     <MenuItem value="maintenance">Maintenance</MenuItem>
-                    <MenuItem value="admin">Administrator</MenuItem>
+                    <MenuItem value="admin">Admin</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>District</InputLabel>
-                  <Select label="District" name="district" value={formData.district} onChange={handleFormChange}>
-                    {DISTRICTS.map((d) => (
-                      <MenuItem key={d} value={d}>{d}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Account Status</InputLabel>
-                  <Select label="Account Status" name="status" value={formData.status} onChange={handleFormChange}>
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="inactive">Inactive</MenuItem>
-                    <MenuItem value="pending">Pending Approval</MenuItem>
-                  </Select>
-                </FormControl>
+                <TextField label="District" fullWidth size="small" value={formData.district} onChange={(e) => setFormData({ ...formData, district: e.target.value })} />
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setOpenAddDialog(false)} color="inherit">Cancel</Button>
-            <Button type="submit" variant="contained" sx={{ borderRadius: '8px', bgcolor: '#6A1B9A', '&:hover': { bgcolor: '#4A148C' } }}>
-              Create Account
-            </Button>
+            <Button onClick={() => setOpenAddDialog(false)} variant="outlined">Cancel</Button>
+            <Button type="submit" variant="contained" sx={{ bgcolor: '#6A1B9A', '&:hover': { bgcolor: '#4A148C' } }}>Create User</Button>
           </DialogActions>
         </form>
-      </Dialog>
-
-      {/* EDIT USER MODAL */}
-      <Dialog
-        open={openEditDialog}
-        onClose={() => setOpenEditDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: '16px', p: 1 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 700, color: '#1e293b' }}>
-          Edit User Profile: {currentUser?.name}
-        </DialogTitle>
-        <form onSubmit={handleEditUserSubmit}>
-          <DialogContent dividers>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Full Name *"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleFormChange}
-                  fullWidth
-                  required
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Username *"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleFormChange}
-                  fullWidth
-                  required
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Email *"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleFormChange}
-                  fullWidth
-                  required
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Phone Number"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleFormChange}
-                  fullWidth
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Role</InputLabel>
-                  <Select label="Role" name="role" value={formData.role} onChange={handleFormChange}>
-                    <MenuItem value="farmer">Farmer</MenuItem>
-                    <MenuItem value="supervisor">Supervisor</MenuItem>
-                    <MenuItem value="manager">Water Manager</MenuItem>
-                    <MenuItem value="maintenance">Maintenance</MenuItem>
-                    <MenuItem value="admin">Administrator</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>District</InputLabel>
-                  <Select label="District" name="district" value={formData.district} onChange={handleFormChange}>
-                    {DISTRICTS.map((d) => (
-                      <MenuItem key={d} value={d}>{d}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Account Status</InputLabel>
-                  <Select label="Account Status" name="status" value={formData.status} onChange={handleFormChange}>
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="inactive">Inactive</MenuItem>
-                    <MenuItem value="pending">Pending Approval</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setOpenEditDialog(false)} color="inherit">Cancel</Button>
-            <Button type="submit" variant="contained" color="primary" sx={{ borderRadius: '8px' }}>
-              Save Changes
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-
-      {/* VIEW USER DETAILS MODAL */}
-      <Dialog
-        open={openViewDialog}
-        onClose={() => setOpenViewDialog(false)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: '16px' } }}
-      >
-        <DialogTitle sx={{ fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          User Details Profile
-          <IconButton size="small" onClick={() => setOpenViewDialog(false)}><CloseIcon /></IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          {currentUser && (
-            <Stack spacing={2} alignItems="center" sx={{ pt: 1, pb: 1 }}>
-              <Avatar
-                sx={{
-                  width: 70,
-                  height: 70,
-                  bgcolor: ROLE_COLOR[currentUser.role] || '#6A1B9A',
-                  fontSize: '1.8rem',
-                  fontWeight: 700
-                }}
-              >
-                {currentUser.name ? currentUser.name[0].toUpperCase() : 'U'}
-              </Avatar>
-              <Box text-align="center" sx={{ textAlign: 'center' }}>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>{currentUser.name}</Typography>
-                <Typography variant="body2" color="text.secondary">@{currentUser.username}</Typography>
-              </Box>
-              <Chip
-                label={currentUser.role}
-                size="small"
-                sx={{
-                  bgcolor: `${ROLE_COLOR[currentUser.role] || '#666'}20`,
-                  color: ROLE_COLOR[currentUser.role] || '#666',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  px: 1
-                }}
-              />
-
-              <Box sx={{ width: '100%', mt: 2 }}>
-                <Stack direction="row" justifyContent="space-between" sx={{ py: 1, borderBottom: '1px solid #f0f0f0' }}>
-                  <Typography variant="body2" color="text.secondary">Email Address:</Typography>
-                  <Typography variant="body2" fontWeight={600}>{currentUser.email}</Typography>
-                </Stack>
-                <Stack direction="row" justifyContent="space-between" sx={{ py: 1, borderBottom: '1px solid #f0f0f0' }}>
-                  <Typography variant="body2" color="text.secondary">Phone Number:</Typography>
-                  <Typography variant="body2" fontWeight={600}>{currentUser.phone || 'N/A'}</Typography>
-                </Stack>
-                <Stack direction="row" justifyContent="space-between" sx={{ py: 1, borderBottom: '1px solid #f0f0f0' }}>
-                  <Typography variant="body2" color="text.secondary">District / Zone:</Typography>
-                  <Typography variant="body2" fontWeight={600}>{currentUser.district}</Typography>
-                </Stack>
-                <Stack direction="row" justifyContent="space-between" sx={{ py: 1 }}>
-                  <Typography variant="body2" color="text.secondary">Account Status:</Typography>
-                  <Chip
-                    label={currentUser.status || 'active'}
-                    color={currentUser.status === 'inactive' ? 'default' : 'success'}
-                    size="small"
-                  />
-                </Stack>
-              </Box>
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button
-            onClick={() => { setOpenViewDialog(false); handleEditClick(currentUser); }}
-            variant="outlined"
-            startIcon={<EditIcon />}
-            sx={{ borderRadius: '8px' }}
-          >
-            Edit User
-          </Button>
-          <Button onClick={() => setOpenViewDialog(false)} color="inherit">Close</Button>
-        </DialogActions>
       </Dialog>
 
       {/* SNACKBAR NOTIFICATION */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-          severity={snackbar.severity}
-          sx={{ width: '100%', borderRadius: '10px', boxShadow: 3 }}
-        >
+      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
           {snackbar.message}
         </Alert>
       </Snackbar>

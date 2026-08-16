@@ -47,7 +47,6 @@ api.interceptors.response.use(
       if (
         originalRequest.url.includes('/auth/login/') ||
         originalRequest.url.includes('/auth/refresh/') ||
-        originalRequest.url.includes('/auth/profile/') ||
         window.location.pathname === '/login'
       ) {
         clearAuthTokens();
@@ -419,5 +418,89 @@ export const getCropHealthHistory = async (params = {}) => {
   return response.data;
 };
 
+// ─── Admin Platform Dashboard APIs ─────────────────────────────────────────
+
+export const getAdminDashboardSummary = async () => {
+  const response = await api.get('/admin/dashboard/summary/');
+  return response.data;
+};
+
+export const getAdminUsers = async (params = {}) => {
+  let url = '/admin/users/';
+  const qp = new URLSearchParams();
+  if (params.search) qp.append('search', params.search);
+  if (params.role) qp.append('role', params.role);
+  if (params.status) qp.append('status', params.status);
+  if (params.ordering) qp.append('ordering', params.ordering);
+  if (params.page) qp.append('page', params.page);
+  if (params.page_size) qp.append('page_size', params.page_size);
+  if (qp.toString()) url += `?${qp.toString()}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getAdminUserDetail = async (userId) => {
+  const response = await api.get(`/admin/users/${userId}/`);
+  return response.data;
+};
+
+export const createAdminUser = async (userData) => {
+  const response = await api.post('/admin/users/', userData);
+  return response.data;
+};
+
+export const updateAdminUser = async (userId, userData) => {
+  const response = await api.patch(`/admin/users/${userId}/`, userData);
+  return response.data;
+};
+
+export const changeUserRole = async (userId, role) => {
+  const response = await api.patch(`/admin/users/${userId}/change-role/`, { role });
+  return response.data;
+};
+
+export const updateUserStatus = async (userId) => {
+  const response = await api.patch(`/admin/users/${userId}/status/`);
+  return response.data;
+};
+
+export const toggleUserStatus = async (userId) => {
+  const response = await api.patch(`/admin/users/${userId}/toggle-status/`);
+  return response.data;
+};
+
+export const deleteAdminUser = async (userId) => {
+  const response = await api.delete(`/admin/users/${userId}/`);
+  return response.data;
+};
+
+export const getAdminActivityLog = async (params = {}) => {
+  let url = '/admin/activity-log/';
+  const qp = new URLSearchParams();
+  if (params.page) qp.append('page', params.page);
+  if (params.page_size) qp.append('page_size', params.page_size);
+  if (qp.toString()) url += `?${qp.toString()}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getAdminFarmsOverview = async (params = {}) => {
+  let url = '/admin/farms-overview/';
+  const qp = new URLSearchParams();
+  if (params.search) qp.append('search', params.search);
+  if (params.district) qp.append('district', params.district);
+  if (params.crop) qp.append('crop', params.crop);
+  if (qp.toString()) url += `?${qp.toString()}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getSystemHealth = async () => {
+  const response = await api.get('/health/');
+  return response.data;
+};
+
 export default api;
+
+
 
