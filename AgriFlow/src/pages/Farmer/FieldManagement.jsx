@@ -19,6 +19,7 @@ const FieldManagement = () => {
   const [currentId, setCurrentId] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
   
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '', area: '', farm: '', crop_type: '', soil_type: '', crop_stage: 'germination',
     planting_date: '', district: '', state: 'Kerala', latitude: '', longitude: '', status: true
@@ -53,9 +54,11 @@ const FieldManagement = () => {
       setCurrentId(field.id);
       setFormData({
         name: field.name, area: field.area, farm: field.farm, crop_type: field.crop_type || '',
-        soil_type: field.soil_type || '', crop_stage: field.crop_stage, planting_date: field.planting_date || '',
+        soil_type: field.soil_type || '', crop_stage: field.crop_stage || 'germination', planting_date: field.planting_date || '',
         district: field.district || '', state: field.state || 'Kerala',
-        latitude: field.latitude || '', longitude: field.longitude || '', status: field.status
+        latitude: field.latitude !== null && field.latitude !== undefined ? field.latitude : '',
+        longitude: field.longitude !== null && field.longitude !== undefined ? field.longitude : '',
+        status: field.status !== undefined ? field.status : true
       });
     } else {
       setIsEditing(false);
@@ -78,14 +81,27 @@ const FieldManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaving(true);
+
+    console.log("Field payload (raw):", formData);
+
     const payload = {
-      ...formData,
-      planting_date: formData.planting_date || null,
-      latitude: formData.latitude !== '' ? parseFloat(formData.latitude) : null,
-      longitude: formData.longitude !== '' ? parseFloat(formData.longitude) : null,
-      district: formData.district || null,
-      state: formData.state || 'Kerala',
+      farm: parseInt(formData.farm, 10),
+      name: (formData.name || '').trim(),
+      area: parseFloat(formData.area) || 0,
+      crop_type: formData.crop_type !== '' && formData.crop_type != null ? parseInt(formData.crop_type, 10) : null,
+      soil_type: formData.soil_type !== '' && formData.soil_type != null ? parseInt(formData.soil_type, 10) : null,
+      crop_stage: formData.crop_stage || 'germination',
+      planting_date: formData.planting_date && formData.planting_date.trim() !== '' ? formData.planting_date : null,
+      district: formData.district ? formData.district.trim() : null,
+      state: formData.state ? formData.state.trim() : 'Kerala',
+      latitude: formData.latitude !== '' && formData.latitude != null ? parseFloat(formData.latitude) : null,
+      longitude: formData.longitude !== '' && formData.longitude != null ? parseFloat(formData.longitude) : null,
+      status: Boolean(formData.status),
     };
+
+    console.log("Field payload (clean):", payload);
+
     try {
       if (isEditing) {
         await updateField(currentId, payload);
@@ -97,7 +113,22 @@ const FieldManagement = () => {
       handleClose();
       fetchData(); // Refresh fields
     } catch (error) {
-      showMessage('error', isEditing ? 'Failed to update field' : 'Failed to create field');
+      console.error("Field save error:", error.response?.data || error);
+      const errData = error.response?.data;
+      let errMsg = isEditing ? 'Failed to update field' : 'Failed to create field';
+      if (errData) {
+        if (typeof errData === 'string') {
+          errMsg = errData;
+        } else if (typeof errData === 'object') {
+          const details = Object.entries(errData)
+            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+            .join(' | ');
+          if (details) errMsg += `: ${details}`;
+        }
+      }
+      showMessage('error', errMsg);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -206,8 +237,8 @@ const FieldManagement = () => {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose} color="inherit">Cancel</Button>
-            <Button type="submit" variant="contained">Save</Button>
+            <Button onClick={handleClose} color="inherit" disabled={saving}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
           </DialogActions>
         </form>
       </Dialog>

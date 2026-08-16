@@ -71,3 +71,22 @@ class LoginLog(models.Model):
 
     def __str__(self):
         return f"{self.user.username} @ {self.login_at}"
+
+
+class AdminActivityLog(models.Model):
+    """tbl_admin_activity_log — Tracks administrative actions for audit."""
+
+    admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='admin_actions')
+    action = models.CharField(max_length=100, help_text="e.g. User Created, Role Changed, Status Updated, User Deleted")
+    target_user_info = models.CharField(max_length=255, help_text="Username or info of affected user")
+    details = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'tbl_admin_activity_log'
+        verbose_name = 'Admin Activity Log'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.admin.username}: {self.action} on {self.target_user_info} @ {self.created_at}"
+

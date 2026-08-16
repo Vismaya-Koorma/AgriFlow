@@ -89,14 +89,14 @@ const WeatherCard = ({ fieldId = null, farmId = null, onRefresh = null, refreshT
     );
   }
 
-  const weather = currentWeather || {
-    city: '',
-    temperature: '--',
-    humidity: '--',
-    rain_probability: '--',
-    wind_speed: '--',
-    condition: 'Unknown'
-  };
+  const weather = currentWeather || {};
+  const temperature = weather.temperature ?? '--';
+  const humidity = weather.humidity ?? '--';
+  const rainProb = weather.rain_probability ?? weather.rain_prob ?? '--';
+  const windSpeed = weather.wind_speed ?? '--';
+  const cityName = weather.city || weather.field_name || 'Selected Field Location';
+  const weatherCondition = weather.condition || 'Clear';
+  const safeForecast = Array.isArray(forecast) ? forecast : [];
 
   return (
     <Card elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0', background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)' }}>
@@ -110,11 +110,11 @@ const WeatherCard = ({ fieldId = null, farmId = null, onRefresh = null, refreshT
             </Typography>
           </Box>
           <Typography variant="subtitle2" sx={{ color: '#475569', fontWeight: 600, mt: 0.5, ml: 4.5 }}>
-            {weather.city || weather.field_name || 'Selected Field Location'}
+            {cityName}
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Chip label={weather.condition || 'Clear'} color="success" size="small" variant="outlined" sx={{ fontWeight: 600 }} />
+          <Chip label={weatherCondition} color="success" size="small" variant="outlined" sx={{ fontWeight: 600 }} />
           <Button
             size="small"
             startIcon={<RefreshIcon />}
@@ -132,28 +132,28 @@ const WeatherCard = ({ fieldId = null, farmId = null, onRefresh = null, refreshT
           <Box sx={{ p: 1.5, bgcolor: '#ffffff', borderRadius: '12px', border: '1px solid #dcfce7', textAlign: 'center' }}>
             <ThermostatIcon sx={{ color: '#ef4444', mb: 0.5 }} />
             <Typography variant="caption" color="text.secondary" display="block">Temperature</Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>{weather.temperature}°C</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>{temperature}°C</Typography>
           </Box>
         </Grid>
         <Grid item xs={6} sm={3}>
           <Box sx={{ p: 1.5, bgcolor: '#ffffff', borderRadius: '12px', border: '1px solid #dcfce7', textAlign: 'center' }}>
             <OpacityIcon sx={{ color: '#0284c7', mb: 0.5 }} />
             <Typography variant="caption" color="text.secondary" display="block">Humidity</Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>{weather.humidity}%</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>{humidity}%</Typography>
           </Box>
         </Grid>
         <Grid item xs={6} sm={3}>
           <Box sx={{ p: 1.5, bgcolor: '#ffffff', borderRadius: '12px', border: '1px solid #dcfce7', textAlign: 'center' }}>
             <ThunderstormIcon sx={{ color: '#2563eb', mb: 0.5 }} />
             <Typography variant="caption" color="text.secondary" display="block">Rain Chance</Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>{weather.rain_probability}%</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>{rainProb}%</Typography>
           </Box>
         </Grid>
         <Grid item xs={6} sm={3}>
           <Box sx={{ p: 1.5, bgcolor: '#ffffff', borderRadius: '12px', border: '1px solid #dcfce7', textAlign: 'center' }}>
             <AirIcon sx={{ color: '#059669', mb: 0.5 }} />
             <Typography variant="caption" color="text.secondary" display="block">Wind Speed</Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>{weather.wind_speed} km/h</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>{windSpeed} km/h</Typography>
           </Box>
         </Grid>
       </Grid>
@@ -167,12 +167,12 @@ const WeatherCard = ({ fieldId = null, farmId = null, onRefresh = null, refreshT
         </AccordionSummary>
         <AccordionDetails sx={{ pt: 0 }}>
           <Stack spacing={1}>
-            {forecast.map((day, idx) => (
-              <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1, borderBottom: idx !== forecast.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                <Typography variant="body2" sx={{ fontWeight: 600, width: 90 }}>{day.day || day.date}</Typography>
-                <Typography variant="body2" color="text.secondary">{day.condition}</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>{day.temp_max}° / {day.temp_min}°C</Typography>
-                <Chip label={`${day.rain_prob || day.rain_probability}% rain`} size="small" color={(day.rain_prob || day.rain_probability) > 50 ? "info" : "default"} variant="outlined" />
+            {safeForecast.map((day, idx) => (
+              <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1, borderBottom: idx !== safeForecast.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, width: 90 }}>{day?.day || day?.date || '—'}</Typography>
+                <Typography variant="body2" color="text.secondary">{day?.condition || 'Clear'}</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{day?.temp_max ?? '--'}° / {day?.temp_min ?? '--'}°C</Typography>
+                <Chip label={`${day?.rain_prob ?? day?.rain_probability ?? 0}% rain`} size="small" color={(day?.rain_prob || day?.rain_probability || 0) > 50 ? "info" : "default"} variant="outlined" />
               </Box>
             ))}
           </Stack>

@@ -19,13 +19,22 @@ export const ROLE_PATHS = {
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('agriflow_user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
 
   // Re-validate the saved JWT on page load
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (!token) {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!token && !refreshToken) {
+      setUser(null);
       setLoading(false);
       return;
     }
@@ -40,9 +49,11 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('agriflow_user', JSON.stringify(normProfile));
       })
       .catch(() => {
-        // Token expired / invalid — silently clear session, don't show error
-        clearAuthTokens();
-        setUser(null);
+        // Only clear session if refresh token also fails
+        if (!localStorage.getItem('refresh_token')) {
+          clearAuthTokens();
+          setUser(null);
+        }
       })
       .finally(() => {
         setLoading(false);

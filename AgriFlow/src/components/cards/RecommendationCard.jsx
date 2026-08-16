@@ -96,12 +96,20 @@ const RecommendationCard = ({ fieldId = null, farmId = null, refreshTrigger = 0 
     const s = (status || '').toLowerCase();
     const t = (text || '').toLowerCase();
 
-    if (s.includes('irrigate') || t.includes('irrigate today')) {
+    if (t.includes('no irrigation needed') || s === 'no_irrigation') {
       return {
         color: '#15803d',
         bgColor: '#f0fdf4',
         borderColor: '#bbf7d0',
-        icon: <WaterIcon sx={{ fontSize: 40, color: '#16a34a' }} />,
+        icon: <CheckCircleIcon sx={{ fontSize: 40, color: '#16a34a' }} />,
+        chipColor: 'success'
+      };
+    } else if (s.includes('irrigate') || t.includes('irrigation needed') || t.includes('irrigate today')) {
+      return {
+        color: '#4f46e5',
+        bgColor: '#f5f3ff',
+        borderColor: '#c7d2fe',
+        icon: <WaterIcon sx={{ fontSize: 40, color: '#6366f1' }} />,
         chipColor: 'error'
       };
     } else if (s.includes('postpone') || t.includes('postpone')) {
@@ -211,7 +219,7 @@ const RecommendationCard = ({ fieldId = null, farmId = null, refreshTrigger = 0 
         <Box sx={{ textAlign: 'right' }}>
           <Typography variant="caption" color="text.secondary" display="block">Estimated Water Requirement</Typography>
           <Typography variant="subtitle1" sx={{ fontWeight: 800, color: config.color }}>
-            {recommendation.estimated_water_requirement || (recommendation.water_volume_litres > 0 ? `${recommendation.water_volume_litres.toLocaleString()} Liters` : '0 Liters')}
+            {recommendation.estimated_water_requirement || ((recommendation.water_volume_litres || 0) > 0 ? `${Number(recommendation.water_volume_litres).toLocaleString()} Liters` : '0 Liters')}
           </Typography>
         </Box>
       </Box>

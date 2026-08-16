@@ -375,7 +375,7 @@ const Topbar = ({ onMenuClick, title }) => {
         </Popover>
 
         {/* ── 3. ACTIVE USER AVATAR ── */}
-        <Tooltip title={user.full_name || user.name || user.username || 'User Profile'}>
+        <Tooltip title={user?.full_name || user?.name || user?.username || 'User Profile'}>
           <Avatar
             sx={{
               bgcolor: color, width: 36, height: 36, fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer',
@@ -384,7 +384,7 @@ const Topbar = ({ onMenuClick, title }) => {
             }}
             onClick={(e) => setProfileAnchor(e.currentTarget)}
           >
-            {(user.full_name || user.name || user.username || 'U')[0].toUpperCase()}
+            {(user?.full_name?.trim() || user?.name?.trim() || user?.username?.trim() || 'U')[0].toUpperCase()}
           </Avatar>
         </Tooltip>
 

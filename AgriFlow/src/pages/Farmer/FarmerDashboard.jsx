@@ -161,14 +161,24 @@ const FarmerDashboard = () => {
         const cropRows = fieldsList.slice(0, 5).map((field) => {
           const style = stageStyles[field.crop_stage] || stageStyles.germination;
           const ndvi = field.status ? 0.85 : 0.62;
+          let harvest = '—';
+          if (field.planting_date) {
+            try {
+              const pDate = new Date(field.planting_date);
+              if (!isNaN(pDate.getTime())) {
+                pDate.setMonth(pDate.getMonth() + 4);
+                harvest = pDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+              }
+            } catch (e) {
+              harvest = '—';
+            }
+          }
           return {
             type: field.crop_type_name || field.name,
             zone: `${field.farm_name || 'Farm'} • ${field.area} Acres`,
             ndvi,
             ...style,
-            harvest: field.planting_date
-              ? new Date(new Date(field.planting_date).setMonth(new Date(field.planting_date).getMonth() + 4)).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-              : '—',
+            harvest,
           };
         });
         setCropHealthList(cropRows);

@@ -99,86 +99,83 @@ def _get_prev_water_litres(field=None, farm=None):
         return 0
 
 
+from irrigation.services import calculate_crop_water_deficit
+
+
 def _run_ml_inference(weather, field=None, farm=None):
-    """Run ML model inference and return prediction dict."""
+    """Run ML model inference for crop stress and compute scientific water deficit."""
+    # 1. Run Random Forest model for crop stress classification (UNTOUCHED ML model)
     model_pkg = _get_model()
-    if model_pkg is None:
-        return None
+    stress_label = 'Low'
+    
+    if model_pkg is not None:
+        try:
+            clf_stress = model_pkg['clf_stress']
+            crop_encoder = model_pkg['crop_encoder']
+            soil_encoder = model_pkg['soil_encoder']
+            stress_encoder = model_pkg['stress_encoder']
 
-    clf_irrigation = model_pkg['clf_irrigation']
-    clf_stress = model_pkg['clf_stress']
-    reg_water = model_pkg['reg_water']
-    crop_encoder = model_pkg['crop_encoder']
-    soil_encoder = model_pkg['soil_encoder']
-    stress_encoder = model_pkg['stress_encoder']
+            temp = float(weather.get('temperature', 29.0))
+            humidity = float(weather.get('humidity', 70.0))
+            rainfall = float(weather.get('rain_probability', 10.0))
+            wind_speed = float(weather.get('wind_speed', 12.0))
 
-    temp = float(weather.get('temperature', 29.0))
-    humidity = float(weather.get('humidity', 70.0))
-    rainfall = float(weather.get('rain_probability', 10.0))
-    wind_speed = float(weather.get('wind_speed', 12.0))
+            crop_name = 'Paddy'
+            soil_name = 'Loam'
+            area = 1.0
+            if field:
+                crop_name = (field.crop_type.name if field.crop_type else 'Paddy')
+                soil_name = (field.soil_type.name if field.soil_type else 'Loam')
+                area = float(field.area or 1.0)
+            elif farm:
+                area = float(farm.total_area or 1.0)
 
-    # Crop & soil type from field
-    crop_name = 'Paddy'
-    soil_name = 'Loam'
-    area = 1.0
-    if field:
-        crop_name = (field.crop_type.name if field.crop_type else 'Paddy')
-        soil_name = (field.soil_type.name if field.soil_type else 'Loam')
-        area = float(field.area or 1.0)
-    elif farm:
-        area = float(farm.total_area or 1.0)
+            try:
+                crop_enc = int(crop_encoder.transform([crop_name])[0])
+            except ValueError:
+                crop_enc = 0
+            try:
+                soil_enc = int(soil_encoder.transform([soil_name])[0])
+            except ValueError:
+                soil_enc = 0
 
-    # Encode safely with unseen-label fallback
-    try:
-        crop_enc = int(crop_encoder.transform([crop_name])[0])
-    except ValueError:
-        crop_enc = 0
-    try:
-        soil_enc = int(soil_encoder.transform([soil_name])[0])
-    except ValueError:
-        soil_enc = 0
+            days_since = _get_days_since_last_irrigation(field=field, farm=farm)
+            prev_water = _get_prev_water_litres(field=field, farm=farm)
 
-    days_since = _get_days_since_last_irrigation(field=field, farm=farm)
-    prev_water = _get_prev_water_litres(field=field, farm=farm)
+            X = np.array([[temp, humidity, rainfall, wind_speed, crop_enc, soil_enc, area, days_since, prev_water]])
+            stress_pred_enc = int(clf_stress.predict(X)[0])
+            stress_label = stress_encoder.classes_[stress_pred_enc]
+        except Exception:
+            stress_label = 'Low'
 
-    X = np.array([[temp, humidity, rainfall, wind_speed, crop_enc, soil_enc, area, days_since, prev_water]])
-
-    irr_pred = int(clf_irrigation.predict(X)[0])
-    irr_proba = clf_irrigation.predict_proba(X)[0]
-    confidence = int(round(max(irr_proba) * 100))
-
-    stress_pred_enc = int(clf_stress.predict(X)[0])
-    stress_label = stress_encoder.classes_[stress_pred_enc]
-
-    water_pred = float(reg_water.predict(X)[0])
-    water_rounded = round(max(0.0, water_pred), 1) if irr_pred else 0.0
-
-    explanation = _build_ai_explanation(
-        irrigation_needed=bool(irr_pred),
-        crop_stress=stress_label,
-        water=water_rounded,
-        temp=temp,
-        humidity=humidity,
-        rainfall=rainfall,
-        days_since=days_since,
-        crop_name=crop_name,
-    )
+    # 2. Run Scientific Crop-Water-Demand Calculation Engine
+    calc_res = calculate_crop_water_deficit(field=field, farm=farm, weather_data=weather)
 
     return {
-        'irrigation_needed': bool(irr_pred),
-        'recommended_water': water_rounded,
-        'unit': 'liters/m²',
+        'irrigation_needed': calc_res['irrigation_needed'],
+        'recommendation': calc_res['recommendation'],
+        'priority': calc_res['priority'],
+        'recommended_water_liters': calc_res['recommended_water_liters'],
+        'recommended_water': calc_res['recommended_water_liters'],
+        'unit': 'Liters',
         'crop_stress': stress_label,
-        'confidence': confidence,
-        'reason': explanation,
-        'weather_snapshot': {
-            'temperature': temp,
-            'humidity': humidity,
-            'rainfall': rainfall,
-            'wind_speed': wind_speed,
-        },
-        'days_since_irrigation': days_since,
+        'confidence': calc_res['confidence'],
+        'reason': calc_res['reason'],
+        'crop_name': calc_res['crop_name'],
+        'crop_stage': calc_res['crop_stage'],
+        'soil_type': calc_res['soil_type'],
+        'area_acres': calc_res['area_acres'],
+        'field_area_m2': calc_res['field_area_m2'],
+        'today_crop_demand_liters': calc_res['today_crop_demand_liters'],
+        'previous_unmet_deficit_liters': calc_res['previous_unmet_deficit_liters'],
+        'useful_carryover_liters': calc_res['useful_carryover_liters'],
+        'effective_rainfall_liters': calc_res['effective_rainfall_liters'],
+        'net_water_deficit_liters': calc_res['net_water_deficit_liters'],
+        'yesterday_irrigation_liters': calc_res['yesterday_irrigation_liters'],
+        'weather_snapshot': calc_res['weather_snapshot'],
+        'days_since_irrigation': _get_days_since_last_irrigation(field=field, farm=farm),
     }
+
 
 
 # ─── Django ViewSet ────────────────────────────────────────────────────────────
@@ -263,6 +260,21 @@ class AIRecommendationViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except Exception:
             log = None
+
+        # Create Alert Notification if target_field is present
+        if target_field:
+            try:
+                from alerts.services import create_irrigation_notification
+                create_irrigation_notification(
+                    field=target_field,
+                    priority=result.get('priority', 'LOW'),
+                    recommended_water_liters=result.get('recommended_water_liters', 0),
+                    recommendation_title=result.get('recommendation', 'Irrigation Needed'),
+                    reason=result.get('reason', '')
+                )
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to create AI irrigation alert: {e}")
 
         field_name = target_field.name if target_field else (target_farm.name if target_farm else 'Farm')
         location_display = city_name or 'Selected Location'
