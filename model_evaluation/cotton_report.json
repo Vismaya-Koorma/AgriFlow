@@ -1,0 +1,80 @@
+{
+    "crop": "Cotton",
+    "crop_key": "cotton",
+    "accuracy": 0.5778,
+    "precision": 0.5203,
+    "recall": 0.5778,
+    "f1_score": 0.5357,
+    "expected_calibration_error": 0.1503,
+    "confusion_matrix": [
+        [
+            2,
+            6,
+            1,
+            0,
+            0
+        ],
+        [
+            3,
+            6,
+            0,
+            0,
+            0
+        ],
+        [
+            2,
+            7,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            9,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            0,
+            9
+        ]
+    ],
+    "class_names": [
+        "alternaria_leaf_spot",
+        "bacterial_blight",
+        "cercospora_leaf_spot",
+        "healthy",
+        "leaf_curl_virus"
+    ],
+    "per_class_metrics": {
+        "alternaria_leaf_spot": {
+            "precision": 0.2857,
+            "recall": 0.2222,
+            "f1_score": 0.25
+        },
+        "bacterial_blight": {
+            "precision": 0.3158,
+            "recall": 0.6667,
+            "f1_score": 0.4286
+        },
+        "cercospora_leaf_spot": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
+        },
+        "healthy": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        },
+        "leaf_curl_virus": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        }
+    }
+}

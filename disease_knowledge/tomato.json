@@ -1,0 +1,119 @@
+{
+    "crop": "Tomato",
+    "diseases": {
+        "bacterial_spot": {
+            "disease": "Tomato Bacterial Spot",
+            "scientific_name": "Xanthomonas vesicatoria",
+            "symptoms": [
+                "Small water-soaked lesions on leaves",
+                "Lesions turn dark brown with yellow halos",
+                "Scab-like spots on tomato fruits"
+            ],
+            "causes": [
+                "Xanthomonas bacterial pathogen",
+                "High temperature (24-30\u00b0C) and splashing rain"
+            ],
+            "prevention": [
+                "1. Use disease-free certified seeds",
+                "2. Practice 2-year crop rotation with non-solanaceous crops"
+            ],
+            "control_measures": [
+                "1. Apply copper-based bactericide at early symptom onset",
+                "2. Remove infected plant debris post-harvest"
+            ],
+            "cultural_practices": [
+                "Avoid overhead sprinkler irrigation"
+            ],
+            "water_management": [
+                "Use drip irrigation to keep foliage dry"
+            ],
+            "nutrient_management": [
+                "Maintain balanced Nitrogen and Calcium levels"
+            ],
+            "severity_indicators": [
+                "Mild: Leaf spots",
+                "Severe: Fruit scabs and defoliation"
+            ],
+            "source": [
+                "ICAR - Indian Institute of Horticultural Research (IIHR)",
+                "TNAU Agritech Portal"
+            ]
+        },
+        "early_blight": {
+            "disease": "Tomato Early Blight",
+            "scientific_name": "Alternaria solani",
+            "symptoms": [
+                "Concentric target-board ring spots on lower leaves",
+                "Yellowing around spots",
+                "Defoliation starting from lower foliage"
+            ],
+            "causes": [
+                "Alternaria solani fungal pathogen",
+                "Warm humid weather with frequent dew"
+            ],
+            "prevention": [
+                "1. Space plants adequately for air circulation",
+                "2. Mulch soil to prevent rain splash"
+            ],
+            "control_measures": [
+                "1. Spray Mancozeb (0.2%) or Copper Oxychloride",
+                "2. Remove lower infected leaves"
+            ],
+            "cultural_practices": [
+                "Stake plants upright"
+            ],
+            "water_management": [
+                "Irrigate at base of stem"
+            ],
+            "nutrient_management": [
+                "Apply adequate Potassium to enhance resistance"
+            ],
+            "severity_indicators": [
+                "Mild: Lower leaf spots",
+                "Severe: Severe leaf drop"
+            ],
+            "source": [
+                "ICAR - IIHR Bangalore",
+                "Kerala Agricultural University"
+            ]
+        },
+        "late_blight": {
+            "disease": "Tomato Late Blight",
+            "scientific_name": "Phytophthora infestans",
+            "symptoms": [
+                "Large dark water-soaked leaf lesions",
+                "White fungal growth on lower leaf surface under high humidity",
+                "Rapid stem rot and fruit decay"
+            ],
+            "causes": [
+                "Phytophthora infestans oomycete pathogen",
+                "Cool (15-22\u00b0C) wet weather"
+            ],
+            "prevention": [
+                "1. Plant resistant cultivars",
+                "2. Destroy volunteer tomato plants"
+            ],
+            "control_measures": [
+                "1. Apply Metalaxyl + Mancozeb prophylactic spray",
+                "2. Destroy infected plants immediately"
+            ],
+            "cultural_practices": [
+                "Maintain clean field margins"
+            ],
+            "water_management": [
+                "Avoid evening irrigation"
+            ],
+            "nutrient_management": [
+                "Balanced soil nutrition"
+            ],
+            "severity_indicators": [
+                "Mild: Single leaf lesion",
+                "Severe: Field-wide blighting"
+            ],
+            "source": [
+                "ICAR - Central Potato Research Institute / IIHR",
+                "TNAU"
+            ]
+        }
+    }
+}

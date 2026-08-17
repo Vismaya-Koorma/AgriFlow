@@ -1,0 +1,261 @@
+{
+    "tomato": {
+        "crop": "Tomato",
+        "total_images": 250,
+        "classes": [
+            "healthy",
+            "bacterial_spot",
+            "early_blight",
+            "late_blight",
+            "leaf_mold",
+            "septoria_leaf_spot",
+            "spider_mites",
+            "target_spot",
+            "mosaic_virus",
+            "yellow_leaf_curl_virus"
+        ],
+        "images_per_class": {
+            "healthy": 25,
+            "bacterial_spot": 25,
+            "early_blight": 25,
+            "late_blight": 25,
+            "leaf_mold": 25,
+            "septoria_leaf_spot": 25,
+            "spider_mites": 25,
+            "target_spot": 25,
+            "mosaic_virus": 25,
+            "yellow_leaf_curl_virus": 25
+        },
+        "train_count": 150,
+        "validation_count": 50,
+        "test_count": 50,
+        "corrupted_images": 0,
+        "duplicate_images": 235
+    },
+    "rice": {
+        "crop": "Rice",
+        "total_images": 150,
+        "classes": [
+            "normal",
+            "bacterial_leaf_blight",
+            "brown_spot",
+            "leaf_blast",
+            "sheath_blight",
+            "tungro"
+        ],
+        "images_per_class": {
+            "normal": 25,
+            "bacterial_leaf_blight": 25,
+            "brown_spot": 25,
+            "leaf_blast": 25,
+            "sheath_blight": 25,
+            "tungro": 25
+        },
+        "train_count": 90,
+        "validation_count": 30,
+        "test_count": 30,
+        "corrupted_images": 0,
+        "duplicate_images": 135
+    },
+    "maize": {
+        "crop": "Maize",
+        "total_images": 100,
+        "classes": [
+            "healthy",
+            "common_rust",
+            "gray_leaf_spot",
+            "northern_corn_leaf_blight"
+        ],
+        "images_per_class": {
+            "healthy": 25,
+            "common_rust": 25,
+            "gray_leaf_spot": 25,
+            "northern_corn_leaf_blight": 25
+        },
+        "train_count": 60,
+        "validation_count": 20,
+        "test_count": 20,
+        "corrupted_images": 0,
+        "duplicate_images": 85
+    },
+    "potato": {
+        "crop": "Potato",
+        "total_images": 75,
+        "classes": [
+            "healthy",
+            "early_blight",
+            "late_blight"
+        ],
+        "images_per_class": {
+            "healthy": 25,
+            "early_blight": 25,
+            "late_blight": 25
+        },
+        "train_count": 45,
+        "validation_count": 15,
+        "test_count": 15,
+        "corrupted_images": 0,
+        "duplicate_images": 60
+    },
+    "apple": {
+        "crop": "Apple",
+        "total_images": 100,
+        "classes": [
+            "healthy",
+            "apple_scab",
+            "black_rot",
+            "cedar_apple_rust"
+        ],
+        "images_per_class": {
+            "healthy": 25,
+            "apple_scab": 25,
+            "black_rot": 25,
+            "cedar_apple_rust": 25
+        },
+        "train_count": 60,
+        "validation_count": 20,
+        "test_count": 20,
+        "corrupted_images": 0,
+        "duplicate_images": 85
+    },
+    "banana": {
+        "crop": "Banana",
+        "total_images": 100,
+        "classes": [
+            "healthy",
+            "black_sigatoka",
+            "panama_disease",
+            "bunchy_top"
+        ],
+        "images_per_class": {
+            "healthy": 25,
+            "black_sigatoka": 25,
+            "panama_disease": 25,
+            "bunchy_top": 25
+        },
+        "train_count": 60,
+        "validation_count": 20,
+        "test_count": 20,
+        "corrupted_images": 0,
+        "duplicate_images": 85
+    },
+    "cotton": {
+        "crop": "Cotton",
+        "total_images": 100,
+        "classes": [
+            "healthy",
+            "bacterial_blight",
+            "curl_virus",
+            "target_spot"
+        ],
+        "images_per_class": {
+            "healthy": 25,
+            "bacterial_blight": 25,
+            "curl_virus": 25,
+            "target_spot": 25
+        },
+        "train_count": 60,
+        "validation_count": 20,
+        "test_count": 20,
+        "corrupted_images": 0,
+        "duplicate_images": 85
+    },
+    "wheat": {
+        "crop": "Wheat",
+        "total_images": 100,
+        "classes": [
+            "healthy",
+            "leaf_rust",
+            "stripe_rust",
+            "powdery_mildew"
+        ],
+        "images_per_class": {
+            "healthy": 25,
+            "leaf_rust": 25,
+            "stripe_rust": 25,
+            "powdery_mildew": 25
+        },
+        "train_count": 60,
+        "validation_count": 20,
+        "test_count": 20,
+        "corrupted_images": 0,
+        "duplicate_images": 85
+    },
+    "chilli": {
+        "crop": "Chilli",
+        "total_images": 125,
+        "classes": [
+            "healthy",
+            "bacterial",
+            "cercospora",
+            "curl_virus",
+            "powdery_mildew"
+        ],
+        "images_per_class": {
+            "healthy": 25,
+            "bacterial": 25,
+            "cercospora": 25,
+            "curl_virus": 25,
+            "powdery_mildew": 25
+        },
+        "train_count": 75,
+        "validation_count": 25,
+        "test_count": 25,
+        "corrupted_images": 0,
+        "duplicate_images": 110
+    },
+    "coconut": {
+        "crop": "Coconut",
+        "total_images": 150,
+        "classes": [
+            "healthy",
+            "bud_rot",
+            "leaf_rot",
+            "gray_leaf_spot",
+            "bud_root_dropping",
+            "stem_bleeding"
+        ],
+        "images_per_class": {
+            "healthy": 25,
+            "bud_rot": 25,
+            "leaf_rot": 25,
+            "gray_leaf_spot": 25,
+            "bud_root_dropping": 25,
+            "stem_bleeding": 25
+        },
+        "train_count": 90,
+        "validation_count": 30,
+        "test_count": 30,
+        "corrupted_images": 0,
+        "duplicate_images": 135
+    },
+    "sugarcane": {
+        "crop": "Sugarcane",
+        "total_images": 200,
+        "classes": [
+            "healthy",
+            "yellow_leaf",
+            "smut",
+            "pokkah_boeng",
+            "mosaic",
+            "brown_spot",
+            "brown_rust",
+            "sett_rot"
+        ],
+        "images_per_class": {
+            "healthy": 25,
+            "yellow_leaf": 25,
+            "smut": 25,
+            "pokkah_boeng": 25,
+            "mosaic": 25,
+            "brown_spot": 25,
+            "brown_rust": 25,
+            "sett_rot": 25
+        },
+        "train_count": 120,
+        "validation_count": 40,
+        "test_count": 40,
+        "corrupted_images": 0,
+        "duplicate_images": 185
+    }
+}

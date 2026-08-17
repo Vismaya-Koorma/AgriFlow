@@ -1,0 +1,9 @@
+{
+  "bacterial_leaf_blight": 0,
+  "brown_spot": 1,
+  "healthy": 2,
+  "leaf_smut": 3,
+  "rice_blast": 4,
+  "sheath_blight": 5,
+  "tungro": 6
+}

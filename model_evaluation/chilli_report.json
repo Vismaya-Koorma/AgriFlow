@@ -1,0 +1,99 @@
+{
+    "crop": "Chilli",
+    "crop_key": "chilli",
+    "accuracy": 0.6852,
+    "precision": 0.6811,
+    "recall": 0.6852,
+    "f1_score": 0.6752,
+    "expected_calibration_error": 0.1621,
+    "confusion_matrix": [
+        [
+            5,
+            0,
+            0,
+            0,
+            4,
+            0
+        ],
+        [
+            0,
+            2,
+            7,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            3,
+            6,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            9,
+            0,
+            0
+        ],
+        [
+            3,
+            0,
+            0,
+            0,
+            6,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            0,
+            0,
+            9
+        ]
+    ],
+    "class_names": [
+        "anthracnose",
+        "bacterial_leaf_spot",
+        "cercospora_leaf_spot",
+        "healthy",
+        "leaf_curl_virus",
+        "powdery_mildew"
+    ],
+    "per_class_metrics": {
+        "anthracnose": {
+            "precision": 0.625,
+            "recall": 0.5556,
+            "f1_score": 0.5882
+        },
+        "bacterial_leaf_spot": {
+            "precision": 0.4,
+            "recall": 0.2222,
+            "f1_score": 0.2857
+        },
+        "cercospora_leaf_spot": {
+            "precision": 0.4615,
+            "recall": 0.6667,
+            "f1_score": 0.5455
+        },
+        "healthy": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        },
+        "leaf_curl_virus": {
+            "precision": 0.6,
+            "recall": 0.6667,
+            "f1_score": 0.6316
+        },
+        "powdery_mildew": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        }
+    }
+}

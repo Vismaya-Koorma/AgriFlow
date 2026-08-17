@@ -1,0 +1,28 @@
+AGRIFLOW 2-STAGE MOBILENETV2 MODEL EVALUATION REPORT: COCONUT
+======================================================================
+Accuracy : 55.56%
+Precision: 46.09%
+Recall   : 55.56%
+F1-Score : 48.75%
+ECE      : 16.18%
+
+Confusion Matrix:
+[[0 2 0 7 0]
+ [0 0 0 9 0]
+ [0 0 9 0 0]
+ [1 1 0 7 0]
+ [0 0 0 0 9]]
+
+Classification Report:
+                precision    recall  f1-score   support
+
+basal_stem_rot       0.00      0.00      0.00         9
+       bud_rot       0.00      0.00      0.00         9
+       healthy       1.00      1.00      1.00         9
+      leaf_rot       0.30      0.78      0.44         9
+ stem_bleeding       1.00      1.00      1.00         9
+
+      accuracy                           0.56        45
+     macro avg       0.46      0.56      0.49        45
+  weighted avg       0.46      0.56      0.49        45
+

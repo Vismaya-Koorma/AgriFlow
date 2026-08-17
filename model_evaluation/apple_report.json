@@ -1,0 +1,63 @@
+{
+    "crop": "Apple",
+    "crop_key": "apple",
+    "accuracy": 0.9444,
+    "precision": 0.9545,
+    "recall": 0.9444,
+    "f1_score": 0.9438,
+    "expected_calibration_error": 0.0447,
+    "confusion_matrix": [
+        [
+            9,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            9,
+            0,
+            0
+        ],
+        [
+            0,
+            0,
+            9,
+            0
+        ],
+        [
+            0,
+            2,
+            0,
+            7
+        ]
+    ],
+    "class_names": [
+        "apple_scab",
+        "black_rot",
+        "cedar_apple_rust",
+        "healthy"
+    ],
+    "per_class_metrics": {
+        "apple_scab": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        },
+        "black_rot": {
+            "precision": 0.8182,
+            "recall": 1.0,
+            "f1_score": 0.9
+        },
+        "cedar_apple_rust": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        },
+        "healthy": {
+            "precision": 1.0,
+            "recall": 0.7778,
+            "f1_score": 0.875
+        }
+    }
+}

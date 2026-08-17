@@ -1,0 +1,117 @@
+{
+    "crop": "Rice",
+    "diseases": {
+        "bacterial_leaf_blight": {
+            "disease": "Rice Bacterial Leaf Blight",
+            "scientific_name": "Xanthomonas oryzae pv. oryzae",
+            "symptoms": [
+                "Wavy yellow-to-white lesions along leaf margins",
+                "Bacterial ooze droplets on leaves in early morning",
+                "Wilting of tillers (Kresek stage)"
+            ],
+            "causes": [
+                "Xanthomonas oryzae bacteria",
+                "High nitrogen application and heavy rainstorms"
+            ],
+            "prevention": [
+                "1. Use resistant varieties (e.g. Swarna Sub1)",
+                "2. Avoid excessive nitrogen fertilizer"
+            ],
+            "control_measures": [
+                "1. Spray Streptocycline (0.015%) + Copper Oxychloride",
+                "2. Drain excess standing water"
+            ],
+            "cultural_practices": [
+                "Keep bunds clean of wild grass hosts"
+            ],
+            "water_management": [
+                "Alternate wetting and drying"
+            ],
+            "nutrient_management": [
+                "Apply Nitrogen in 3 split doses"
+            ],
+            "severity_indicators": [
+                "Mild: Margin yellowing",
+                "Severe: Kresek tiller death"
+            ],
+            "source": [
+                "ICAR - National Rice Research Institute (NRRI), Cuttack",
+                "KAU"
+            ]
+        },
+        "brown_spot": {
+            "disease": "Rice Brown Spot",
+            "scientific_name": "Bipolaris oryzae",
+            "symptoms": [
+                "Oval brown lesions with yellow halos on leaf blades",
+                "Dark brown spots on grains causing discoloration"
+            ],
+            "causes": [
+                "Bipolaris oryzae fungal pathogen",
+                "Nutrient-starved or drought-stressed soils"
+            ],
+            "prevention": [
+                "1. Treat seeds with Carbendazim (2g/kg)",
+                "2. Correct soil nutrient deficiencies"
+            ],
+            "control_measures": [
+                "1. Foliar spray of Mancozeb (0.25%) or Edifenphos",
+                "2. Apply recommended Potash dose"
+            ],
+            "cultural_practices": [
+                "Soil solarization in nurseries"
+            ],
+            "water_management": [
+                "Maintain shallow standing water"
+            ],
+            "nutrient_management": [
+                "Apply Zinc Sulphate and Potash"
+            ],
+            "severity_indicators": [
+                "Mild: Isolated leaf spots",
+                "Severe: Grain discoloration"
+            ],
+            "source": [
+                "ICAR - NRRI Cuttack",
+                "TNAU Agritech Portal"
+            ]
+        },
+        "leaf_blast": {
+            "disease": "Rice Leaf Blast",
+            "scientific_name": "Magnaporthe oryzae",
+            "symptoms": [
+                "Spindle-shaped eye spots with gray/white centers and reddish-brown borders",
+                "Nodal and neck rot during heading stage"
+            ],
+            "causes": [
+                "Magnaporthe oryzae fungus",
+                "High humidity and cool night temperatures"
+            ],
+            "prevention": [
+                "1. Avoid late nitrogen application",
+                "2. Seed treatment with Tricyclazole"
+            ],
+            "control_measures": [
+                "1. Spray Tricyclazole 75 WP (0.6g/L) at neck blast stage",
+                "2. Maintain field water level"
+            ],
+            "cultural_practices": [
+                "Destroy infected stubble"
+            ],
+            "water_management": [
+                "Do not dry field completely during tillering"
+            ],
+            "nutrient_management": [
+                "Apply Potassium in two splits"
+            ],
+            "severity_indicators": [
+                "Mild: Leaf eye spots",
+                "Severe: Neck blast rot"
+            ],
+            "source": [
+                "ICAR - NRRI Cuttack",
+                "Kerala Agricultural University"
+            ]
+        }
+    }
+}

@@ -1,0 +1,32 @@
+AGRIFLOW 2-STAGE MOBILENETV2 MODEL EVALUATION REPORT: PADDY / RICE
+======================================================================
+Accuracy : 58.73%
+Precision: 70.10%
+Recall   : 58.73%
+F1-Score : 57.12%
+ECE      : 12.19%
+
+Confusion Matrix:
+[[3 0 0 0 0 6 0]
+ [4 1 0 0 0 4 0]
+ [0 0 8 0 0 1 0]
+ [0 0 0 9 0 0 0]
+ [0 0 0 0 3 0 6]
+ [4 0 0 0 0 5 0]
+ [0 0 0 0 1 0 8]]
+
+Classification Report:
+                       precision    recall  f1-score   support
+
+bacterial_leaf_blight       0.27      0.33      0.30         9
+           brown_spot       1.00      0.11      0.20         9
+              healthy       1.00      0.89      0.94         9
+            leaf_smut       1.00      1.00      1.00         9
+           rice_blast       0.75      0.33      0.46         9
+        sheath_blight       0.31      0.56      0.40         9
+               tungro       0.57      0.89      0.70         9
+
+             accuracy                           0.59        63
+            macro avg       0.70      0.59      0.57        63
+         weighted avg       0.70      0.59      0.57        63
+

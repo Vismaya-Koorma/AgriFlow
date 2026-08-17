@@ -1,0 +1,7 @@
+{
+  "common_rust": 0,
+  "gray_leaf_spot": 1,
+  "healthy": 2,
+  "maize_leaf_blight": 3,
+  "northern_corn_leaf_blight": 4
+}

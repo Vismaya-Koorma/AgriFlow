@@ -20,19 +20,20 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ImageSearchIcon from '@mui/icons-material/ImageSearch';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 import MemoryIcon from '@mui/icons-material/Memory';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getCropHealthHistory, getFields } from '../../services/api';
 import axiosInstance from '../../services/api';
 
 const POPULAR_CROPS = [
-  'Tomato', 'Paddy / Rice', 'Maize', 'Banana', 'Cotton',
-  'Potato', 'Wheat', 'Chili', 'Coconut', 'Sugarcane', 'Other Crop'
+  'Tomato', 'Paddy / Rice', 'Maize', 'Potato', 'Apple',
+  'Banana', 'Cotton', 'Wheat', 'Chili', 'Coconut', 'Sugarcane', 'Other Crop'
 ];
 
 const CropHealthAssistant = () => {
   // Form input state
-  const [cropType, setCropType] = useState('Paddy / Rice');
+  const [cropType, setCropType] = useState('Tomato');
   const [customCrop, setCustomCrop] = useState('');
   const [selectedField, setSelectedField] = useState('');
   const [symptoms, setSymptoms] = useState('');
@@ -162,13 +163,14 @@ const CropHealthAssistant = () => {
   const filteredHistory = historyList.filter(item => {
     const matchesCrop = cropFilter === 'All' || item.crop_type.toLowerCase() === cropFilter.toLowerCase();
     const matchesSearch = !searchQuery ||
-      item.symptoms.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.symptoms && item.symptoms.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (item.status && item.status.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      item.crop_type.toLowerCase().includes(searchQuery.toLowerCase());
+      (item.crop_type && item.crop_type.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCrop && matchesSearch;
   });
 
   const isHealthy = result?.status === 'Healthy';
+  const isLowConfidence = result?.confidence_level === 'LOW' || (result?.confidence > 0 && result?.confidence < 60.0);
 
   return (
     <DashboardLayout title="AI Crop Health Assistant">
@@ -233,7 +235,7 @@ const CropHealthAssistant = () => {
                     >
                       <MenuItem value="">-- None --</MenuItem>
                       {userFields.map(f => (
-                        <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem>
+                        <MenuItem key={f.id} value={f.id}>{f.name} ({f.crop_type || 'Crop'})</MenuItem>
                       ))}
                     </TextField>
                   </Grid>
@@ -260,7 +262,7 @@ const CropHealthAssistant = () => {
                       fullWidth
                       multiline
                       rows={3}
-                      placeholder="e.g. Rice leaves are becoming yellow and the plants are growing slowly, OR leaves look healthy."
+                      placeholder="e.g. Tomato leaves have concentric brown target spots with yellow chlorosis, OR leaves look healthy."
                       value={symptoms}
                       onChange={(e) => setSymptoms(e.target.value)}
                       variant="outlined"
@@ -301,7 +303,15 @@ const CropHealthAssistant = () => {
                       )}
                     </Box>
                     <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                      You can submit Text-only, Image-only, or Both together.
+                      {cropType === 'Other Crop' ? (
+                        <span style={{ color: '#d97706', fontWeight: 600 }}>
+                          Disease detection is currently unavailable for this crop.
+                        </span>
+                      ) : (
+                        <span style={{ color: '#15803d', fontWeight: 600 }}>
+                          Image disease detection available for {cropType} (MobileNetV2)
+                        </span>
+                      )}
                     </Typography>
                   </Grid>
 
@@ -350,7 +360,7 @@ const CropHealthAssistant = () => {
                     No Analysis Submitted Yet
                   </Typography>
                   <Typography variant="body2" color="text.secondary" maxWidth={380} sx={{ mt: 0.5, mx: 'auto' }}>
-                    Enter natural language symptoms, upload a leaf image, or both to get ML predictions from Sentence Transformers & MobileNetV2 CNN.
+                    Enter natural language symptoms, upload a leaf image, or both to get crop-validated predictions.
                   </Typography>
                 </Box>
               </Card>
@@ -363,19 +373,63 @@ const CropHealthAssistant = () => {
                   Running Neural AI Pipeline...
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  Computing Sentence Transformer embeddings & MobileNetV2 CNN leaf classifications.
+                  Encoding Sentence Transformer embeddings & evaluating MobileNetV2 CNN leaf classes.
                 </Typography>
               </Card>
             )}
 
             {result && !loading && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+
+                {/* Input Summary Banner */}
+                <Paper elevation={1} sx={{ p: 2, borderRadius: 3, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                  <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                    <Chip label={`Crop: ${result.crop_type}`} color="primary" variant="outlined" sx={{ fontWeight: 800 }} />
+                    {result.field_name && (
+                      <Chip label={`Field: ${result.field_name}`} variant="outlined" sx={{ fontWeight: 700 }} />
+                    )}
+                    <Chip
+                      label={`Input: ${result.input_type === 'both' ? 'Image + Symptoms' : result.input_type === 'image' ? 'Image Only' : 'Text Symptoms Only'}`}
+                      variant="outlined"
+                      sx={{ fontWeight: 700 }}
+                    />
+                  </Stack>
+                </Paper>
+
+                {/* Field Crop Conflict Warning Alert */}
+                {result.field_warning && (
+                  <Alert severity="warning" icon={<WarningAmberIcon />} sx={{ borderRadius: 3, fontWeight: 600 }}>
+                    {result.field_warning}
+                  </Alert>
+                )}
+
+                {/* Unsupported Crop Image Notification Alert */}
+                {result.image_analysis && result.image_analysis.supported === false && (
+                  <Alert severity="info" icon={<InfoOutlinedIcon />} sx={{ borderRadius: 3, fontWeight: 600 }}>
+                    {result.image_analysis.message}
+                  </Alert>
+                )}
+
+                {/* Low Confidence Warning Alert */}
+                {isLowConfidence && (
+                  <Alert severity="warning" sx={{ borderRadius: 3, fontWeight: 600 }}>
+                    The prediction has low confidence ({result.confidence}%). Upload a clearer image of the affected leaf, spear leaf, or crown area and provide additional symptoms for better diagnosis.
+                  </Alert>
+                )}
+
+                {/* Poor Image Quality Alert */}
+                {(result.error === 'poor_image_quality' || (result.image_quality && result.image_quality !== 'acceptable')) && (
+                  <Alert severity="error" icon={<WarningAmberIcon />} sx={{ borderRadius: 3, fontWeight: 600 }}>
+                    {result.message || 'Unable to determine disease reliably. Please upload a clear image showing the affected leaf, spear leaf, or crown area.'}
+                  </Alert>
+                )}
+
                 {/* Dynamic Title Header Banner Card */}
                 <Card
                   elevation={3}
                   sx={{
                     borderRadius: 4,
-                    bgcolor: isHealthy ? '#15803d' : '#1e293b',
+                    bgcolor: isHealthy ? '#15803d' : isLowConfidence ? '#b45309' : '#1e293b',
                     color: '#fff',
                     p: 2.5
                   }}
@@ -390,29 +444,25 @@ const CropHealthAssistant = () => {
                       <Typography variant="h6" fontWeight={800}>
                         {isHealthy
                           ? `Crop Health Status: Healthy (${result.crop_type})`
-                          : `Crop Health Diagnosis: ${result.status || 'Possible Stress'} (${result.crop_type})`
+                          : `Crop Health Diagnosis: ${result.status || 'Possible Stress'}`
                         }
                       </Typography>
                     </Box>
-                    <Chip
-                      label={`REAL AI Model Confidence: ${result.confidence}%`}
-                      sx={{
-                        bgcolor: isHealthy ? '#4ade80' : '#fef08a',
-                        color: isHealthy ? '#14532d' : '#713f12',
-                        fontWeight: 800
-                      }}
-                    />
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                      {result.evidence_status === 'STRONG' && (
+                        <Chip label="Evidence Level: STRONG" size="small" sx={{ bgcolor: '#22c55e', color: '#fff', fontWeight: 800 }} />
+                      )}
+                      {result.evidence_status === 'MODERATE' && (
+                        <Chip label="Evidence Level: MODERATE" size="small" sx={{ bgcolor: '#3b82f6', color: '#fff', fontWeight: 800 }} />
+                      )}
+                      {result.evidence_status === 'CONFLICTING' && (
+                        <Chip label="⚠ Evidence: CONFLICTING" size="small" sx={{ bgcolor: '#f97316', color: '#fff', fontWeight: 800 }} />
+                      )}
+                      {result.evidence_status === 'INSUFFICIENT' && (
+                        <Chip label="⚠ Evidence: INSUFFICIENT" size="small" sx={{ bgcolor: '#eab308', color: '#000', fontWeight: 800 }} />
+                      )}
+                    </Stack>
                   </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={result.confidence}
-                    sx={{
-                      height: 8,
-                      borderRadius: 4,
-                      bgcolor: 'rgba(255,255,255,0.2)',
-                      '& .MuiLinearProgress-bar': { bgcolor: isHealthy ? '#4ade80' : '#fef08a' }
-                    }}
-                  />
                 </Card>
 
                 {/* Sub-analysis cards for hybrid text + image */}
@@ -428,10 +478,10 @@ const CropHealthAssistant = () => {
                             </Typography>
                           </Stack>
                           <Typography variant="body2" color="#334155">
-                            Status: <strong>{result.text_analysis.status}</strong>
+                            Top Match: <strong>{result.text_analysis.disease_name || result.text_analysis.status}</strong>
                           </Typography>
                           <Typography variant="body2" color="#334155">
-                            Cosine Similarity Confidence: <strong>{result.text_analysis.confidence}%</strong>
+                            Semantic Similarity: <strong>{result.text_analysis.confidence}%</strong>
                           </Typography>
                         </Paper>
                       </Grid>
@@ -439,19 +489,27 @@ const CropHealthAssistant = () => {
 
                     {result.image_analysis && (
                       <Grid item xs={12} sm={6}>
-                        <Paper elevation={1} sx={{ p: 2, borderRadius: 3, bgcolor: '#f0f9ff', border: '1px solid #bae6fd' }}>
+                        <Paper elevation={1} sx={{ p: 2, borderRadius: 3, bgcolor: result.image_analysis.supported === false ? '#fffbebf' : '#f0f9ff', border: result.image_analysis.supported === false ? '1px solid #fde68a' : '1px solid #bae6fd' }}>
                           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                            <ImageSearchIcon sx={{ color: '#0284c7' }} />
-                            <Typography variant="subtitle2" fontWeight={700} color="#075985">
+                            <ImageSearchIcon sx={{ color: result.image_analysis.supported === false ? '#b45309' : '#0284c7' }} />
+                            <Typography variant="subtitle2" fontWeight={700} color={result.image_analysis.supported === false ? '#92400e' : '#075985'}>
                               MobileNetV2 CNN (Image AI)
                             </Typography>
                           </Stack>
-                          <Typography variant="body2" color="#334155">
-                            Disease: <strong>{result.image_analysis.disease_name || result.image_analysis.status}</strong>
-                          </Typography>
-                          <Typography variant="body2" color="#334155">
-                            Softmax Model Confidence: <strong>{result.image_analysis.confidence}%</strong>
-                          </Typography>
+                          {result.image_analysis.supported === false ? (
+                            <Typography variant="body2" color="#92400e" fontWeight={500}>
+                              Unsupported Crop Image Model
+                            </Typography>
+                          ) : (
+                            <>
+                              <Typography variant="body2" color="#334155">
+                                Predicted Class: <strong>{result.image_analysis.disease_name || result.image_analysis.status}</strong>
+                              </Typography>
+                              <Typography variant="body2" color="#334155">
+                                Calibrated Confidence (T=1.25): <strong>{result.image_analysis.confidence}%</strong>
+                              </Typography>
+                            </>
+                          )}
                         </Paper>
                       </Grid>
                     )}
@@ -492,20 +550,20 @@ const CropHealthAssistant = () => {
                     </Card>
                   </Grid>
 
-                  {/* Card B: Fertilizer Guidance */}
+                  {/* Card B: Recommended Control Measures / Treatment */}
                   <Grid item xs={12} sm={6}>
-                    <Card elevation={2} sx={{ borderRadius: 3, height: '100%', borderLeft: '5px solid #16a34a' }}>
+                    <Card elevation={2} sx={{ borderRadius: 3, height: '100%', borderLeft: '5px solid #d97706' }}>
                       <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                          <ScienceIcon sx={{ color: '#16a34a' }} />
-                          <Typography variant="subtitle1" fontWeight={700} color="#166534">
-                            {isHealthy ? 'Fertilizer Schedule' : 'Suggested Fertilizer'}
+                          <ScienceIcon sx={{ color: '#d97706' }} />
+                          <Typography variant="subtitle1" fontWeight={700} color="#92400e">
+                            {isHealthy ? 'Maintenance Guidance' : 'Recommended Control Measures'}
                           </Typography>
                         </Box>
                         <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                          {(result.fertilizer || []).map((fert, i) => (
+                          {(result.control_measures || result.treatment || []).map((measure, i) => (
                             <Typography component="li" key={i} variant="body2" color="#334155" sx={{ mb: 0.8, fontWeight: 500 }}>
-                              {fert}
+                              {measure}
                             </Typography>
                           ))}
                         </Box>
@@ -513,7 +571,30 @@ const CropHealthAssistant = () => {
                     </Card>
                   </Grid>
 
-                  {/* Card C: Watering Advice */}
+                  {/* Card C: Nutrient Management (Separated from Fungicides/Control) */}
+                  {(result.nutrient_management && result.nutrient_management.length > 0) && (
+                    <Grid item xs={12}>
+                      <Card elevation={2} sx={{ borderRadius: 3, borderLeft: '5px solid #16a34a', bgcolor: '#f0fdf4' }}>
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                            <ScienceIcon sx={{ color: '#16a34a' }} />
+                            <Typography variant="subtitle1" fontWeight={700} color="#166534">
+                              Nutrient Management
+                            </Typography>
+                          </Box>
+                          <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                            {(result.nutrient_management || []).map((nutr, i) => (
+                              <Typography component="li" key={i} variant="body2" color="#334155" sx={{ mb: 0.8, fontWeight: 500 }}>
+                                {nutr}
+                              </Typography>
+                            ))}
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  )}
+
+                  {/* Card D: Watering Advice */}
                   <Grid item xs={12}>
                     <Card elevation={2} sx={{ borderRadius: 3, borderLeft: '5px solid #0284c7', bgcolor: '#f0f9ff' }}>
                       <CardContent>
@@ -530,7 +611,7 @@ const CropHealthAssistant = () => {
                     </Card>
                   </Grid>
 
-                  {/* Card D: Prevention & Monitoring Tips */}
+                  {/* Card E: Prevention & Monitoring Tips */}
                   <Grid item xs={12}>
                     <Card elevation={2} sx={{ borderRadius: 3, borderLeft: '5px solid #8b5cf6' }}>
                       <CardContent>

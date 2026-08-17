@@ -1,0 +1,8 @@
+{
+  "anthracnose": 0,
+  "bacterial_leaf_spot": 1,
+  "cercospora_leaf_spot": 2,
+  "healthy": 3,
+  "leaf_curl_virus": 4,
+  "powdery_mildew": 5
+}
