@@ -1,0 +1,24 @@
+AGRIFLOW 2-STAGE MOBILENETV2 MODEL EVALUATION REPORT: POTATO
+======================================================================
+Accuracy : 55.56%
+Precision: 52.82%
+Recall   : 55.56%
+F1-Score : 53.25%
+ECE      : 19.06%
+
+Confusion Matrix:
+[[1 0 8]
+ [0 9 0]
+ [4 0 5]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+early_blight       0.20      0.11      0.14         9
+     healthy       1.00      1.00      1.00         9
+ late_blight       0.38      0.56      0.45         9
+
+    accuracy                           0.56        27
+   macro avg       0.53      0.56      0.53        27
+weighted avg       0.53      0.56      0.53        27
+

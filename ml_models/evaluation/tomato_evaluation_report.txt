@@ -1,0 +1,38 @@
+AGRIFLOW 2-STAGE MOBILENETV2 MODEL EVALUATION REPORT: TOMATO
+======================================================================
+Accuracy : 21.11%
+Precision: 20.99%
+Recall   : 21.11%
+F1-Score : 18.96%
+ECE      : 23.45%
+
+Confusion Matrix:
+[[2 6 0 0 0 0 0 0 1 0]
+ [4 2 0 1 0 0 0 0 2 0]
+ [0 0 9 0 0 0 0 0 0 0]
+ [5 2 0 1 0 0 0 0 1 0]
+ [0 0 0 0 3 0 0 6 0 0]
+ [0 0 0 0 8 0 0 1 0 0]
+ [2 5 0 0 0 0 0 0 2 0]
+ [0 0 0 0 8 0 0 0 0 1]
+ [4 3 0 0 0 0 0 0 2 0]
+ [0 0 0 0 6 0 0 3 0 0]]
+
+Classification Report:
+                        precision    recall  f1-score   support
+
+        bacterial_spot       0.12      0.22      0.15         9
+          early_blight       0.11      0.22      0.15         9
+               healthy       1.00      1.00      1.00         9
+           late_blight       0.50      0.11      0.18         9
+             leaf_mold       0.12      0.33      0.18         9
+          mosaic_virus       0.00      0.00      0.00         9
+    septoria_leaf_spot       0.00      0.00      0.00         9
+          spider_mites       0.00      0.00      0.00         9
+           target_spot       0.25      0.22      0.24         9
+yellow_leaf_curl_virus       0.00      0.00      0.00         9
+
+              accuracy                           0.21        90
+             macro avg       0.21      0.21      0.19        90
+          weighted avg       0.21      0.21      0.19        90
+

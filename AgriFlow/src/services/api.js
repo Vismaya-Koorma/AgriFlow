@@ -419,5 +419,179 @@ export const getCropHealthHistory = async (params = {}) => {
   return response.data;
 };
 
+// ─── Admin Platform Dashboard APIs ─────────────────────────────────────────
+
+
+
+export const getAdminDashboardSummary = async () => {
+  const response = await api.get('/admin/dashboard/summary/');
+  return response.data;
+};
+
+export const getAdminUsers = async (params = {}) => {
+  let url = '/admin/users/';
+  const qp = new URLSearchParams();
+  if (params.search) qp.append('search', params.search);
+  if (params.role) qp.append('role', params.role);
+  if (params.status) qp.append('status', params.status);
+  if (params.ordering) qp.append('ordering', params.ordering);
+  if (params.page) qp.append('page', params.page);
+  if (params.page_size) qp.append('page_size', params.page_size);
+  if (qp.toString()) url += `?${qp.toString()}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getAdminUserDetail = async (userId) => {
+  const response = await api.get(`/admin/users/${userId}/`);
+  return response.data;
+};
+
+export const createAdminUser = async (userData) => {
+  const response = await api.post('/admin/users/', userData);
+  return response.data;
+};
+
+export const updateAdminUser = async (userId, userData) => {
+  const response = await api.patch(`/admin/users/${userId}/`, userData);
+  return response.data;
+};
+
+export const changeUserRole = async (userId, role) => {
+  const response = await api.patch(`/admin/users/${userId}/change-role/`, { role });
+  return response.data;
+};
+
+export const updateUserStatus = async (userId) => {
+  const response = await api.patch(`/admin/users/${userId}/status/`);
+  return response.data;
+};
+
+export const toggleUserStatus = async (userId) => {
+  const response = await api.patch(`/admin/users/${userId}/toggle-status/`);
+  return response.data;
+};
+
+export const deleteAdminUser = async (userId) => {
+  const response = await api.delete(`/admin/users/${userId}/`);
+  return response.data;
+};
+
+export const getAdminActivityLog = async (params = {}) => {
+  let url = '/admin/activity-log/';
+  const qp = new URLSearchParams();
+  if (params.page) qp.append('page', params.page);
+  if (params.page_size) qp.append('page_size', params.page_size);
+  if (qp.toString()) url += `?${qp.toString()}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getAdminFarmsOverview = async (params = {}) => {
+  let url = '/admin/farms-overview/';
+  const qp = new URLSearchParams();
+  if (params.search) qp.append('search', params.search);
+  if (params.district) qp.append('district', params.district);
+  if (params.crop) qp.append('crop', params.crop);
+  if (qp.toString()) url += `?${qp.toString()}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getSystemHealth = async () => {
+  const response = await api.get('/health/');
+  return response.data;
+};
+
+// ─── WATER RESOURCE MANAGER APIs ─────────────────────────────────────────────
+
+export const getWaterSources = async (params = {}) => {
+  let url = '/water-sources/';
+  const qp = new URLSearchParams();
+  if (params.search) qp.append('search', params.search);
+  if (params.location) qp.append('location', params.location);
+  if (params.source_type) qp.append('source_type', params.source_type);
+  if (params.status) qp.append('status', params.status);
+  if (qp.toString()) url += `?${qp.toString()}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const createWaterSource = async (sourceData) => {
+  const response = await api.post('/water-sources/', sourceData);
+  return response.data;
+};
+
+export const updateWaterSource = async (sourceId, sourceData) => {
+  const response = await api.patch(`/water-sources/${sourceId}/`, sourceData);
+  return response.data;
+};
+
+export const updateWaterLevel = async (sourceId, levelData) => {
+  const response = await api.post(`/water-sources/${sourceId}/update-level/`, levelData);
+  return response.data;
+};
+
+export const getWaterSourceHistory = async (sourceId) => {
+  const response = await api.get(`/water-sources/${sourceId}/history/`);
+  return response.data;
+};
+
+export const getWaterAllocationRequests = async (params = {}) => {
+  let url = '/water-allocation-requests/';
+  const qp = new URLSearchParams();
+  if (params.search) qp.append('search', params.search);
+  if (params.status) qp.append('status', params.status);
+  if (params.priority) qp.append('priority', params.priority);
+  if (qp.toString()) url += `?${qp.toString()}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const createWaterAllocationRequest = async (requestData) => {
+  const response = await api.post('/water-allocation-requests/', requestData);
+  return response.data;
+};
+
+export const approveWaterAllocationRequest = async (requestId, approvalData) => {
+  const response = await api.post(`/water-allocation-requests/${requestId}/approve/`, approvalData);
+  return response.data;
+};
+
+export const rejectWaterAllocationRequest = async (requestId, rejectionData) => {
+  const response = await api.post(`/water-allocation-requests/${requestId}/reject/`, rejectionData);
+  return response.data;
+};
+
+export const getWaterAllocations = async (params = {}) => {
+  let url = '/water-allocations/';
+  const qp = new URLSearchParams();
+  if (params.source) qp.append('source', params.source);
+  if (params.status) qp.append('status', params.status);
+  if (qp.toString()) url += `?${qp.toString()}`;
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getWaterUsages = async () => {
+  const response = await api.get('/water-usages/');
+  return response.data;
+};
+
+export const recordWaterUsage = async (usageData) => {
+  const response = await api.post('/water-usages/', usageData);
+  return response.data;
+};
+
+export const getWaterManagerDashboard = async () => {
+  const response = await api.get('/water-manager/dashboard/');
+  return response.data;
+};
+
+export const getWaterManagerReports = async () => {
+  const response = await api.get('/water-manager/reports/');
+  return response.data;
+};
+
 export default api;
 

@@ -1,0 +1,120 @@
+{
+    "crop": "Paddy / Rice",
+    "crop_key": "rice",
+    "accuracy": 0.5873,
+    "precision": 0.701,
+    "recall": 0.5873,
+    "f1_score": 0.5712,
+    "expected_calibration_error": 0.1219,
+    "confusion_matrix": [
+        [
+            3,
+            0,
+            0,
+            0,
+            0,
+            6,
+            0
+        ],
+        [
+            4,
+            1,
+            0,
+            0,
+            0,
+            4,
+            0
+        ],
+        [
+            0,
+            0,
+            8,
+            0,
+            0,
+            1,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            9,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            0,
+            3,
+            0,
+            6
+        ],
+        [
+            4,
+            0,
+            0,
+            0,
+            0,
+            5,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            8
+        ]
+    ],
+    "class_names": [
+        "bacterial_leaf_blight",
+        "brown_spot",
+        "healthy",
+        "leaf_smut",
+        "rice_blast",
+        "sheath_blight",
+        "tungro"
+    ],
+    "per_class_metrics": {
+        "bacterial_leaf_blight": {
+            "precision": 0.2727,
+            "recall": 0.3333,
+            "f1_score": 0.3
+        },
+        "brown_spot": {
+            "precision": 1.0,
+            "recall": 0.1111,
+            "f1_score": 0.2
+        },
+        "healthy": {
+            "precision": 1.0,
+            "recall": 0.8889,
+            "f1_score": 0.9412
+        },
+        "leaf_smut": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        },
+        "rice_blast": {
+            "precision": 0.75,
+            "recall": 0.3333,
+            "f1_score": 0.4615
+        },
+        "sheath_blight": {
+            "precision": 0.3125,
+            "recall": 0.5556,
+            "f1_score": 0.4
+        },
+        "tungro": {
+            "precision": 0.5714,
+            "recall": 0.8889,
+            "f1_score": 0.6957
+        }
+    }
+}

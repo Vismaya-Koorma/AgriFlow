@@ -1,0 +1,80 @@
+{
+    "crop": "Coconut",
+    "crop_key": "coconut",
+    "accuracy": 0.5556,
+    "precision": 0.4609,
+    "recall": 0.5556,
+    "f1_score": 0.4875,
+    "expected_calibration_error": 0.1618,
+    "confusion_matrix": [
+        [
+            0,
+            2,
+            0,
+            7,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            9,
+            0
+        ],
+        [
+            0,
+            0,
+            9,
+            0,
+            0
+        ],
+        [
+            1,
+            1,
+            0,
+            7,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            0,
+            9
+        ]
+    ],
+    "class_names": [
+        "basal_stem_rot",
+        "bud_rot",
+        "healthy",
+        "leaf_rot",
+        "stem_bleeding"
+    ],
+    "per_class_metrics": {
+        "basal_stem_rot": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
+        },
+        "bud_rot": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
+        },
+        "healthy": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        },
+        "leaf_rot": {
+            "precision": 0.3043,
+            "recall": 0.7778,
+            "f1_score": 0.4375
+        },
+        "stem_bleeding": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        }
+    }
+}

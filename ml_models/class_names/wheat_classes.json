@@ -1,0 +1,8 @@
+{
+  "healthy": 0,
+  "leaf_rust": 1,
+  "powdery_mildew": 2,
+  "septoria_leaf_blotch": 3,
+  "stem_rust": 4,
+  "stripe_rust": 5
+}

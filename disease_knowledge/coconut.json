@@ -1,0 +1,213 @@
+{
+    "crop": "Coconut",
+    "diseases": {
+        "bud_rot": {
+            "disease": "Coconut Bud Rot",
+            "scientific_name": "Phytophthora palmivora",
+            "symptoms": [
+                "Discoloration and rotting of the central spear leaf",
+                "Spear leaf turns pale yellow, withers, and dries up",
+                "Foul odor emanating from the infected central spindle tissue",
+                "Spear leaf easily pulls out from the crown upon gentle tugging",
+                "Progressive collapse of young surrounding fronds"
+            ],
+            "causes": [
+                "Fungal pathogen Phytophthora palmivora",
+                "High relative humidity (>90%) and continuous rainfall during monsoon",
+                "Waterlogging around coconut palm root zone"
+            ],
+            "prevention": [
+                "1. Provide proper field drainage to prevent water stagnation",
+                "2. Maintain adequate spacing (7.5m x 7.5m) between palms",
+                "3. Perform pre-monsoon prophylactic spray of 1% Bordeaux mixture on palm crown"
+            ],
+            "control_measures": [
+                "1. Remove infected spindle leaves and clean affected crown tissue",
+                "2. Apply 1% Bordeaux paste to cleaned crown area",
+                "3. Protect cleaned crown with polythene cover during rain",
+                "4. Apply recommended bio-fungicide Trichoderma viride paste for early infections"
+            ],
+            "cultural_practices": [
+                "Clean palm crowns annually before southwest monsoon onset",
+                "Remove and burn dead trees to eliminate inoculum source"
+            ],
+            "water_management": [
+                "Ensure proper drainage channels in coconut gardens during heavy monsoons",
+                "Avoid drip or overhead irrigation hitting palm crowns"
+            ],
+            "nutrient_management": [
+                "Apply recommended NPK (500g N, 320g P2O5, 1200g K2O per palm/year)",
+                "Apply 50kg organic manure or compost per palm annually"
+            ],
+            "severity_indicators": [
+                "Mild: Spear leaf yellowing",
+                "Moderate: Spear leaf rotting with foul smell",
+                "Severe: Crown collapse and tree mortality"
+            ],
+            "source": [
+                "Coconut Development Board (CDB), Government of India",
+                "Kerala Agricultural University (KAU) Adhoc Package of Practices for Coconut"
+            ]
+        },
+        "leaf_rot": {
+            "disease": "Coconut Leaf Rot",
+            "scientific_name": "Bipolaris halodes / Colletotrichum gloeosporioides",
+            "symptoms": [
+                "Dark brown necrotic lesions on distal leaflets of young fronds",
+                "Affected leaflets dry up, shrivel, and tear into ragged fan-like shapes",
+                "Sunken necrotic spots along leaflet margins",
+                "Foliage appears burnt or shredded in upper crown"
+            ],
+            "causes": [
+                "Secondary fungal infection (Bipolaris halodes, Colletotrichum gloeosporioides) following Rhynchophorus or Phytophthora damage",
+                "Prolonged humid weather and high rainfall"
+            ],
+            "prevention": [
+                "1. Regular crown sanitation and removal of rotten leaflet parts",
+                "2. Apply prophylactic crown treatment before monsoon season"
+            ],
+            "control_measures": [
+                "1. Cut away severely affected rot-damaged leaf tips and burn them",
+                "2. Spray 1% Bordeaux mixture or 0.2% Mancozeb on affected central leaves",
+                "3. Apply bio-control agent Pseudomonas fluorescens (50g in 500ml water) into leaf axils"
+            ],
+            "cultural_practices": [
+                "Remove rotten leaflets during regular palm maintenance",
+                "Maintain optimal plant health through balanced fertilization"
+            ],
+            "water_management": [
+                "Maintain consistent root zone soil moisture without waterlogging"
+            ],
+            "nutrient_management": [
+                "Apply 1kg Magnesium Sulphate per palm annually for leaf health",
+                "Ensure adequate Potassium supply to improve disease tolerance"
+            ],
+            "severity_indicators": [
+                "Mild: Tip necrosis on 1-2 fronds",
+                "Moderate: Shredded leaflets on multiple upper fronds",
+                "Severe: Extensive leaf area destruction across crown"
+            ],
+            "source": [
+                "ICAR - Central Plantation Crops Research Institute (CPCRI), Kasaragod",
+                "Kerala Agricultural University (KAU) Plant Pathology Advisory"
+            ]
+        },
+        "gray_leaf_spot": {
+            "disease": "Coconut Gray Leaf Spot",
+            "scientific_name": "Pestalotiopsis palmarum",
+            "symptoms": [
+                "Yellowish-brown spots on older fronds that turn gray with dark brown borders",
+                "Minute black fruiting bodies (acervuli) visible on gray spots",
+                "Premature drying and blighting of outer leaf fronds"
+            ],
+            "causes": [
+                "Pestalotiopsis palmarum fungal pathogen",
+                "Potash deficiency in soil predisposes palms to infection"
+            ],
+            "prevention": [
+                "1. Maintain adequate Potash fertilization",
+                "2. Prune heavily infected lower leaves and destroy them"
+            ],
+            "control_measures": [
+                "1. Remove severely blighted lower leaves",
+                "2. Spray 1% Bordeaux mixture or 0.25% Copper Oxychloride on foliage"
+            ],
+            "cultural_practices": [
+                "Keep coconut basin clean and free of weed competition"
+            ],
+            "water_management": [
+                "Irrigate during dry summer months (45-50 liters/palm/day)"
+            ],
+            "nutrient_management": [
+                "Apply additional 500g Muriate of Potash (MOP) per palm in deficient soils"
+            ],
+            "severity_indicators": [
+                "Mild: Spots on lowest 1-2 fronds",
+                "Severe: Extensive outer frond blighting"
+            ],
+            "source": [
+                "ICAR - CPCRI Kasaragod Coconut Disease Management Guide",
+                "Tamil Nadu Agricultural University (TNAU) Agritech Portal"
+            ]
+        },
+        "stem_bleeding": {
+            "disease": "Coconut Stem Bleeding",
+            "scientific_name": "Thielaviopsis paradoxa",
+            "symptoms": [
+                "Exudation of dark reddish-brown liquid from bark cracks on stem base",
+                "Exuded fluid dries into black sticky patches",
+                "Internal fibrous stem tissues decay into dark spongy mass",
+                "Crown foliage turns yellow and nut yield drops significantly"
+            ],
+            "causes": [
+                "Fungal pathogen Thielaviopsis paradoxa entering through stem wounds or growth cracks",
+                "Soil moisture fluctuations and heavy soil texture"
+            ],
+            "prevention": [
+                "1. Avoid mechanical damage or wounds to coconut stem during weeding/harvest",
+                "2. Maintain organic mulching around coconut basin"
+            ],
+            "control_measures": [
+                "1. Chisel out infected diseased bark tissue cleanly",
+                "2. Apply Coal Tar or 5% Calixin/Bordeaux paste to chiseled stem area",
+                "3. Root feed with 2% Carbendazim (100ml water) twice a year"
+            ],
+            "cultural_practices": [
+                "Apply neem cake (5kg/palm/year) in soil basin"
+            ],
+            "water_management": [
+                "Avoid waterlogging at stem base during rainy season"
+            ],
+            "nutrient_management": [
+                "Apply balanced NPK + Organic manure (50kg/palm)"
+            ],
+            "severity_indicators": [
+                "Mild: Single bleeding spot on lower trunk",
+                "Severe: Multiple bleeding lesions extending up stem"
+            ],
+            "source": [
+                "Coconut Development Board (CDB) Disease Management Bulletin",
+                "ICAR - CPCRI Stem Bleeding Extension Leaflet"
+            ]
+        },
+        "bud_root_dropping": {
+            "disease": "Coconut Button Shedding / Root Rot",
+            "scientific_name": "Physiological / Phytophthora sp.",
+            "symptoms": [
+                "Premature shedding of buttons and immature nuts",
+                "Decay of root tips and reduced absorption",
+                "Inflorescence drying and yellow frond tips"
+            ],
+            "causes": [
+                "Severe soil moisture stress or sudden waterlogging",
+                "Nutrient deficiency (Boron / Potassium)",
+                "Fungal root decay"
+            ],
+            "prevention": [
+                "1. Maintain regular summer irrigation and winter basin mulching",
+                "2. Apply Borax (50g/palm/year) to prevent button shedding"
+            ],
+            "control_measures": [
+                "1. Apply 50g Borax in basin along with organic manure",
+                "2. Ensure proper soil drainage and apply Trichoderma enriched compost"
+            ],
+            "cultural_practices": [
+                "Mulch basin with green leaves or coconut husk"
+            ],
+            "water_management": [
+                "Drip irrigation 30-40 liters/palm/day"
+            ],
+            "nutrient_management": [
+                "Apply micronutrients (Boron 50g, Zinc 100g per palm)"
+            ],
+            "severity_indicators": [
+                "Mild: <20% button drop",
+                "Severe: >60% button and nut drop"
+            ],
+            "source": [
+                "TNAU Agritech Portal Coconut Production Guide",
+                "KAU Package of Practices for Crops"
+            ]
+        }
+    }
+}

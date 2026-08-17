@@ -1,0 +1,30 @@
+AGRIFLOW 2-STAGE MOBILENETV2 MODEL EVALUATION REPORT: WHEAT
+======================================================================
+Accuracy : 55.56%
+Precision: 55.51%
+Recall   : 55.56%
+F1-Score : 51.18%
+ECE      : 8.76%
+
+Confusion Matrix:
+[[9 0 0 0 0 0]
+ [0 7 0 0 1 1]
+ [0 9 0 0 0 0]
+ [0 0 0 9 0 0]
+ [0 6 0 0 1 2]
+ [0 5 0 0 0 4]]
+
+Classification Report:
+                      precision    recall  f1-score   support
+
+             healthy       1.00      1.00      1.00         9
+           leaf_rust       0.26      0.78      0.39         9
+      powdery_mildew       0.00      0.00      0.00         9
+septoria_leaf_blotch       1.00      1.00      1.00         9
+           stem_rust       0.50      0.11      0.18         9
+         stripe_rust       0.57      0.44      0.50         9
+
+            accuracy                           0.56        54
+           macro avg       0.56      0.56      0.51        54
+        weighted avg       0.56      0.56      0.51        54
+

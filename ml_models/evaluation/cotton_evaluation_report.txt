@@ -1,0 +1,28 @@
+AGRIFLOW 2-STAGE MOBILENETV2 MODEL EVALUATION REPORT: COTTON
+======================================================================
+Accuracy : 57.78%
+Precision: 52.03%
+Recall   : 57.78%
+F1-Score : 53.57%
+ECE      : 15.03%
+
+Confusion Matrix:
+[[2 6 1 0 0]
+ [3 6 0 0 0]
+ [2 7 0 0 0]
+ [0 0 0 9 0]
+ [0 0 0 0 9]]
+
+Classification Report:
+                      precision    recall  f1-score   support
+
+alternaria_leaf_spot       0.29      0.22      0.25         9
+    bacterial_blight       0.32      0.67      0.43         9
+cercospora_leaf_spot       0.00      0.00      0.00         9
+             healthy       1.00      1.00      1.00         9
+     leaf_curl_virus       1.00      1.00      1.00         9
+
+            accuracy                           0.58        45
+           macro avg       0.52      0.58      0.54        45
+        weighted avg       0.52      0.58      0.54        45
+

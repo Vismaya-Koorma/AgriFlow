@@ -1,0 +1,1045 @@
+{
+    "tomato": {
+        "crop": "Tomato",
+        "crop_key": "tomato",
+        "accuracy": 0.2111,
+        "precision": 0.2099,
+        "recall": 0.2111,
+        "f1_score": 0.1896,
+        "expected_calibration_error": 0.2345,
+        "confusion_matrix": [
+            [
+                2,
+                6,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0
+            ],
+            [
+                4,
+                2,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                0
+            ],
+            [
+                0,
+                0,
+                9,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                5,
+                2,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                3,
+                0,
+                0,
+                6,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                8,
+                0,
+                0,
+                1,
+                0,
+                0
+            ],
+            [
+                2,
+                5,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                8,
+                0,
+                0,
+                0,
+                0,
+                1
+            ],
+            [
+                4,
+                3,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                6,
+                0,
+                0,
+                3,
+                0,
+                0
+            ]
+        ],
+        "class_names": [
+            "bacterial_spot",
+            "early_blight",
+            "healthy",
+            "late_blight",
+            "leaf_mold",
+            "mosaic_virus",
+            "septoria_leaf_spot",
+            "spider_mites",
+            "target_spot",
+            "yellow_leaf_curl_virus"
+        ],
+        "per_class_metrics": {
+            "bacterial_spot": {
+                "precision": 0.1176,
+                "recall": 0.2222,
+                "f1_score": 0.1538
+            },
+            "early_blight": {
+                "precision": 0.1111,
+                "recall": 0.2222,
+                "f1_score": 0.1481
+            },
+            "healthy": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "late_blight": {
+                "precision": 0.5,
+                "recall": 0.1111,
+                "f1_score": 0.1818
+            },
+            "leaf_mold": {
+                "precision": 0.12,
+                "recall": 0.3333,
+                "f1_score": 0.1765
+            },
+            "mosaic_virus": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1_score": 0.0
+            },
+            "septoria_leaf_spot": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1_score": 0.0
+            },
+            "spider_mites": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1_score": 0.0
+            },
+            "target_spot": {
+                "precision": 0.25,
+                "recall": 0.2222,
+                "f1_score": 0.2353
+            },
+            "yellow_leaf_curl_virus": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1_score": 0.0
+            }
+        }
+    },
+    "rice": {
+        "crop": "Paddy / Rice",
+        "crop_key": "rice",
+        "accuracy": 0.5873,
+        "precision": 0.701,
+        "recall": 0.5873,
+        "f1_score": 0.5712,
+        "expected_calibration_error": 0.1219,
+        "confusion_matrix": [
+            [
+                3,
+                0,
+                0,
+                0,
+                0,
+                6,
+                0
+            ],
+            [
+                4,
+                1,
+                0,
+                0,
+                0,
+                4,
+                0
+            ],
+            [
+                0,
+                0,
+                8,
+                0,
+                0,
+                1,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                9,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                3,
+                0,
+                6
+            ],
+            [
+                4,
+                0,
+                0,
+                0,
+                0,
+                5,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                8
+            ]
+        ],
+        "class_names": [
+            "bacterial_leaf_blight",
+            "brown_spot",
+            "healthy",
+            "leaf_smut",
+            "rice_blast",
+            "sheath_blight",
+            "tungro"
+        ],
+        "per_class_metrics": {
+            "bacterial_leaf_blight": {
+                "precision": 0.2727,
+                "recall": 0.3333,
+                "f1_score": 0.3
+            },
+            "brown_spot": {
+                "precision": 1.0,
+                "recall": 0.1111,
+                "f1_score": 0.2
+            },
+            "healthy": {
+                "precision": 1.0,
+                "recall": 0.8889,
+                "f1_score": 0.9412
+            },
+            "leaf_smut": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "rice_blast": {
+                "precision": 0.75,
+                "recall": 0.3333,
+                "f1_score": 0.4615
+            },
+            "sheath_blight": {
+                "precision": 0.3125,
+                "recall": 0.5556,
+                "f1_score": 0.4
+            },
+            "tungro": {
+                "precision": 0.5714,
+                "recall": 0.8889,
+                "f1_score": 0.6957
+            }
+        }
+    },
+    "maize": {
+        "crop": "Maize",
+        "crop_key": "maize",
+        "accuracy": 0.6667,
+        "precision": 0.6424,
+        "recall": 0.6667,
+        "f1_score": 0.646,
+        "expected_calibration_error": 0.1391,
+        "confusion_matrix": [
+            [
+                9,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                6,
+                0,
+                1,
+                2
+            ],
+            [
+                0,
+                0,
+                9,
+                0,
+                0
+            ],
+            [
+                0,
+                3,
+                0,
+                5,
+                1
+            ],
+            [
+                0,
+                2,
+                0,
+                6,
+                1
+            ]
+        ],
+        "class_names": [
+            "common_rust",
+            "gray_leaf_spot",
+            "healthy",
+            "maize_leaf_blight",
+            "northern_corn_leaf_blight"
+        ],
+        "per_class_metrics": {
+            "common_rust": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "gray_leaf_spot": {
+                "precision": 0.5455,
+                "recall": 0.6667,
+                "f1_score": 0.6
+            },
+            "healthy": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "maize_leaf_blight": {
+                "precision": 0.4167,
+                "recall": 0.5556,
+                "f1_score": 0.4762
+            },
+            "northern_corn_leaf_blight": {
+                "precision": 0.25,
+                "recall": 0.1111,
+                "f1_score": 0.1538
+            }
+        }
+    },
+    "potato": {
+        "crop": "Potato",
+        "crop_key": "potato",
+        "accuracy": 0.5556,
+        "precision": 0.5282,
+        "recall": 0.5556,
+        "f1_score": 0.5325,
+        "expected_calibration_error": 0.1906,
+        "confusion_matrix": [
+            [
+                1,
+                0,
+                8
+            ],
+            [
+                0,
+                9,
+                0
+            ],
+            [
+                4,
+                0,
+                5
+            ]
+        ],
+        "class_names": [
+            "early_blight",
+            "healthy",
+            "late_blight"
+        ],
+        "per_class_metrics": {
+            "early_blight": {
+                "precision": 0.2,
+                "recall": 0.1111,
+                "f1_score": 0.1429
+            },
+            "healthy": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "late_blight": {
+                "precision": 0.3846,
+                "recall": 0.5556,
+                "f1_score": 0.4545
+            }
+        }
+    },
+    "apple": {
+        "crop": "Apple",
+        "crop_key": "apple",
+        "accuracy": 0.9444,
+        "precision": 0.9545,
+        "recall": 0.9444,
+        "f1_score": 0.9438,
+        "expected_calibration_error": 0.0447,
+        "confusion_matrix": [
+            [
+                9,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                9,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                9,
+                0
+            ],
+            [
+                0,
+                2,
+                0,
+                7
+            ]
+        ],
+        "class_names": [
+            "apple_scab",
+            "black_rot",
+            "cedar_apple_rust",
+            "healthy"
+        ],
+        "per_class_metrics": {
+            "apple_scab": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "black_rot": {
+                "precision": 0.8182,
+                "recall": 1.0,
+                "f1_score": 0.9
+            },
+            "cedar_apple_rust": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "healthy": {
+                "precision": 1.0,
+                "recall": 0.7778,
+                "f1_score": 0.875
+            }
+        }
+    },
+    "banana": {
+        "crop": "Banana",
+        "crop_key": "banana",
+        "accuracy": 0.6,
+        "precision": 0.5349,
+        "recall": 0.6,
+        "f1_score": 0.5537,
+        "expected_calibration_error": 0.1439,
+        "confusion_matrix": [
+            [
+                7,
+                0,
+                0,
+                0,
+                2
+            ],
+            [
+                6,
+                0,
+                0,
+                0,
+                3
+            ],
+            [
+                0,
+                0,
+                9,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                9,
+                0
+            ],
+            [
+                5,
+                2,
+                0,
+                0,
+                2
+            ]
+        ],
+        "class_names": [
+            "black_sigatoka",
+            "bunchy_top",
+            "cordana_leaf_spot",
+            "healthy",
+            "panama_disease"
+        ],
+        "per_class_metrics": {
+            "black_sigatoka": {
+                "precision": 0.3889,
+                "recall": 0.7778,
+                "f1_score": 0.5185
+            },
+            "bunchy_top": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1_score": 0.0
+            },
+            "cordana_leaf_spot": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "healthy": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "panama_disease": {
+                "precision": 0.2857,
+                "recall": 0.2222,
+                "f1_score": 0.25
+            }
+        }
+    },
+    "cotton": {
+        "crop": "Cotton",
+        "crop_key": "cotton",
+        "accuracy": 0.5778,
+        "precision": 0.5203,
+        "recall": 0.5778,
+        "f1_score": 0.5357,
+        "expected_calibration_error": 0.1503,
+        "confusion_matrix": [
+            [
+                2,
+                6,
+                1,
+                0,
+                0
+            ],
+            [
+                3,
+                6,
+                0,
+                0,
+                0
+            ],
+            [
+                2,
+                7,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                9,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                9
+            ]
+        ],
+        "class_names": [
+            "alternaria_leaf_spot",
+            "bacterial_blight",
+            "cercospora_leaf_spot",
+            "healthy",
+            "leaf_curl_virus"
+        ],
+        "per_class_metrics": {
+            "alternaria_leaf_spot": {
+                "precision": 0.2857,
+                "recall": 0.2222,
+                "f1_score": 0.25
+            },
+            "bacterial_blight": {
+                "precision": 0.3158,
+                "recall": 0.6667,
+                "f1_score": 0.4286
+            },
+            "cercospora_leaf_spot": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1_score": 0.0
+            },
+            "healthy": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "leaf_curl_virus": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            }
+        }
+    },
+    "wheat": {
+        "crop": "Wheat",
+        "crop_key": "wheat",
+        "accuracy": 0.5556,
+        "precision": 0.5551,
+        "recall": 0.5556,
+        "f1_score": 0.5118,
+        "expected_calibration_error": 0.0876,
+        "confusion_matrix": [
+            [
+                9,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                7,
+                0,
+                0,
+                1,
+                1
+            ],
+            [
+                0,
+                9,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                9,
+                0,
+                0
+            ],
+            [
+                0,
+                6,
+                0,
+                0,
+                1,
+                2
+            ],
+            [
+                0,
+                5,
+                0,
+                0,
+                0,
+                4
+            ]
+        ],
+        "class_names": [
+            "healthy",
+            "leaf_rust",
+            "powdery_mildew",
+            "septoria_leaf_blotch",
+            "stem_rust",
+            "stripe_rust"
+        ],
+        "per_class_metrics": {
+            "healthy": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "leaf_rust": {
+                "precision": 0.2593,
+                "recall": 0.7778,
+                "f1_score": 0.3889
+            },
+            "powdery_mildew": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1_score": 0.0
+            },
+            "septoria_leaf_blotch": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "stem_rust": {
+                "precision": 0.5,
+                "recall": 0.1111,
+                "f1_score": 0.1818
+            },
+            "stripe_rust": {
+                "precision": 0.5714,
+                "recall": 0.4444,
+                "f1_score": 0.5
+            }
+        }
+    },
+    "chilli": {
+        "crop": "Chilli",
+        "crop_key": "chilli",
+        "accuracy": 0.6852,
+        "precision": 0.6811,
+        "recall": 0.6852,
+        "f1_score": 0.6752,
+        "expected_calibration_error": 0.1621,
+        "confusion_matrix": [
+            [
+                5,
+                0,
+                0,
+                0,
+                4,
+                0
+            ],
+            [
+                0,
+                2,
+                7,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                3,
+                6,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                9,
+                0,
+                0
+            ],
+            [
+                3,
+                0,
+                0,
+                0,
+                6,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                9
+            ]
+        ],
+        "class_names": [
+            "anthracnose",
+            "bacterial_leaf_spot",
+            "cercospora_leaf_spot",
+            "healthy",
+            "leaf_curl_virus",
+            "powdery_mildew"
+        ],
+        "per_class_metrics": {
+            "anthracnose": {
+                "precision": 0.625,
+                "recall": 0.5556,
+                "f1_score": 0.5882
+            },
+            "bacterial_leaf_spot": {
+                "precision": 0.4,
+                "recall": 0.2222,
+                "f1_score": 0.2857
+            },
+            "cercospora_leaf_spot": {
+                "precision": 0.4615,
+                "recall": 0.6667,
+                "f1_score": 0.5455
+            },
+            "healthy": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "leaf_curl_virus": {
+                "precision": 0.6,
+                "recall": 0.6667,
+                "f1_score": 0.6316
+            },
+            "powdery_mildew": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            }
+        }
+    },
+    "coconut": {
+        "crop": "Coconut",
+        "crop_key": "coconut",
+        "accuracy": 0.5556,
+        "precision": 0.4609,
+        "recall": 0.5556,
+        "f1_score": 0.4875,
+        "expected_calibration_error": 0.1618,
+        "confusion_matrix": [
+            [
+                0,
+                2,
+                0,
+                7,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                9,
+                0
+            ],
+            [
+                0,
+                0,
+                9,
+                0,
+                0
+            ],
+            [
+                1,
+                1,
+                0,
+                7,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                9
+            ]
+        ],
+        "class_names": [
+            "basal_stem_rot",
+            "bud_rot",
+            "healthy",
+            "leaf_rot",
+            "stem_bleeding"
+        ],
+        "per_class_metrics": {
+            "basal_stem_rot": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1_score": 0.0
+            },
+            "bud_rot": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1_score": 0.0
+            },
+            "healthy": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "leaf_rot": {
+                "precision": 0.3043,
+                "recall": 0.7778,
+                "f1_score": 0.4375
+            },
+            "stem_bleeding": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            }
+        }
+    },
+    "sugarcane": {
+        "crop": "Sugarcane",
+        "crop_key": "sugarcane",
+        "accuracy": 0.7222,
+        "precision": 0.6526,
+        "recall": 0.7222,
+        "f1_score": 0.6609,
+        "expected_calibration_error": 0.1961,
+        "confusion_matrix": [
+            [
+                9,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                8,
+                1,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                5,
+                4,
+                0,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                9,
+                0,
+                0
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                9
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                9
+            ]
+        ],
+        "class_names": [
+            "healthy",
+            "leaf_scald",
+            "mosaic",
+            "red_rot",
+            "rust",
+            "smut"
+        ],
+        "per_class_metrics": {
+            "healthy": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "leaf_scald": {
+                "precision": 0.6154,
+                "recall": 0.8889,
+                "f1_score": 0.7273
+            },
+            "mosaic": {
+                "precision": 0.8,
+                "recall": 0.4444,
+                "f1_score": 0.5714
+            },
+            "red_rot": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1_score": 1.0
+            },
+            "rust": {
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1_score": 0.0
+            },
+            "smut": {
+                "precision": 0.5,
+                "recall": 1.0,
+                "f1_score": 0.6667
+            }
+        }
+    }
+}

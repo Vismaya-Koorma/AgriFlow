@@ -1,0 +1,7 @@
+{
+  "basal_stem_rot": 0,
+  "bud_rot": 1,
+  "healthy": 2,
+  "leaf_rot": 3,
+  "stem_bleeding": 4
+}

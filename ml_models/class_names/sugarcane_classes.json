@@ -1,0 +1,8 @@
+{
+  "healthy": 0,
+  "leaf_scald": 1,
+  "mosaic": 2,
+  "red_rot": 3,
+  "rust": 4,
+  "smut": 5
+}

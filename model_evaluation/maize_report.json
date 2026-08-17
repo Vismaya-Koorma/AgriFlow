@@ -1,0 +1,80 @@
+{
+    "crop": "Maize",
+    "crop_key": "maize",
+    "accuracy": 0.6667,
+    "precision": 0.6424,
+    "recall": 0.6667,
+    "f1_score": 0.646,
+    "expected_calibration_error": 0.1391,
+    "confusion_matrix": [
+        [
+            9,
+            0,
+            0,
+            0,
+            0
+        ],
+        [
+            0,
+            6,
+            0,
+            1,
+            2
+        ],
+        [
+            0,
+            0,
+            9,
+            0,
+            0
+        ],
+        [
+            0,
+            3,
+            0,
+            5,
+            1
+        ],
+        [
+            0,
+            2,
+            0,
+            6,
+            1
+        ]
+    ],
+    "class_names": [
+        "common_rust",
+        "gray_leaf_spot",
+        "healthy",
+        "maize_leaf_blight",
+        "northern_corn_leaf_blight"
+    ],
+    "per_class_metrics": {
+        "common_rust": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        },
+        "gray_leaf_spot": {
+            "precision": 0.5455,
+            "recall": 0.6667,
+            "f1_score": 0.6
+        },
+        "healthy": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        },
+        "maize_leaf_blight": {
+            "precision": 0.4167,
+            "recall": 0.5556,
+            "f1_score": 0.4762
+        },
+        "northern_corn_leaf_blight": {
+            "precision": 0.25,
+            "recall": 0.1111,
+            "f1_score": 0.1538
+        }
+    }
+}

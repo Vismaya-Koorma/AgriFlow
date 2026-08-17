@@ -1,0 +1,76 @@
+{
+    "crop": "Maize",
+    "diseases": {
+        "healthy": {
+            "disease": "Maize Healthy",
+            "scientific_name": "N/A",
+            "symptoms": [
+                "Vigorous leaf growth",
+                "Uniform green foliage",
+                "No visible necrotic or chlorotic lesions"
+            ],
+            "causes": [
+                "Optimal crop care"
+            ],
+            "prevention": [
+                "Maintain balanced fertilization and regular monitoring"
+            ],
+            "control_measures": [
+                "No chemical treatment required"
+            ],
+            "cultural_practices": [
+                "Field sanitation and proper crop spacing"
+            ],
+            "water_management": [
+                "Maintain adequate moisture according to growth stage"
+            ],
+            "nutrient_management": [
+                "Apply recommended NPK fertilizers"
+            ],
+            "severity_indicators": [
+                "Healthy crop"
+            ],
+            "source": [
+                "ICAR Crop Management Guidelines",
+                "State Agricultural University"
+            ]
+        },
+        "foliar_disease": {
+            "disease": "Maize Leaf Spot / Blight",
+            "scientific_name": "Pathogen sp. affecting maize",
+            "symptoms": [
+                "Leaf spots and chlorotic yellowing on maize foliage",
+                "Reduced photosynthetic leaf area"
+            ],
+            "causes": [
+                "Fungal or bacterial foliar pathogen",
+                "High relative humidity and leaf wetness"
+            ],
+            "prevention": [
+                "1. Use certified disease-resistant seeds for maize",
+                "2. Maintain recommended plant density"
+            ],
+            "control_measures": [
+                "1. Apply recommended bio-fungicide (Trichoderma/Pseudomonas)",
+                "2. Spray bio-fungicide or Copper Oxychloride upon symptom onset"
+            ],
+            "cultural_practices": [
+                "Remove and burn infected crop debris"
+            ],
+            "water_management": [
+                "Avoid leaf wetness via root-zone irrigation"
+            ],
+            "nutrient_management": [
+                "Ensure adequate Potash and micronutrient balance"
+            ],
+            "severity_indicators": [
+                "Mild: Isolated leaf lesions",
+                "Severe: Extensive foliar blight"
+            ],
+            "source": [
+                "ICAR Research Advisory",
+                "TNAU / KAU Extension Leaflet"
+            ]
+        }
+    }
+}

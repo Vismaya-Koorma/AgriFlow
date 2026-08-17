@@ -1,0 +1,26 @@
+AGRIFLOW 2-STAGE MOBILENETV2 MODEL EVALUATION REPORT: APPLE
+======================================================================
+Accuracy : 94.44%
+Precision: 95.45%
+Recall   : 94.44%
+F1-Score : 94.38%
+ECE      : 4.47%
+
+Confusion Matrix:
+[[9 0 0 0]
+ [0 9 0 0]
+ [0 0 9 0]
+ [0 2 0 7]]
+
+Classification Report:
+                  precision    recall  f1-score   support
+
+      apple_scab       1.00      1.00      1.00         9
+       black_rot       0.82      1.00      0.90         9
+cedar_apple_rust       1.00      1.00      1.00         9
+         healthy       1.00      0.78      0.88         9
+
+        accuracy                           0.94        36
+       macro avg       0.95      0.94      0.94        36
+    weighted avg       0.95      0.94      0.94        36
+

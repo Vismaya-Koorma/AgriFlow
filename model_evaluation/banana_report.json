@@ -1,0 +1,80 @@
+{
+    "crop": "Banana",
+    "crop_key": "banana",
+    "accuracy": 0.6,
+    "precision": 0.5349,
+    "recall": 0.6,
+    "f1_score": 0.5537,
+    "expected_calibration_error": 0.1439,
+    "confusion_matrix": [
+        [
+            7,
+            0,
+            0,
+            0,
+            2
+        ],
+        [
+            6,
+            0,
+            0,
+            0,
+            3
+        ],
+        [
+            0,
+            0,
+            9,
+            0,
+            0
+        ],
+        [
+            0,
+            0,
+            0,
+            9,
+            0
+        ],
+        [
+            5,
+            2,
+            0,
+            0,
+            2
+        ]
+    ],
+    "class_names": [
+        "black_sigatoka",
+        "bunchy_top",
+        "cordana_leaf_spot",
+        "healthy",
+        "panama_disease"
+    ],
+    "per_class_metrics": {
+        "black_sigatoka": {
+            "precision": 0.3889,
+            "recall": 0.7778,
+            "f1_score": 0.5185
+        },
+        "bunchy_top": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0
+        },
+        "cordana_leaf_spot": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        },
+        "healthy": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0
+        },
+        "panama_disease": {
+            "precision": 0.2857,
+            "recall": 0.2222,
+            "f1_score": 0.25
+        }
+    }
+}

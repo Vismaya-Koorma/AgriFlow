@@ -1,0 +1,28 @@
+AGRIFLOW 2-STAGE MOBILENETV2 MODEL EVALUATION REPORT: BANANA
+======================================================================
+Accuracy : 60.00%
+Precision: 53.49%
+Recall   : 60.00%
+F1-Score : 55.37%
+ECE      : 14.39%
+
+Confusion Matrix:
+[[7 0 0 0 2]
+ [6 0 0 0 3]
+ [0 0 9 0 0]
+ [0 0 0 9 0]
+ [5 2 0 0 2]]
+
+Classification Report:
+                   precision    recall  f1-score   support
+
+   black_sigatoka       0.39      0.78      0.52         9
+       bunchy_top       0.00      0.00      0.00         9
+cordana_leaf_spot       1.00      1.00      1.00         9
+          healthy       1.00      1.00      1.00         9
+   panama_disease       0.29      0.22      0.25         9
+
+         accuracy                           0.60        45
+        macro avg       0.53      0.60      0.55        45
+     weighted avg       0.53      0.60      0.55        45
+
