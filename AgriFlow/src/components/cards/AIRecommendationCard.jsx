@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Card, Typography, Chip, CircularProgress, Alert, Divider, Grid,
-  LinearProgress, Tooltip
+  LinearProgress, Tooltip, Stack
 } from '@mui/material';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import OpacityIcon from '@mui/icons-material/Opacity';
@@ -87,14 +87,22 @@ const AIRecommendationCard = ({ fieldId = null, farmId = null, refreshTrigger = 
     );
   }
 
-  const stress = stressConfig[data.crop_stress] || stressConfig.Low;
+  const priorityConfig = {
+    LOW: { label: 'LOW PRIORITY', color: '#16a34a', bg: '#dcfce7' },
+    MEDIUM: { label: 'MEDIUM PRIORITY', color: '#d97706', bg: '#fef3c7' },
+    HIGH: { label: 'HIGH PRIORITY', color: '#dc2626', bg: '#fee2e2' },
+  };
+
+  const priorityInfo = priorityConfig[data?.priority] || (data?.irrigation_needed ? priorityConfig.MEDIUM : priorityConfig.LOW);
+  const stress = stressConfig[data?.crop_stress] || stressConfig.Low;
+  const confidenceVal = Number(data?.confidence ?? 85);
 
   return (
     <Card elevation={0} sx={{
       p: 3, borderRadius: '16px',
       border: '1px solid',
-      borderColor: data.irrigation_needed ? '#c7d2fe' : '#d1fae5',
-      background: data.irrigation_needed
+      borderColor: data?.irrigation_needed ? '#c7d2fe' : '#d1fae5',
+      background: data?.irrigation_needed
         ? 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)'
         : 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
     }}>
@@ -108,101 +116,126 @@ const AIRecommendationCard = ({ fieldId = null, farmId = null, refreshTrigger = 
             AI Irrigation Recommendation
           </Typography>
         </Box>
-        <Chip
-          label={`${data.confidence}% Confidence`}
-          size="small"
-          sx={{ bgcolor: '#6366f1', color: '#fff', fontWeight: 700, fontSize: '0.72rem' }}
-        />
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Chip
+            label={priorityInfo.label}
+            size="small"
+            sx={{ bgcolor: priorityInfo.bg, color: priorityInfo.color, fontWeight: 800, fontSize: '0.72rem', border: `1px solid ${priorityInfo.color}33` }}
+          />
+          <Chip
+            label={`${confidenceVal}% Confidence`}
+            size="small"
+            sx={{ bgcolor: '#6366f1', color: '#fff', fontWeight: 700, fontSize: '0.72rem' }}
+          />
+        </Stack>
       </Box>
 
       {/* Location label */}
       {data.field_name && (
         <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, mb: 2, display: 'block' }}>
-          📍 {data.field_name}{data.location ? ` — ${data.location}` : ''}
+          📍 {data.field_name}{data.location ? ` — ${data.location}` : ''} ({data.crop_name || 'Crop'} • {data.crop_stage || 'Growth Stage'})
         </Typography>
       )}
 
       {/* Recommendation Banner */}
       <Box sx={{
-        display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, borderRadius: '12px',
-        bgcolor: data.irrigation_needed ? '#4f46e5' : '#16a34a', mb: 2
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderRadius: '14px',
+        bgcolor: data.irrigation_needed ? '#4f46e5' : '#16a34a', mb: 2.5, color: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
       }}>
-        {data.irrigation_needed
-          ? <CheckCircleIcon sx={{ color: '#fff', fontSize: 28 }} />
-          : <CancelIcon sx={{ color: '#fff', fontSize: 28 }} />
-        }
-        <Box>
-          <Typography variant="body2" sx={{ color: '#fff', opacity: 0.85, fontSize: '0.72rem' }}>Recommendation</Typography>
-          <Typography variant="subtitle2" sx={{ color: '#fff', fontWeight: 800 }}>
-            {data.irrigation_needed ? '✔ Irrigate Today' : '✖ No Irrigation Needed'}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {data.irrigation_needed
+            ? <WaterDropIcon sx={{ color: '#fff', fontSize: 32 }} />
+            : <CheckCircleIcon sx={{ color: '#fff', fontSize: 32 }} />
+          }
+          <Box>
+            <Typography variant="caption" sx={{ opacity: 0.85, fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Recommendation
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+              {data.irrigation_needed ? '💧 Irrigation Needed' : '❌ No Irrigation Needed'}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ textAlign: 'right', bgcolor: 'rgba(255,255,255,0.15)', px: 2, py: 1, borderRadius: '10px' }}>
+          <Typography variant="caption" sx={{ opacity: 0.9, display: 'block', fontSize: '0.7rem' }}>Recommended Water</Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
+            {data.recommended_water > 0 ? `${data.recommended_water.toLocaleString()} Liters` : '0 Liters'}
           </Typography>
         </Box>
       </Box>
 
-      {/* Key Metrics Grid */}
+      {/* Dynamic Water Deficit Breakdown Grid */}
       <Grid container spacing={1.5} sx={{ mb: 2 }}>
-        {/* Water Requirement */}
-        <Grid item xs={6}>
-          <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: '10px' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-              <WaterDropIcon sx={{ color: '#0ea5e9', fontSize: 18 }} />
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Estimated Water</Typography>
-            </Box>
-            <Typography variant="h6" fontWeight={800} color="#0c4a6e">
-              {data.recommended_water > 0 ? `${data.recommended_water}` : '—'}
-              <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
-                {data.recommended_water > 0 ? data.unit : 'Not required'}
-              </Typography>
+        {/* Crop Demand */}
+        <Grid item xs={6} sm={4}>
+          <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.85)', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.05)' }}>
+            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">Crop Water Demand</Typography>
+            <Typography variant="subtitle2" fontWeight={800} color="#0369a1">
+              {data.today_crop_demand_liters ? `${Number(data.today_crop_demand_liters).toLocaleString()} L/day` : 'N/A'}
             </Typography>
           </Box>
         </Grid>
 
-        {/* Crop Stress */}
-        <Grid item xs={6}>
-          <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: '10px' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-              <WarningAmberIcon sx={{ color: stress.color, fontSize: 18 }} />
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>Crop Stress</Typography>
-            </Box>
-            <Chip
-              label={`${stress.icon} ${data.crop_stress}`}
-              size="small"
-              sx={{ bgcolor: stress.bg, color: stress.color, fontWeight: 700, border: `1px solid ${stress.color}33` }}
-            />
+        {/* Previous Irrigation */}
+        <Grid item xs={6} sm={4}>
+          <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.85)', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.05)' }}>
+            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">Previous Irrigation</Typography>
+            <Typography variant="subtitle2" fontWeight={800} color="#475569">
+              {(data.yesterday_irrigation_liters != null) ? `${Number(data.yesterday_irrigation_liters).toLocaleString()} L` : '0 L'}
+            </Typography>
           </Box>
         </Grid>
 
-        {/* Temperature */}
+        {/* Effective Rainfall */}
+        <Grid item xs={6} sm={4}>
+          <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.85)', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.05)' }}>
+            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">Effective Rainfall</Typography>
+            <Typography variant="subtitle2" fontWeight={800} color="#15803d">
+              {(data.effective_rainfall_liters != null) ? `${Number(data.effective_rainfall_liters).toLocaleString()} L` : '0 L'}
+            </Typography>
+          </Box>
+        </Grid>
+
+        {/* Water Deficit */}
+        <Grid item xs={6} sm={4}>
+          <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.85)', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.05)' }}>
+            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">Water Deficit</Typography>
+            <Typography variant="subtitle2" fontWeight={800} color={(data.net_water_deficit_liters || 0) > 0 ? "#b91c1c" : "#15803d"}>
+              {(data.net_water_deficit_liters != null) ? `${Number(data.net_water_deficit_liters).toLocaleString()} L` : '0 L'}
+            </Typography>
+          </Box>
+        </Grid>
+
+        {/* Temperature & Humidity */}
         {data.weather && (
-          <Grid item xs={6}>
-            <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: '10px' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                <ThermostatIcon sx={{ color: '#f97316', fontSize: 18 }} />
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>Temperature</Typography>
-              </Box>
-              <Typography variant="subtitle2" fontWeight={800} color="#7c2d12">{data.weather.temperature}°C</Typography>
+          <Grid item xs={6} sm={4}>
+            <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.85)', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.05)' }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">Weather</Typography>
+              <Typography variant="subtitle2" fontWeight={800} color="#334155">
+                {data.weather.temperature}°C • {data.weather.humidity}% RH
+              </Typography>
             </Box>
           </Grid>
         )}
 
-        {/* Humidity */}
-        {data.weather && (
-          <Grid item xs={6}>
-            <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: '10px' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                <OpacityIcon sx={{ color: '#0284c7', fontSize: 18 }} />
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>Humidity</Typography>
-              </Box>
-              <Typography variant="subtitle2" fontWeight={800} color="#0c4a6e">{data.weather.humidity}%</Typography>
-            </Box>
-          </Grid>
-        )}
+        {/* Crop Stress */}
+        <Grid item xs={6} sm={4}>
+          <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.85)', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.05)' }}>
+            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">Crop Stress</Typography>
+            <Chip
+              label={`${stress.icon} ${data.crop_stress}`}
+              size="small"
+              sx={{ bgcolor: stress.bg, color: stress.color, fontWeight: 700, height: 22, fontSize: '0.7rem' }}
+            />
+          </Box>
+        </Grid>
       </Grid>
 
       {/* AI Confidence progress bar */}
       <Box sx={{ mb: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-          <Typography variant="caption" color="text.secondary" fontWeight={600}>AI Confidence</Typography>
+          <Typography variant="caption" color="text.secondary" fontWeight={600}>AI Confidence (Data Quality)</Typography>
           <Typography variant="caption" color="#6366f1" fontWeight={700}>{data.confidence}%</Typography>
         </Box>
         <LinearProgress
@@ -219,13 +252,13 @@ const AIRecommendationCard = ({ fieldId = null, farmId = null, refreshTrigger = 
       <Divider sx={{ mb: 1.5, borderColor: 'rgba(0,0,0,0.08)' }} />
 
       {/* AI Explanation */}
-      <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.6)', borderRadius: '10px' }}>
+      <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.7)', borderRadius: '10px', border: '1px solid rgba(99,102,241,0.15)' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
           <AutoAwesomeIcon sx={{ color: '#6366f1', fontSize: 14 }} />
           <Typography variant="caption" fontWeight={700} color="#4338ca">AI Explanation</Typography>
         </Box>
-        <Typography variant="body2" sx={{ color: '#374151', lineHeight: 1.6, fontSize: '0.8rem' }}>
-          {data.reason}
+        <Typography variant="body2" sx={{ color: '#374151', lineHeight: 1.6, fontSize: '0.82rem' }}>
+          "{data.reason}"
         </Typography>
       </Box>
     </Card>

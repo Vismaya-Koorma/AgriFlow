@@ -124,7 +124,7 @@ const Sidebar = ({ open, onClose }) => {
       {/* User Info */}
       <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 1.5, bgcolor: '#f5f5f5' }}>
         <Avatar sx={{ bgcolor: color, width: 36, height: 36, fontSize: '0.85rem', fontWeight: 700 }}>
-          {(user.full_name || user.name || user.username || 'U')[0].toUpperCase()}
+          {(user?.full_name?.trim() || user?.name?.trim() || user?.username?.trim() || 'U')[0].toUpperCase()}
         </Avatar>
         <Box>
           <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b', lineHeight: 1.1 }}>

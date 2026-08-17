@@ -23,6 +23,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { farms as defaultFarms } from '../../data/farms';
+import { getAdminFarmsOverview } from '../../services/api';
 
 const DISTRICTS = [
   'Thrissur', 'Ernakulam', 'Thiruvananthapuram', 'Alappuzha',
@@ -39,21 +40,41 @@ const INITIAL_ADMIN_FARMS = [
 ];
 
 const AdminFarmManagement = () => {
-  const [farmList, setFarmList] = useState(() => {
-    const saved = localStorage.getItem('agriflow_admin_farms');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Failed to parse saved farms", e);
+  const [farmList, setFarmList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchLiveFarms = async () => {
+    setLoading(true);
+    try {
+      const res = await getAdminFarmsOverview();
+      if (res.farms && res.farms.length > 0) {
+        const formatted = res.farms.map(f => ({
+          id: f.id,
+          name: f.name,
+          owner: f.owner,
+          district: f.district || 'Kottayam',
+          location: f.state || 'Kerala',
+          total_area: f.fields ? f.fields.reduce((acc, field) => acc + (field.area || 0), 0) : 5.0,
+          crop: f.fields && f.fields[0] ? f.fields[0].crop_type : 'Paddy',
+          fieldsCount: f.fields_count || 1,
+          status: 'Active'
+        }));
+        setFarmList(formatted);
+      } else {
+        setFarmList(INITIAL_ADMIN_FARMS);
       }
+    } catch (err) {
+      console.error("Failed to load backend farm directory, fallback to local:", err);
+      setFarmList(INITIAL_ADMIN_FARMS);
+    } finally {
+      setLoading(false);
     }
-    return INITIAL_ADMIN_FARMS;
-  });
+  };
 
   useEffect(() => {
-    localStorage.setItem('agriflow_admin_farms', JSON.stringify(farmList));
-  }, [farmList]);
+    fetchLiveFarms();
+  }, []);
+
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');

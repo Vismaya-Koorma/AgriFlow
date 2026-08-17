@@ -23,6 +23,10 @@ import AlertsPage from './pages/Farmer/Alerts';
 import CropHealthAssistant from './pages/Farmer/CropHealthAssistant';
 
 import AdminFarmManagement from './pages/Admin/AdminFarmManagement';
+import AdminSettings from './pages/Admin/AdminSettings';
+
+import ErrorBoundary from './components/common/ErrorBoundary';
+
 
 function App() {
   return (
@@ -36,7 +40,11 @@ function App() {
             <Route path="/register" element={<Register />} />
 
             <Route path="/farmer" element={
-              <ProtectedRoute role="farmer"><FarmerDashboard /></ProtectedRoute>
+              <ProtectedRoute role="farmer">
+                <ErrorBoundary>
+                  <FarmerDashboard />
+                </ErrorBoundary>
+              </ProtectedRoute>
             } />
             <Route path="/farmer/farms" element={
               <ProtectedRoute role="farmer"><FarmManagement /></ProtectedRoute>
@@ -86,7 +94,7 @@ function App() {
               <ProtectedRoute role="admin"><AlertsPage /></ProtectedRoute>
             } />
             <Route path="/admin/settings" element={
-              <ProtectedRoute role="admin"><AdminDashboard initialTab={0} /></ProtectedRoute>
+              <ProtectedRoute role="admin"><AdminSettings /></ProtectedRoute>
             } />
             <Route path="/admin/profile" element={
               <ProtectedRoute role="admin"><Profile /></ProtectedRoute>

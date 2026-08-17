@@ -89,3 +89,53 @@ class ChangePasswordSerializer(serializers.Serializer):
         if data['new_password'] != data['confirm_password']:
             raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
         return data
+
+
+from .models import AdminActivityLog
+
+class AdminActivityLogSerializer(serializers.ModelSerializer):
+    admin_username = serializers.CharField(source='admin.username', read_only=True)
+
+    class Meta:
+        model = AdminActivityLog
+        fields = ['id', 'admin', 'admin_username', 'action', 'target_user_info', 'details', 'created_at']
+        read_only_fields = ['id', 'admin', 'admin_username', 'created_at']
+
+
+class AdminUserCreateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=6)
+    confirm_password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'username', 'email', 'full_name', 'phone_number',
+            'district', 'state', 'role', 'password', 'confirm_password',
+            'is_active'
+        ]
+
+    def validate_username(self, value):
+        username = value.strip().lower()
+        if User.objects.filter(username__iexact=username).exists():
+            raise serializers.ValidationError("A user with this username already exists.")
+        return username
+
+    def validate_email(self, value):
+        email = value.strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError("A user with this email address already exists.")
+        return email
+
+    def validate(self, data):
+        if data['password'] != data['confirm_password']:
+            raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
+        return data
+
+    def create(self, validated_data):
+        validated_data.pop('confirm_password')
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+

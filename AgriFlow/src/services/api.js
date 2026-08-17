@@ -47,7 +47,6 @@ api.interceptors.response.use(
       if (
         originalRequest.url.includes('/auth/login/') ||
         originalRequest.url.includes('/auth/refresh/') ||
-        originalRequest.url.includes('/auth/profile/') ||
         window.location.pathname === '/login'
       ) {
         clearAuthTokens();
@@ -422,7 +421,6 @@ export const getCropHealthHistory = async (params = {}) => {
 // ─── Admin Platform Dashboard APIs ─────────────────────────────────────────
 
 
-
 export const getAdminDashboardSummary = async () => {
   const response = await api.get('/admin/dashboard/summary/');
   return response.data;
@@ -500,9 +498,7 @@ export const getAdminFarmsOverview = async (params = {}) => {
 
 export const getSystemHealth = async () => {
   const response = await api.get('/health/');
-  return response.data;
-};
-
+  return result;
 // ─── WATER RESOURCE MANAGER APIs ─────────────────────────────────────────────
 
 export const getWaterSources = async (params = {}) => {
@@ -594,4 +590,6 @@ export const getWaterManagerReports = async () => {
 };
 
 export default api;
+
+
 

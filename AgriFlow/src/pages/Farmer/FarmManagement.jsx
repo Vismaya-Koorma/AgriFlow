@@ -15,6 +15,7 @@ const FarmManagement = () => {
   const [currentId, setCurrentId] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
   
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({ name: '', location: '', district: '', state: '', total_area: '' });
 
   useEffect(() => {
@@ -39,7 +40,7 @@ const FarmManagement = () => {
     if (farm) {
       setIsEditing(true);
       setCurrentId(farm.id);
-      setFormData({ name: farm.name, location: farm.location, district: farm.district, state: farm.state, total_area: farm.total_area });
+      setFormData({ name: farm.name, location: farm.location || '', district: farm.district || '', state: farm.state || '', total_area: farm.total_area });
     } else {
       setIsEditing(false);
       setCurrentId(null);
@@ -54,18 +55,47 @@ const FarmManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaving(true);
+    
+    console.log("Farm payload (raw):", formData);
+
+    const payload = {
+      name: (formData.name || '').trim(),
+      location: (formData.location || '').trim() || null,
+      district: (formData.district || '').trim() || null,
+      state: (formData.state || '').trim() || 'Kerala',
+      total_area: parseFloat(formData.total_area) || 0,
+    };
+
+    console.log("Farm payload (clean):", payload);
+
     try {
       if (isEditing) {
-        await updateFarm(currentId, formData);
+        await updateFarm(currentId, payload);
         showMessage('success', 'Farm updated successfully');
       } else {
-        await createFarm(formData);
+        await createFarm(payload);
         showMessage('success', 'Farm created successfully');
       }
       handleClose();
       fetchFarms();
     } catch (error) {
-      showMessage('error', isEditing ? 'Failed to update farm' : 'Failed to create farm');
+      console.error("Farm save error:", error.response?.data || error);
+      const errData = error.response?.data;
+      let errMsg = isEditing ? 'Failed to update farm' : 'Failed to create farm';
+      if (errData) {
+        if (typeof errData === 'string') {
+          errMsg = errData;
+        } else if (typeof errData === 'object') {
+          const details = Object.entries(errData)
+            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+            .join(' | ');
+          if (details) errMsg += `: ${details}`;
+        }
+      }
+      showMessage('error', errMsg);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -145,8 +175,8 @@ const FarmManagement = () => {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose} color="inherit">Cancel</Button>
-            <Button type="submit" variant="contained">Save</Button>
+            <Button onClick={handleClose} color="inherit" disabled={saving}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
           </DialogActions>
         </form>
       </Dialog>
