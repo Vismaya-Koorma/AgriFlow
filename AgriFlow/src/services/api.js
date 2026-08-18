@@ -498,7 +498,9 @@ export const getAdminFarmsOverview = async (params = {}) => {
 
 export const getSystemHealth = async () => {
   const response = await api.get('/health/');
-  return result;
+  return response.data;
+};
+
 // ─── WATER RESOURCE MANAGER APIs ─────────────────────────────────────────────
 
 export const getWaterSources = async (params = {}) => {
