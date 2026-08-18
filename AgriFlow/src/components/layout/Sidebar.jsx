@@ -23,6 +23,7 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import GrassIcon from '@mui/icons-material/Grass';
 import MenuIcon from '@mui/icons-material/Menu';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 const NAV_CONFIG = {
   farmer: [
@@ -47,6 +48,7 @@ const NAV_CONFIG = {
   ],
   manager: [
     { label: 'Dashboard', path: '/manager', icon: <DashboardIcon /> },
+    { label: 'Decision Intelligence', path: '/manager/decision-intelligence', icon: <AutoAwesomeIcon /> },
     { label: 'Water Demand', path: '/manager/demand', icon: <WaterDropIcon /> },
     { label: 'Water Allocation', path: '/manager/allocation', icon: <AssignmentIcon /> },
     { label: 'Schedules', path: '/manager/schedules', icon: <ListAltIcon /> },
@@ -65,6 +67,7 @@ const NAV_CONFIG = {
   ],
   admin: [
     { label: 'Dashboard', path: '/admin', icon: <DashboardIcon /> },
+    { label: 'Decision Intelligence', path: '/admin/decision-intelligence', icon: <AutoAwesomeIcon /> },
     { label: 'Users', path: '/admin/users', icon: <PeopleIcon /> },
     { label: 'Farm Management', path: '/admin/farms', icon: <AgricultureIcon /> },
     { label: 'Analytics', path: '/admin/analytics', icon: <BarChartIcon /> },

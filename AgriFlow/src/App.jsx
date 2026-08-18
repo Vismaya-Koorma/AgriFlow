@@ -28,6 +28,8 @@ import AdminSettings from './pages/Admin/AdminSettings';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
 
+import DecisionIntelligence from './pages/Manager/DecisionIntelligence';
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -73,6 +75,9 @@ function App() {
             <Route path="/manager" element={
               <ProtectedRoute role="manager"><WaterManagerDashboard /></ProtectedRoute>
             } />
+            <Route path="/manager/decision-intelligence" element={
+              <ProtectedRoute role="manager"><DecisionIntelligence /></ProtectedRoute>
+            } />
             <Route path="/maintenance" element={
               <ProtectedRoute role="maintenance"><MaintenanceDashboard /></ProtectedRoute>
             } />
@@ -80,6 +85,9 @@ function App() {
             {/* Admin Portal Top Functionalities */}
             <Route path="/admin" element={
               <ProtectedRoute role="admin"><AdminDashboard initialTab={0} /></ProtectedRoute>
+            } />
+            <Route path="/admin/decision-intelligence" element={
+              <ProtectedRoute role="admin"><DecisionIntelligence /></ProtectedRoute>
             } />
             <Route path="/admin/users" element={
               <ProtectedRoute role="admin"><AdminDashboard initialTab={1} /></ProtectedRoute>

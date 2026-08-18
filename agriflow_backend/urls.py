@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/', include('alerts.urls')),
     path('api/', include('maintenance.urls')),
     path('api/', include('reports.urls')),
+    path('api/decision-intelligence/', include('decision_intelligence.urls')),
 
     # JWT Token Refresh
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
