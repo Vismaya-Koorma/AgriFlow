@@ -69,17 +69,79 @@ function App() {
             <Route path="/farmer/profile" element={
               <ProtectedRoute role="farmer"><Profile /></ProtectedRoute>
             } />
+            {/* Supervisor Routes */}
             <Route path="/supervisor" element={
               <ProtectedRoute role="supervisor"><SupervisorDashboard /></ProtectedRoute>
             } />
+            <Route path="/supervisor/farmers" element={
+              <ProtectedRoute role="supervisor"><SupervisorDashboard /></ProtectedRoute>
+            } />
+            <Route path="/supervisor/verification" element={
+              <ProtectedRoute role="supervisor"><SupervisorDashboard /></ProtectedRoute>
+            } />
+            <Route path="/supervisor/crops" element={
+              <ProtectedRoute role="supervisor"><SupervisorDashboard /></ProtectedRoute>
+            } />
+            <Route path="/supervisor/priority" element={
+              <ProtectedRoute role="supervisor"><SupervisorDashboard /></ProtectedRoute>
+            } />
+            <Route path="/supervisor/reports" element={
+              <ProtectedRoute role="supervisor"><Reports /></ProtectedRoute>
+            } />
+            <Route path="/supervisor/notifications" element={
+              <ProtectedRoute role="supervisor"><AlertsPage /></ProtectedRoute>
+            } />
+            <Route path="/supervisor/profile" element={
+              <ProtectedRoute role="supervisor"><Profile /></ProtectedRoute>
+            } />
+
+            {/* Manager Routes */}
             <Route path="/manager" element={
-              <ProtectedRoute role="manager"><WaterManagerDashboard /></ProtectedRoute>
+              <ProtectedRoute role="manager"><WaterManagerDashboard initialTab={0} /></ProtectedRoute>
             } />
             <Route path="/manager/decision-intelligence" element={
               <ProtectedRoute role="manager"><DecisionIntelligence /></ProtectedRoute>
             } />
+            <Route path="/manager/demand" element={
+              <ProtectedRoute role="manager"><WaterManagerDashboard initialTab={2} /></ProtectedRoute>
+            } />
+            <Route path="/manager/allocation" element={
+              <ProtectedRoute role="manager"><WaterManagerDashboard initialTab={3} /></ProtectedRoute>
+            } />
+            <Route path="/manager/schedules" element={
+              <ProtectedRoute role="manager"><WaterManagerDashboard initialTab={3} /></ProtectedRoute>
+            } />
+            <Route path="/manager/complaints" element={
+              <ProtectedRoute role="manager"><WaterManagerDashboard initialTab={4} /></ProtectedRoute>
+            } />
+            <Route path="/manager/reports" element={
+              <ProtectedRoute role="manager"><Reports /></ProtectedRoute>
+            } />
+            <Route path="/manager/notifications" element={
+              <ProtectedRoute role="manager"><AlertsPage /></ProtectedRoute>
+            } />
+            <Route path="/manager/profile" element={
+              <ProtectedRoute role="manager"><Profile /></ProtectedRoute>
+            } />
+
+            {/* Maintenance Routes */}
             <Route path="/maintenance" element={
               <ProtectedRoute role="maintenance"><MaintenanceDashboard /></ProtectedRoute>
+            } />
+            <Route path="/maintenance/complaints" element={
+              <ProtectedRoute role="maintenance"><MaintenanceDashboard /></ProtectedRoute>
+            } />
+            <Route path="/maintenance/tasks" element={
+              <ProtectedRoute role="maintenance"><MaintenanceDashboard /></ProtectedRoute>
+            } />
+            <Route path="/maintenance/history" element={
+              <ProtectedRoute role="maintenance"><MaintenanceDashboard /></ProtectedRoute>
+            } />
+            <Route path="/maintenance/notifications" element={
+              <ProtectedRoute role="maintenance"><AlertsPage /></ProtectedRoute>
+            } />
+            <Route path="/maintenance/profile" element={
+              <ProtectedRoute role="maintenance"><Profile /></ProtectedRoute>
             } />
 
             {/* Admin Portal Top Functionalities */}

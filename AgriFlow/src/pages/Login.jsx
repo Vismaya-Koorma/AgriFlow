@@ -72,8 +72,13 @@ const Login = () => {
               border: '1px solid rgba(255,255,255,0.5)',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-              <AgricultureIcon color="primary" sx={{ fontSize: 30 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+              <Box
+                component="img"
+                src="/agriflow-logo.jpg"
+                alt="AgriFlow AI Logo"
+                sx={{ width: 42, height: 42, borderRadius: "10px", boxShadow: "0 4px 12px rgba(46,125,50,0.3)", border: "2px solid #2E7D32" }}
+              />
               <Typography variant="h5" sx={{ fontWeight: 800, color: '#1e293b' }}>
                 AgriFlow <span style={{ color: '#2E7D32' }}>AI</span>
               </Typography>

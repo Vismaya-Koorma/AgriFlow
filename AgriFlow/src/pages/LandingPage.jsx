@@ -102,17 +102,18 @@ const LandingPage = () => {
               onClick={() => handleScrollTo('home')}
             >
               <Box
+                component="img"
+                src="/agriflow-logo.jpg"
+                alt="AgriFlow AI Logo"
                 sx={{
-                  bgcolor: '#2e7d32',
-                  p: 1,
+                  width: 44,
+                  height: 44,
                   borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  boxShadow: '0 0 20px rgba(46, 125, 50, 0.4)',
+                  objectFit: 'cover',
+                  boxShadow: '0 0 20px rgba(46, 125, 50, 0.5)',
+                  border: '2px solid rgba(76, 175, 80, 0.5)',
                 }}
-              >
-                <AgricultureIcon sx={{ color: '#ffffff', fontSize: 28 }} />
-              </Box>
+              />
               <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: '-0.5px', color: '#ffffff' }}>
                 AgriFlow <span style={{ color: '#4caf50' }}>AI</span>
               </Typography>
@@ -198,7 +199,7 @@ const LandingPage = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 4 }}>
-          <AgricultureIcon sx={{ color: '#4caf50', fontSize: 32 }} />
+          <Box component="img" src="/agriflow-logo.jpg" alt="AgriFlow Logo" sx={{ width: 40, height: 40, borderRadius: "10px", border: "2px solid #4caf50" }} />
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
             AgriFlow AI
           </Typography>
@@ -702,7 +703,7 @@ const LandingPage = () => {
         <Container maxWidth="lg">
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AgricultureIcon sx={{ color: '#4caf50' }} />
+              <Box component="img" src="/agriflow-logo.jpg" alt="AgriFlow Logo" sx={{ width: 28, height: 28, borderRadius: "6px" }} />
               <Typography variant="body2" sx={{ fontWeight: 700, color: '#ffffff' }}>
                 AgriFlow AI Platform © {new Date().getFullYear()}
               </Typography>

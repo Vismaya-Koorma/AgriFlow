@@ -42,11 +42,15 @@ const STATUS_COLOR = {
   used: 'default'
 };
 
-const WaterManagerDashboard = () => {
-  const [currentTab, setCurrentTab] = useState(0);
+const WaterManagerDashboard = ({ initialTab = 0 }) => {
+  const [currentTab, setCurrentTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    setCurrentTab(initialTab);
+  }, [initialTab]);
 
   // Data States
   const [dashboardData, setDashboardData] = useState(null);

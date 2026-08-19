@@ -242,7 +242,7 @@ const DecisionIntelligence = () => {
                       <Button
                         key={pct}
                         variant={simulationMode && reductionPct === pct ? "contained" : "outlined"}
-                        color="teal"
+                        color="primary"
                         size="small"
                         sx={{
                           bgcolor: simulationMode && reductionPct === pct ? '#00695C' : '#fff',
@@ -536,7 +536,7 @@ const DecisionIntelligence = () => {
                           <Chip label={row.allocation_status} size="small" color={getAllocStatusBadgeColor(row.allocation_status)} sx={{ fontWeight: 700 }} />
                         </TableCell>
                         <TableCell align="center">
-                          <IconButton size="small" color="teal" onClick={() => setSelectedExplanation(row)}>
+                          <IconButton size="small" color="primary" onClick={() => setSelectedExplanation(row)}>
                             <InfoIcon fontSize="small" />
                           </IconButton>
                         </TableCell>
@@ -572,7 +572,7 @@ const DecisionIntelligence = () => {
                             <Typography variant="body2" sx={{ fontWeight: 700, color: '#004D40' }}>{f.factor}</Typography>
                             <Typography variant="caption" sx={{ color: '#546E7A' }}>{f.detail}</Typography>
                           </Box>
-                          <Chip label={`${f.points > 0 ? '+' : ''}${f.points} pts`} color={f.points > 0 ? "teal" : "secondary"} size="small" sx={{ fontWeight: 700 }} />
+                          <Chip label={`${f.points > 0 ? '+' : ''}${f.points} pts`} color={f.points > 0 ? "primary" : "secondary"} size="small" sx={{ fontWeight: 700 }} />
                         </Paper>
                       ))}
                     </Stack>
