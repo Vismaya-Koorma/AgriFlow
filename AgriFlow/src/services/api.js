@@ -498,7 +498,9 @@ export const getAdminFarmsOverview = async (params = {}) => {
 
 export const getSystemHealth = async () => {
   const response = await api.get('/health/');
-  return result;
+  return response.data;
+};
+
 // ─── WATER RESOURCE MANAGER APIs ─────────────────────────────────────────────
 
 export const getWaterSources = async (params = {}) => {
@@ -586,6 +588,27 @@ export const getWaterManagerDashboard = async () => {
 
 export const getWaterManagerReports = async () => {
   const response = await api.get('/water-manager/reports/');
+  return response.data;
+};
+
+// ─── DECISION INTELLIGENCE API SERVICES ──────────────────────────────────────
+export const getDecisionIntelligenceDashboard = async () => {
+  const response = await api.get('/decision-intelligence/dashboard/');
+  return response.data;
+};
+
+export const getFieldPriorities = async () => {
+  const response = await api.get('/decision-intelligence/priorities/');
+  return response.data;
+};
+
+export const runWhatIfSimulation = async (simData) => {
+  const response = await api.post('/decision-intelligence/simulate/', simData);
+  return response.data;
+};
+
+export const getSimulationHistory = async () => {
+  const response = await api.get('/decision-intelligence/simulation-history/');
   return response.data;
 };
 

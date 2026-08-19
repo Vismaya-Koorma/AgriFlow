@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'alerts',
     'maintenance',
     'reports',
+    'decision_intelligence',
 ]
 
 MIDDLEWARE = [
