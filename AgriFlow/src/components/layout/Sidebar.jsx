@@ -118,7 +118,7 @@ const Sidebar = ({ open, onClose }) => {
     <Box sx={{ width: SIDEBAR_WIDTH, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#fff' }}>
       {/* Brand */}
       <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5, bgcolor: color }}>
-        <AgricultureIcon sx={{ color: '#fff', fontSize: 28 }} />
+        <Avatar src="/agriflow-logo.jpg" alt="AgriFlow Logo" sx={{ width: 38, height: 38, border: "2px solid rgba(255,255,255,0.8)", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }} />
         <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1.2 }}>
           AgriFlow AI
         </Typography>

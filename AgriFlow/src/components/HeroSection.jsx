@@ -21,9 +21,11 @@ const HeroSection = () => {
     >
       {/* Brand Header */}
       <Stack direction="row" alignItems="center" spacing={1.5}>
-        <Avatar sx={{ bgcolor: '#ffffff', color: '#2E7D32', width: 48, height: 48, boxShadow: '0 6px 18px rgba(0,0,0,0.25)' }}>
-          <AgricultureIcon sx={{ fontSize: 28 }} />
-        </Avatar>
+        <Avatar
+          src="/agriflow-logo.jpg"
+          alt="AgriFlow Logo"
+          sx={{ width: 50, height: 50, boxShadow: '0 6px 18px rgba(0,0,0,0.3)', border: '2px solid rgba(255,255,255,0.9)' }}
+        />
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 700, color: '#ffffff', lineHeight: 1.2, letterSpacing: '0.5px' }}>
             AgriFlow <span style={{ color: '#81C784' }}>AI</span>
