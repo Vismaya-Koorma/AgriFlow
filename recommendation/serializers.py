@@ -1,7 +1,6 @@
+# pyrefly: ignore [missing-import]
 from rest_framework import serializers
 from .models import SoilMoistureEstimation, IrrigationRecommendation, CropStressRisk, IrrigationPriority
-
-
 class SoilMoistureEstimationSerializer(serializers.ModelSerializer):
     field_name = serializers.CharField(source='field.name', read_only=True)
 
