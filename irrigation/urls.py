@@ -4,7 +4,8 @@ from .views import (
     IrrigationHistoryViewSet, RainfallConfirmationViewSet,
     WaterSourceViewSet, WaterAllocationRequestViewSet,
     WaterAllocationViewSet, WaterUsageViewSet,
-    water_manager_dashboard_summary, water_manager_reports
+    water_manager_dashboard_summary, water_manager_reports,
+    water_consumed_24h
 )
 
 router = DefaultRouter()
@@ -16,6 +17,7 @@ router.register(r'water-allocations', WaterAllocationViewSet, basename='water-al
 router.register(r'water-usages', WaterUsageViewSet, basename='water-usage')
 
 urlpatterns = [
+    path('irrigation/water-consumed-24h/', water_consumed_24h, name='water-consumed-24h'),
     path('water-manager/dashboard/', water_manager_dashboard_summary, name='water-manager-dashboard'),
     path('water-manager/reports/', water_manager_reports, name='water-manager-reports'),
     path('', include(router.urls)),

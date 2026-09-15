@@ -280,10 +280,7 @@ const LandingPage = () => {
                   color: '#ffffff',
                 }}
               >
-                Precision Irrigation <br />
-                <span style={{ background: 'linear-gradient(90deg, #4caf50, #81c784)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  Powered by AI
-                </span>
+                Precision Irrigation
               </Typography>
               <Typography
                 variant="body1"

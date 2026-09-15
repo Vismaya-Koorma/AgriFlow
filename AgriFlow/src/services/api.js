@@ -9,12 +9,15 @@ const api = axios.create({
   },
 });
 
-// Request Interceptor: Attach JWT Access Token if available
+// Request Interceptor: Attach JWT Access Token if available & handle FormData multipart boundary automatically
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
     }
     return config;
   },
@@ -124,7 +127,7 @@ export const registerUser = async (formData) => {
     full_name: formData.fullName || formData.full_name || formData.name,
     phone_number: formData.phoneNumber || formData.phone_number || '',
     district: formData.district || '',
-    state: formData.state || '',
+    state: formData.state && formData.state.trim() ? formData.state.trim() : 'Kerala',
     role: formData.role || 'farmer',
     password: formData.password,
     confirm_password: formData.confirmPassword || formData.password,
@@ -132,10 +135,6 @@ export const registerUser = async (formData) => {
   };
 
   const response = await api.post('/auth/register/', payload);
-  if (response.data.tokens) {
-    setAuthTokens(response.data.tokens);
-    localStorage.setItem('agriflow_user', JSON.stringify(response.data.user));
-  }
   return response.data;
 };
 
@@ -242,10 +241,23 @@ export const getCropTypes = async () => {
   return response.data;
 };
 
+export const getCropVarieties = async (cropTypeId = null) => {
+  const url = cropTypeId ? `/crop-varieties/?crop=${cropTypeId}` : '/crop-varieties/';
+  const response = await api.get(url);
+  return response.data;
+};
+
+
+export const getCropWaterRequirements = async () => {
+  const response = await api.get('/crop-water-requirements/');
+  return response.data;
+};
+
 export const getSoilTypes = async () => {
   const response = await api.get('/soil-types/');
   return response.data;
 };
+
 
 // ─── Irrigation History APIs ───────────────────────────────────────────────
 
@@ -253,7 +265,9 @@ export const getIrrigationHistory = async (params = {}) => {
   let url = '/irrigation/';
   const queryParams = new URLSearchParams();
   if (typeof params === 'object' && params !== null) {
+    if (params.farm) queryParams.append('farm', params.farm);
     if (params.field) queryParams.append('field', params.field);
+    if (params.status) queryParams.append('status', params.status);
     if (params.search) queryParams.append('search', params.search);
     if (params.start_date) queryParams.append('start_date', params.start_date);
     if (params.end_date) queryParams.append('end_date', params.end_date);
@@ -262,6 +276,11 @@ export const getIrrigationHistory = async (params = {}) => {
   }
   if (queryParams.toString()) url += `?${queryParams.toString()}`;
   const response = await api.get(url);
+  return response.data;
+};
+
+export const getWaterConsumed24h = async () => {
+  const response = await api.get('/irrigation/water-consumed-24h/');
   return response.data;
 };
 
@@ -313,8 +332,12 @@ export const getWeatherForecast = async (param = null) => {
 // ─── Rainfall Confirmation APIs ───────────────────────────────────────────
 
 export const getLatestRainfallConfirmation = async () => {
-  const response = await api.get('/rainfall/latest/');
-  return response.data;
+  try {
+    const response = await api.get('/rainfall/latest/');
+    return response.data;
+  } catch (err) {
+    return null;
+  }
 };
 
 export const submitRainfallConfirmation = async (data) => {
@@ -363,10 +386,14 @@ export const getAlerts = async (params = {}) => {
   const queryParams = new URLSearchParams();
   if (params.severity) queryParams.append('severity', params.severity);
   if (params.alert_type) queryParams.append('alert_type', params.alert_type);
+  if (params.is_resolved !== undefined && params.is_resolved !== null) {
+    queryParams.append('is_resolved', params.is_resolved);
+  }
   if (queryParams.toString()) url += `?${queryParams.toString()}`;
   const response = await api.get(url);
   return response.data;
 };
+
 
 export const getUnreadAlertCount = async () => {
   const response = await api.get('/alerts/unread_count/');
@@ -375,6 +402,11 @@ export const getUnreadAlertCount = async () => {
 
 export const resolveAlert = async (id) => {
   const response = await api.patch(`/alerts/${id}/resolve/`);
+  return response.data;
+};
+
+export const markAlertAsRead = async (id) => {
+  const response = await api.patch(`/alerts/${id}/read/`);
   return response.data;
 };
 

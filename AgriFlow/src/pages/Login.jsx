@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import {
   Box, Grid, Typography, TextField, Button, InputAdornment,
   IconButton, Alert, CircularProgress, Link, Divider,
 } from '@mui/material';
-import AgricultureIcon from '@mui/icons-material/Agriculture';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Visibility from '@mui/icons-material/Visibility';
@@ -17,29 +17,49 @@ const Login = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [serverError, setServerError] = useState('');
 
-  const handleChange = (e) => {
-    setError('');
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      username: '',
+      password: '',
+    },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.username || !form.password) {
-      setError('Please enter username and password.');
-      return;
-    }
+  const onSubmit = async (data) => {
+    setServerError('');
     setLoading(true);
-    // small delay for UX
-    await new Promise((r) => setTimeout(r, 600));
-    const result = await login(form.username, form.password);
-    setLoading(false);
-    if (result.success) {
-      navigate(ROLE_PATHS[result.user.role] || '/farmer');
-    } else {
-      setError(result.error);
+
+    try {
+      const result = await login(data.username.trim(), data.password);
+      if (result.success) {
+        navigate(ROLE_PATHS[result.user?.role] || '/farmer');
+      } else {
+        if (result.errors && typeof result.errors === 'object') {
+          Object.keys(result.errors).forEach((field) => {
+            const val = result.errors[field];
+            const msg = Array.isArray(val) ? val[0] : val;
+            if (field === 'username' || field === 'email') {
+              setError('username', { type: 'server', message: msg });
+            } else if (field === 'password') {
+              setError('password', { type: 'server', message: msg });
+            } else {
+              setServerError(msg);
+            }
+          });
+        } else {
+          setServerError(result.error || 'Invalid email or password.');
+        }
+      }
+    } catch {
+      setServerError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,7 +97,7 @@ const Login = () => {
                 component="img"
                 src="/agriflow-logo.jpg"
                 alt="AgriFlow AI Logo"
-                sx={{ width: 42, height: 42, borderRadius: "10px", boxShadow: "0 4px 12px rgba(46,125,50,0.3)", border: "2px solid #2E7D32" }}
+                sx={{ width: 42, height: 42, borderRadius: '10px', boxShadow: '0 4px 12px rgba(46,125,50,0.3)', border: '2px solid #2E7D32' }}
               />
               <Typography variant="h5" sx={{ fontWeight: 800, color: '#1e293b' }}>
                 AgriFlow <span style={{ color: '#2E7D32' }}>AI</span>
@@ -91,21 +111,20 @@ const Login = () => {
               Enter your credentials to access your dashboard.
             </Typography>
 
-            {error && (
+            {serverError && (
               <Alert severity="error" sx={{ mb: 2, borderRadius: '10px' }}>
-                {error}
+                {serverError}
               </Alert>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit(onSubmit)} noValidate>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                 <TextField
                   fullWidth
                   label="Username or Email"
-                  name="username"
-                  placeholder="e.g. farmer or your_username"
-                  value={form.username}
-                  onChange={handleChange}
+                  placeholder="e.g. farmer or user@example.com"
+                  error={Boolean(errors.username)}
+                  helperText={errors.username?.message}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -113,16 +132,30 @@ const Login = () => {
                       </InputAdornment>
                     ),
                   }}
+                  {...register('username', {
+                    validate: (value) => {
+                      if (!value || !value.trim()) {
+                        return 'This field is required.';
+                      }
+                      const val = value.trim();
+                      if (val.includes('@')) {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(val)) {
+                          return 'Please enter a valid email address.';
+                        }
+                      }
+                      return true;
+                    },
+                  })}
                 />
 
                 <TextField
                   fullWidth
                   label="Password"
-                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  value={form.password}
-                  onChange={handleChange}
+                  error={Boolean(errors.password)}
+                  helperText={errors.password?.message}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -137,6 +170,14 @@ const Login = () => {
                       </InputAdornment>
                     ),
                   }}
+                  {...register('password', {
+                    validate: (value) => {
+                      if (!value) {
+                        return 'Password is required.';
+                      }
+                      return true;
+                    },
+                  })}
                 />
 
                 <Button
@@ -160,8 +201,6 @@ const Login = () => {
                 </Link>
               </Typography>
             </Box>
-
-
           </Box>
         </Grid>
       </Grid>

@@ -18,11 +18,18 @@ class IrrigationHistory(models.Model):
         RIVER = 'river', 'River'
         TANK = 'tank', 'Tank'
 
+    class Status(models.TextChoices):
+        COMPLETED = 'completed', 'Completed'
+        NOT_DONE = 'not_done', 'Not Done'
+
+    farm = models.ForeignKey('farms.Farm', on_delete=models.CASCADE, related_name='irrigation_records', null=True, blank=True)
     field = models.ForeignKey('farms.Field', on_delete=models.CASCADE, related_name='irrigation_history')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.COMPLETED)
+    recommended_water_litres = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     method = models.CharField(max_length=20, choices=Method.choices, default=Method.DRIP)
     water_source = models.CharField(max_length=20, choices=Source.choices, default=Source.CANAL)
-    volume_litres = models.DecimalField(max_digits=10, decimal_places=2)
-    duration_minutes = models.PositiveIntegerField()
+    volume_litres = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    duration_minutes = models.PositiveIntegerField(default=0, null=True, blank=True)
     field_condition = models.CharField(max_length=255, blank=True, null=True)
     created_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, related_name='irrigation_records')
     irrigated_at = models.DateTimeField(auto_now_add=True)
@@ -32,8 +39,15 @@ class IrrigationHistory(models.Model):
         db_table = 'tbl_irrigation_history'
         ordering = ['-irrigated_at']
 
+    def save(self, *args, **kwargs):
+        if self.field and not self.farm:
+            self.farm = self.field.farm
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.field.name} — {self.volume_litres}L on {self.irrigated_at.date()}"
+        farm_name = self.farm.name if self.farm else (self.field.farm.name if self.field else 'Farm')
+        field_name = self.field.name if self.field else 'Field'
+        return f"{farm_name} - {field_name} — {self.volume_litres}L ({self.get_status_display()}) on {self.irrigated_at.date()}"
 
 
 class RainfallConfirmation(models.Model):

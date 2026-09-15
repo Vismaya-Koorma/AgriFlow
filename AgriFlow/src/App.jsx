@@ -21,6 +21,7 @@ import IrrigationHistory from './pages/Farmer/IrrigationHistory';
 import Reports from './pages/Farmer/Reports';
 import AlertsPage from './pages/Farmer/Alerts';
 import CropHealthAssistant from './pages/Farmer/CropHealthAssistant';
+import FarmerComplaints from './pages/Farmer/FarmerComplaints';
 
 import AdminFarmManagement from './pages/Admin/AdminFarmManagement';
 import AdminSettings from './pages/Admin/AdminSettings';
@@ -59,6 +60,9 @@ function App() {
             } />
             <Route path="/farmer/irrigation-history" element={
               <ProtectedRoute role="farmer"><IrrigationHistory /></ProtectedRoute>
+            } />
+            <Route path="/farmer/complaints" element={
+              <ProtectedRoute role="farmer"><FarmerComplaints /></ProtectedRoute>
             } />
             <Route path="/farmer/reports" element={
               <ProtectedRoute role="farmer"><Reports /></ProtectedRoute>
@@ -126,22 +130,22 @@ function App() {
 
             {/* Maintenance Routes */}
             <Route path="/maintenance" element={
-              <ProtectedRoute role="maintenance"><MaintenanceDashboard /></ProtectedRoute>
+              <ProtectedRoute role="maintenance"><ErrorBoundary><MaintenanceDashboard /></ErrorBoundary></ProtectedRoute>
             } />
             <Route path="/maintenance/complaints" element={
-              <ProtectedRoute role="maintenance"><MaintenanceDashboard /></ProtectedRoute>
+              <ProtectedRoute role="maintenance"><ErrorBoundary><MaintenanceDashboard /></ErrorBoundary></ProtectedRoute>
             } />
             <Route path="/maintenance/tasks" element={
-              <ProtectedRoute role="maintenance"><MaintenanceDashboard /></ProtectedRoute>
+              <ProtectedRoute role="maintenance"><ErrorBoundary><MaintenanceDashboard /></ErrorBoundary></ProtectedRoute>
             } />
             <Route path="/maintenance/history" element={
-              <ProtectedRoute role="maintenance"><MaintenanceDashboard /></ProtectedRoute>
+              <ProtectedRoute role="maintenance"><ErrorBoundary><MaintenanceDashboard /></ErrorBoundary></ProtectedRoute>
             } />
             <Route path="/maintenance/notifications" element={
-              <ProtectedRoute role="maintenance"><AlertsPage /></ProtectedRoute>
+              <ProtectedRoute role="maintenance"><ErrorBoundary><AlertsPage /></ErrorBoundary></ProtectedRoute>
             } />
             <Route path="/maintenance/profile" element={
-              <ProtectedRoute role="maintenance"><Profile /></ProtectedRoute>
+              <ProtectedRoute role="maintenance"><ErrorBoundary><Profile /></ErrorBoundary></ProtectedRoute>
             } />
 
             {/* Admin Portal Top Functionalities */}

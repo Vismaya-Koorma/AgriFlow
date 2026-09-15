@@ -16,7 +16,7 @@ const FarmManagement = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
   
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({ name: '', location: '', district: '', state: '', total_area: '' });
+  const [formData, setFormData] = useState({ name: '', location: '', district: '', total_area: '' });
 
   useEffect(() => {
     fetchFarms();
@@ -40,11 +40,11 @@ const FarmManagement = () => {
     if (farm) {
       setIsEditing(true);
       setCurrentId(farm.id);
-      setFormData({ name: farm.name, location: farm.location || '', district: farm.district || '', state: farm.state || '', total_area: farm.total_area });
+      setFormData({ name: farm.name, location: farm.location || '', district: farm.district || '', total_area: farm.total_area });
     } else {
       setIsEditing(false);
       setCurrentId(null);
-      setFormData({ name: '', location: '', district: '', state: '', total_area: '' });
+      setFormData({ name: '', location: '', district: '', total_area: '' });
     }
     setOpen(true);
   };
@@ -63,7 +63,7 @@ const FarmManagement = () => {
       name: (formData.name || '').trim(),
       location: (formData.location || '').trim() || null,
       district: (formData.district || '').trim() || null,
-      state: (formData.state || '').trim() || 'Kerala',
+      state: 'Kerala',
       total_area: parseFloat(formData.total_area) || 0,
     };
 
@@ -163,11 +163,8 @@ const FarmManagement = () => {
               <Grid item xs={12}>
                 <TextField fullWidth label="Location" name="location" value={formData.location} onChange={handleChange} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField fullWidth label="District" name="district" value={formData.district} onChange={handleChange} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="State" name="state" value={formData.state} onChange={handleChange} />
               </Grid>
               <Grid item xs={12}>
                 <TextField fullWidth label="Total Area (acres)" name="total_area" type="number" inputProps={{ step: '0.01' }} value={formData.total_area} onChange={handleChange} required />

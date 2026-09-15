@@ -78,7 +78,7 @@ const Register = () => {
       email: '',
       phoneNumber: '',
       district: '',
-      state: '',
+      state: 'Kerala',
       password: '',
       confirmPassword: '',
       termsAccepted: false,
@@ -94,10 +94,26 @@ const Register = () => {
       const authRes = await registerUser(data);
       if (!authRes.success) {
         if (authRes.errors && typeof authRes.errors === 'object') {
+          const fieldMap = {
+            email: 'email',
+            phone_number: 'phoneNumber',
+            phoneNumber: 'phoneNumber',
+            mobile: 'phoneNumber',
+            full_name: 'fullName',
+            fullName: 'fullName',
+            username: 'username',
+            password: 'password',
+            confirm_password: 'confirmPassword',
+            confirmPassword: 'confirmPassword',
+            district: 'district',
+            terms_accepted: 'termsAccepted',
+            termsAccepted: 'termsAccepted',
+          };
           Object.keys(authRes.errors).forEach((field) => {
+            const targetField = fieldMap[field] || field;
             const val = authRes.errors[field];
             const msg = Array.isArray(val) ? val[0] : val;
-            setError(field, { type: 'server', message: msg });
+            setError(targetField, { type: 'server', message: msg });
           });
         }
         setToast({ open: true, message: authRes.error || 'Registration failed', severity: 'error' });
@@ -184,7 +200,7 @@ const Register = () => {
                       ),
                     }}
                     {...register('fullName', {
-                      required: 'Full name is required',
+                      required: 'This field is required.',
                       minLength: { value: 3, message: 'At least 3 characters required' },
                     })}
                   />
@@ -205,7 +221,7 @@ const Register = () => {
                       ),
                     }}
                     {...register('username', {
-                      required: 'Username is required',
+                      required: 'This field is required.',
                       minLength: { value: 3, message: 'At least 3 characters required' },
                       pattern: {
                         value: /^[a-zA-Z0-9_-]+$/,
@@ -231,8 +247,8 @@ const Register = () => {
                       ),
                     }}
                     {...register('email', {
-                      required: 'Email is required',
-                      pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Enter a valid email' },
+                      required: 'Please enter a valid email address.',
+                      pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Please enter a valid email address.' },
                     })}
                   />
                 </Grid>
@@ -252,8 +268,8 @@ const Register = () => {
                       ),
                     }}
                     {...register('phoneNumber', {
-                      required: 'Phone number is required',
-                      pattern: { value: /^[6-9]\d{9}$/, message: 'Enter a valid 10-digit number' },
+                      required: 'Please enter a valid 10-digit mobile number.',
+                      pattern: { value: /^[6-9]\d{9}$/, message: 'Please enter a valid 10-digit mobile number.' },
                     })}
                   />
                 </Grid>
@@ -292,8 +308,6 @@ const Register = () => {
                   />
                 </Grid>
 
-
-
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -317,8 +331,15 @@ const Register = () => {
                       ),
                     }}
                     {...register('password', {
-                      required: 'Password is required',
-                      minLength: { value: 8, message: 'At least 8 characters required' },
+                      validate: (val) => {
+                        if (!val) return 'Password is required.';
+                        if (val.length < 8) return 'Password must be at least 8 characters long.';
+                        if (!/[A-Z]/.test(val)) return 'Password must contain at least 1 uppercase letter (A-Z).';
+                        if (!/[a-z]/.test(val)) return 'Password must contain at least 1 lowercase letter (a-z).';
+                        if (!/[0-9]/.test(val)) return 'Password must contain at least 1 number (0-9).';
+                        if (!/[^a-zA-Z0-9]/.test(val)) return 'Password must contain at least 1 special character (@, #, $, %, !, etc.).';
+                        return true;
+                      },
                     })}
                   />
                   <PasswordStrength password={password} />
@@ -347,8 +368,8 @@ const Register = () => {
                       ),
                     }}
                     {...register('confirmPassword', {
-                      required: 'Please confirm password',
-                      validate: (val) => val === password || 'Passwords do not match',
+                      required: 'Confirm password is required.',
+                      validate: (val) => val === password || 'Passwords do not match.',
                     })}
                   />
                 </Grid>
@@ -358,7 +379,7 @@ const Register = () => {
                     control={
                       <Checkbox
                         color="primary"
-                        {...register('termsAccepted', { required: 'You must accept the terms' })}
+                        {...register('termsAccepted', { required: 'You must accept the terms and conditions.' })}
                       />
                     }
                     label={

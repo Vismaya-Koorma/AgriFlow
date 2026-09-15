@@ -65,15 +65,8 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const data = await apiRegister(userData);
-      const newUser = data.user || {
-        username: userData.username,
-        role: userData.role || 'farmer',
-        full_name: userData.fullName || userData.full_name || userData.name,
-        email: userData.email,
-      };
-      setUser(newUser);
-      localStorage.setItem('agriflow_user', JSON.stringify(newUser));
-      return { success: true, user: newUser, message: data.message || 'Account created successfully!' };
+      clearAuthTokens();
+      return { success: true, user: data.user, message: data.message || 'Account created successfully!' };
     } catch (err) {
       const errData = err.response?.data;
       let errorMsg = 'Registration failed. Please try again.';
@@ -128,10 +121,9 @@ export const AuthProvider = ({ children }) => {
         } else if (typeof errData === 'object') {
           const firstKey = Object.keys(errData)[0];
           const val = errData[firstKey];
-          errorMsg = Array.isArray(val) ? val[0] : val;
         }
       }
-      return { success: false, error: errorMsg };
+      return { success: false, error: errorMsg, errors: typeof errData === 'object' && !Array.isArray(errData) ? errData : {} };
     } finally {
       setLoading(false);
     }

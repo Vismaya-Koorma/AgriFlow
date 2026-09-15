@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box, Typography, Card, Grid, Button, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
   Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Alert, Snackbar,
-  Chip, InputAdornment, Stack, Tooltip
+  Chip, InputAdornment, Stack, Tooltip, CircularProgress
 } from '@mui/material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import AIRecommendationCard from '../../components/cards/AIRecommendationCard';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import {
   getIrrigationHistory, createIrrigationHistory, updateIrrigationHistory, deleteIrrigationHistory,
-  getFields, submitRainfallConfirmation, getLatestRainfallConfirmation
+  getFarms, getFields, submitRainfallConfirmation, getLatestRainfallConfirmation, getAIRecommendation
 } from '../../services/api';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -18,13 +21,20 @@ import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import CloudRainIcon from '@mui/icons-material/Thunderstorm';
 
 const IrrigationHistory = () => {
+  const location = useLocation();
+  const navState = location.state || {};
+
   const [history, setHistory] = useState([]);
+  const [farms, setFarms] = useState([]);
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedField, setSelectedField] = useState('');
+  const [selectedFarm, setSelectedFarm] = useState(navState.selectedFarmId || '');
+  const [selectedField, setSelectedField] = useState(navState.selectedFieldId || navState.fieldId || '');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -34,6 +44,10 @@ const IrrigationHistory = () => {
   const [currentId, setCurrentId] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  // AI Recommendation State for Modal
+  const [aiRec, setAiRec] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
   // Rainfall Confirmation Modal
   const [rainModalOpen, setRainModalOpen] = useState(false);
   const [rainOption, setRainOption] = useState('light_rain');
@@ -42,40 +56,100 @@ const IrrigationHistory = () => {
   const [latestRain, setLatestRain] = useState(null);
 
   const [formData, setFormData] = useState({
-    field: '', method: 'drip', water_source: 'canal', volume_litres: '', duration_minutes: '', field_condition: '', notes: ''
+    farm: navState.selectedFarmId || '',
+    field: navState.selectedFieldId || navState.fieldId || '',
+    status: 'completed',
+    volume_litres: '',
+    recommended_water_litres: '',
+    duration_minutes: '30',
+    method: 'drip',
+    water_source: 'canal',
+    field_condition: '',
+    notes: ''
   });
 
   useEffect(() => {
-    fetchFieldsAndRain();
-    fetchHistory();
+    fetchFarmsFieldsAndRain();
   }, []);
 
-  const fetchFieldsAndRain = async () => {
+  const fetchFarmsFieldsAndRain = async () => {
     try {
-      const [fData, rData] = await Promise.all([getFields(), getLatestRainfallConfirmation()]);
-      setFields(fData);
-      if (fData.length > 0) setRainField(fData[0].id);
+      const [farmsData, fieldsData, rData] = await Promise.all([
+        getFarms().catch((err) => { console.error('getFarms error:', err); return []; }),
+        getFields().catch((err) => { console.error('getFields error:', err); return []; }),
+        getLatestRainfallConfirmation().catch((err) => { console.error('getLatestRainfallConfirmation error:', err); return null; })
+      ]);
+      const farmList = Array.isArray(farmsData) ? farmsData : (farmsData?.results || []);
+      const fieldList = Array.isArray(fieldsData) ? fieldsData : (fieldsData?.results || []);
+      setFarms(farmList);
+      setFields(fieldList);
+      if (fieldList.length > 0) setRainField(fieldList[0].id);
       setLatestRain(rData);
+
+      // Handle preselected farm & field from location state or default
+      let initField = navState.selectedFieldId || navState.fieldId || '';
+      let initFarm = navState.selectedFarmId || '';
+
+      if (initField && fieldList.length > 0) {
+        const found = fieldList.find(f => String(f.id) === String(initField));
+        if (found) {
+          initFarm = found.farm || found.farm_id || initFarm;
+          setSelectedField(found.id);
+          setSelectedFarm(initFarm);
+        }
+      }
+
+      fetchHistory({ farm: initFarm, field: initField });
     } catch (e) {
-      console.error(e);
+      console.error('Error fetching farms/fields', e);
+      fetchHistory({});
     }
   };
 
-  const fetchHistory = async () => {
+  const fetchHistory = async (overrideParams = null) => {
     setLoading(true);
     try {
       const params = {};
-      if (selectedField) params.field = selectedField;
+      const farmVal = overrideParams?.farm !== undefined ? overrideParams.farm : selectedFarm;
+      const fieldVal = overrideParams?.field !== undefined ? overrideParams.field : selectedField;
+
+      if (farmVal) params.farm = farmVal;
+      if (fieldVal) params.field = fieldVal;
+      if (selectedStatus) params.status = selectedStatus;
       if (searchTerm) params.search = searchTerm;
       if (startDate) params.start_date = startDate;
       if (endDate) params.end_date = endDate;
 
       const data = await getIrrigationHistory(params);
-      setHistory(data);
+      const list = Array.isArray(data) ? data : (data?.results || []);
+      setHistory(list);
     } catch (error) {
       showMessage('error', 'Failed to fetch irrigation records');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAIForField = async (fieldId) => {
+    if (!fieldId) {
+      setAiRec(null);
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const res = await getAIRecommendation({ fieldId });
+      setAiRec(res);
+      if (res && res.recommended_water != null) {
+        setFormData(prev => ({
+          ...prev,
+          recommended_water_litres: String(res.recommended_water)
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to fetch AI recommendation for modal:', e);
+      setAiRec(null);
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -86,10 +160,12 @@ const IrrigationHistory = () => {
 
   const handleResetFilter = () => {
     setSearchTerm('');
+    setSelectedFarm('');
     setSelectedField('');
+    setSelectedStatus('');
     setStartDate('');
     setEndDate('');
-    getIrrigationHistory({}).then((data) => setHistory(data));
+    fetchHistory({ farm: '', field: '' });
   };
 
   const showMessage = (type, text) => setMessage({ type, text });
@@ -99,38 +175,114 @@ const IrrigationHistory = () => {
       setIsEditing(true);
       setCurrentId(record.id);
       setFormData({
-        field: record.field, method: record.method, water_source: record.water_source,
-        volume_litres: record.volume_litres, duration_minutes: record.duration_minutes,
-        field_condition: record.field_condition || '', notes: record.notes || ''
+        farm: record.farm || '',
+        field: record.field || '',
+        status: record.status || 'completed',
+        volume_litres: record.volume_litres || '0',
+        recommended_water_litres: record.recommended_water_litres || '',
+        duration_minutes: record.duration_minutes || '0',
+        method: record.method || 'drip',
+        water_source: record.water_source || 'canal',
+        field_condition: record.field_condition || '',
+        notes: record.notes || ''
       });
+      if (record.field) fetchAIForField(record.field);
     } else {
       setIsEditing(false);
       setCurrentId(null);
+
+      let defaultFarm = selectedFarm || navState.selectedFarmId || farms[0]?.id || '';
+      let availableFieldsForDefaultFarm = fields.filter((f) => !defaultFarm || f.farm === defaultFarm || f.farm?.id === defaultFarm);
+      let defaultField = selectedField || navState.selectedFieldId || availableFieldsForDefaultFarm[0]?.id || '';
+
+      if (defaultField && !defaultFarm) {
+        const foundF = fields.find(f => String(f.id) === String(defaultField));
+        if (foundF) defaultFarm = foundF.farm;
+      }
+
       setFormData({
-        field: fields[0]?.id || '', method: 'drip', water_source: 'canal',
-        volume_litres: '', duration_minutes: '', field_condition: '', notes: ''
+        farm: defaultFarm,
+        field: defaultField,
+        status: 'completed',
+        volume_litres: '',
+        recommended_water_litres: '',
+        duration_minutes: '30',
+        method: 'drip',
+        water_source: 'canal',
+        field_condition: '',
+        notes: ''
       });
+
+      if (defaultField) fetchAIForField(defaultField);
     }
     setOpen(true);
   };
 
   const handleClose = () => setOpen(false);
+
+  const handleFarmChange = (e) => {
+    const newFarmId = e.target.value;
+    const availableFields = fields.filter((f) => f.farm === newFarmId || f.farm?.id === newFarmId);
+    const newFieldId = availableFields[0]?.id || '';
+    setFormData({
+      ...formData,
+      farm: newFarmId,
+      field: newFieldId
+    });
+    if (newFieldId) fetchAIForField(newFieldId);
+  };
+
+  const handleFieldChangeInModal = (e) => {
+    const newFieldId = e.target.value;
+    setFormData({ ...formData, field: newFieldId });
+    if (newFieldId) fetchAIForField(newFieldId);
+  };
+
+  const handleStatusChange = (e) => {
+    const newStatus = e.target.value;
+    setFormData({
+      ...formData,
+      status: newStatus,
+      volume_litres: newStatus === 'not_done' ? '0' : formData.volume_litres
+    });
+  };
+
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.field) {
+      showMessage('error', 'Please select a valid field.');
+      return;
+    }
+
+    if (formData.status === 'completed' && (formData.volume_litres === '' || parseFloat(formData.volume_litres) < 0)) {
+      showMessage('error', 'Please enter a valid positive volume for completed irrigation.');
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      volume_litres: formData.status === 'not_done' ? 0 : parseFloat(formData.volume_litres || 0),
+      recommended_water_litres: formData.recommended_water_litres ? parseFloat(formData.recommended_water_litres) : null,
+      duration_minutes: parseInt(formData.duration_minutes || 0, 10)
+    };
+
     try {
       if (isEditing) {
-        await updateIrrigationHistory(currentId, formData);
+        await updateIrrigationHistory(currentId, payload);
         showMessage('success', 'Record updated successfully');
       } else {
-        await createIrrigationHistory(formData);
+        await createIrrigationHistory(payload);
         showMessage('success', 'Record logged successfully');
       }
       handleClose();
       fetchHistory();
+      setRefreshTrigger(prev => prev + 1);
+      if (formData.field) fetchAIForField(formData.field);
     } catch (error) {
-      showMessage('error', isEditing ? 'Failed to update record' : 'Failed to log record');
+      const errDetail = error.response?.data ? JSON.stringify(error.response.data) : 'Failed to save record';
+      showMessage('error', errDetail);
     }
   };
 
@@ -140,6 +292,8 @@ const IrrigationHistory = () => {
         await deleteIrrigationHistory(id);
         showMessage('success', 'Record deleted successfully');
         fetchHistory();
+        setRefreshTrigger(prev => prev + 1);
+        if (selectedField) fetchAIForField(selectedField);
       } catch (error) {
         showMessage('error', 'Failed to delete record');
       }
@@ -158,21 +312,33 @@ const IrrigationHistory = () => {
       showMessage('success', 'Rainfall confirmation logged! Recommendations updated.');
       setRainModalOpen(false);
       setRainNotes('');
+      setRefreshTrigger(prev => prev + 1);
+      if (rainField) fetchAIForField(rainField);
     } catch (err) {
       showMessage('error', 'Failed to confirm rainfall');
     }
   };
 
+  // Filtered fields for Farm dropdown selection in Filter bar
+  const filterAvailableFields = selectedFarm
+    ? fields.filter((f) => f.farm === selectedFarm || f.farm?.id === selectedFarm)
+    : fields;
+
+  // Filtered fields for Modal form
+  const modalAvailableFields = formData.farm
+    ? fields.filter((f) => f.farm === formData.farm || f.farm?.id === formData.farm)
+    : fields;
+
   return (
     <DashboardLayout title="Irrigation History">
-      {/* Header Banner / Summary Banner */}
+      {/* Header Banner */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b' }}>
             Irrigation History & Logs
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Monitor, record, and filter your field watering history and confirm recent rainfall.
+            Monitor, record, and filter your field watering history and confirm actual water consumption.
           </Typography>
         </Box>
         <Stack direction="row" spacing={2}>
@@ -198,6 +364,17 @@ const IrrigationHistory = () => {
         </Stack>
       </Box>
 
+      {/* AI Recommendation Card for Selected/Active Field */}
+      {fields.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <AIRecommendationCard
+            fieldId={selectedField || fields[0]?.id}
+            farmId={selectedFarm || null}
+            refreshTrigger={refreshTrigger}
+          />
+        </Box>
+      )}
+
       {/* Latest Rainfall Banner */}
       {latestRain && (
         <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: '12px', bgcolor: '#e0f2fe', border: '1px solid #bae6fd', display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -214,15 +391,16 @@ const IrrigationHistory = () => {
         </Paper>
       )}
 
-      {/* Search & Filter Bar */}
+      {/* Search & Cascading Filter Bar */}
       <Card elevation={0} sx={{ p: 2.5, mb: 3, borderRadius: '16px', border: '1px solid #e2e8f0', bgcolor: '#ffffff' }}>
         <form onSubmit={handleSearchFilter}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={3}>
+            {/* Search */}
+            <Grid item xs={12} sm={2.5}>
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Search notes or method..."
+                placeholder="Search notes/method..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -234,22 +412,58 @@ const IrrigationHistory = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
+            {/* Farm Filter */}
+            <Grid item xs={12} sm={2}>
               <TextField
                 select
                 fullWidth
                 size="small"
-                label="Filter by Field"
-                value={selectedField}
-                onChange={(e) => setSelectedField(e.target.value)}
+                label="Farm"
+                value={selectedFarm}
+                onChange={(e) => {
+                  setSelectedFarm(e.target.value);
+                  setSelectedField('');
+                }}
               >
-                <MenuItem value="">All Fields</MenuItem>
-                {fields.map((f) => (
+                <MenuItem value="">All Farms</MenuItem>
+                {farms.map((f) => (
                   <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem>
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={6} sm={2}>
+            {/* Field Filter (Cascading) */}
+            <Grid item xs={12} sm={2}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Field"
+                value={selectedField}
+                onChange={(e) => setSelectedField(e.target.value)}
+              >
+                <MenuItem value="">All Fields</MenuItem>
+                {filterAvailableFields.map((f) => (
+                  <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            {/* Status Filter */}
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Status"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                <MenuItem value="">All Statuses</MenuItem>
+                <MenuItem value="completed">Done</MenuItem>
+                <MenuItem value="not_done">Not Done</MenuItem>
+              </TextField>
+            </Grid>
+            {/* Date Range */}
+            <Grid item xs={6} sm={1.5}>
               <TextField
                 fullWidth
                 size="small"
@@ -260,7 +474,7 @@ const IrrigationHistory = () => {
                 onChange={(e) => setStartDate(e.target.value)}
               />
             </Grid>
-            <Grid item xs={6} sm={2}>
+            <Grid item xs={6} sm={1.5}>
               <TextField
                 fullWidth
                 size="small"
@@ -271,12 +485,10 @@ const IrrigationHistory = () => {
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </Grid>
-            <Grid item xs={12} sm={2} sx={{ display: 'flex', gap: 1 }}>
+            {/* Actions */}
+            <Grid item xs={12} sm={1} sx={{ display: 'flex', gap: 1 }}>
               <Button type="submit" variant="contained" fullWidth size="small" startIcon={<FilterListIcon />} sx={{ borderRadius: '8px' }}>
                 Filter
-              </Button>
-              <Button variant="outlined" color="inherit" size="small" onClick={handleResetFilter} sx={{ borderRadius: '8px' }}>
-                Reset
               </Button>
             </Grid>
           </Grid>
@@ -292,12 +504,13 @@ const IrrigationHistory = () => {
             <Table>
               <TableHead sx={{ bgcolor: '#f8fafc' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Field</TableCell>
                   <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Date & Time</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Duration</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Volume (L)</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Method</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Water Source</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Farm</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Field</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Rec. Water</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Actual Water Used</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Method / Source</TableCell>
                   <TableCell sx={{ fontWeight: 700, color: '#475569' }}>Notes</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700, color: '#475569' }}>Actions</TableCell>
                 </TableRow>
@@ -305,24 +518,42 @@ const IrrigationHistory = () => {
               <TableBody>
                 {history.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                       <Typography color="text.secondary">No irrigation records match your criteria.</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
                   history.map((record) => (
                     <TableRow key={record.id} hover>
-                      <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{record.field_name}</TableCell>
                       <TableCell>{new Date(record.irrigated_at).toLocaleString()}</TableCell>
-                      <TableCell>{record.duration_minutes} min</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{record.farm_name || '—'}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{record.field_name || '—'}</TableCell>
                       <TableCell>
-                        <Chip label={`${record.volume_litres} L`} size="small" color="primary" variant="outlined" />
+                        <Chip
+                          label={record.status === 'completed' ? 'Done' : 'Not Done'}
+                          size="small"
+                          color={record.status === 'completed' ? 'success' : 'default'}
+                          sx={{ fontWeight: 600 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {record.recommended_water_litres != null
+                          ? `${Number(record.recommended_water_litres).toLocaleString()} L`
+                          : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={`${Number(record.volume_litres).toLocaleString()} L`}
+                          size="small"
+                          color={record.status === 'completed' ? 'primary' : 'default'}
+                          variant="outlined"
+                          sx={{ fontWeight: 700 }}
+                        />
                       </TableCell>
                       <TableCell sx={{ textTransform: 'capitalize' }}>
-                        <Chip label={record.method} size="small" color="success" sx={{ textTransform: 'capitalize' }} />
+                        {record.method} ({record.water_source})
                       </TableCell>
-                      <TableCell sx={{ textTransform: 'capitalize' }}>{record.water_source}</TableCell>
-                      <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <TableCell sx={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {record.notes || '-'}
                       </TableCell>
                       <TableCell align="right">
@@ -349,27 +580,157 @@ const IrrigationHistory = () => {
       {/* Add/Edit Irrigation Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <form onSubmit={handleSubmit}>
-          <DialogTitle sx={{ fontWeight: 700 }}>{isEditing ? 'Edit Irrigation Record' : 'Add Irrigation Record'}</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 700 }}>{isEditing ? 'Edit Irrigation Record' : 'Record Irrigation Event'}</DialogTitle>
           <DialogContent dividers>
+            {/* AI Recommendation Preview Box */}
+            {aiLoading ? (
+              <Box sx={{ p: 2, mb: 2.5, borderRadius: '12px', bgcolor: '#f5f3ff', border: '1px solid #ddd6fe', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <CircularProgress size={20} sx={{ color: '#6366f1' }} />
+                <Typography variant="body2" sx={{ color: '#4c1d95', fontWeight: 600 }}>
+                  Fetching current AI recommendation for selected field...
+                </Typography>
+              </Box>
+            ) : aiRec && !aiRec.error ? (
+              <Box sx={{
+                p: 2, mb: 2.5, borderRadius: '14px',
+                border: '1px solid',
+                borderColor: aiRec.irrigation_needed ? '#c7d2fe' : '#bbf7d0',
+                bgcolor: aiRec.irrigation_needed ? '#f5f3ff' : '#f0fdf4'
+              }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <AutoAwesomeIcon sx={{ color: '#6366f1', fontSize: 20 }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e1b4b' }}>
+                      Current AI Recommendation
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={aiRec.priority ? `${aiRec.priority} PRIORITY` : (aiRec.irrigation_needed ? 'HIGH PRIORITY' : 'LOW PRIORITY')}
+                    size="small"
+                    sx={{
+                      bgcolor: aiRec.priority === 'HIGH' || aiRec.irrigation_needed ? '#fee2e2' : '#dcfce7',
+                      color: aiRec.priority === 'HIGH' || aiRec.irrigation_needed ? '#dc2626' : '#16a34a',
+                      fontWeight: 800, fontSize: '0.7rem'
+                    }}
+                  />
+                </Box>
+                <Grid container spacing={1} alignItems="center">
+                  <Grid item xs={7}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: aiRec.irrigation_needed ? '#4338ca' : '#15803d' }}>
+                      {aiRec.irrigation_needed ? '💧 Irrigation Needed' : '❌ No Irrigation Needed'}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                      Field: <strong>{aiRec.field_name || 'Selected Field'}</strong> ({aiRec.crop_name || 'Crop'} • {aiRec.crop_stage || 'Stage'})
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={5} sx={{ textAlign: 'right' }}>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>Recommended Water</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                      {aiRec.recommended_water ? `${Number(aiRec.recommended_water).toLocaleString()} L` : '0 L'}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+            ) : null}
+
             <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField select fullWidth label="Field" name="field" value={formData.field} onChange={handleChange} required>
-                  {fields.map((f) => ( <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem> ))}
+              {/* Farm Select */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Farm *"
+                  name="farm"
+                  value={formData.farm}
+                  onChange={handleFarmChange}
+                  required
+                >
+                  {farms.map((f) => ( <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem> ))}
                 </TextField>
               </Grid>
+              {/* Field Select (Cascading) */}
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Duration (minutes)" name="duration_minutes" type="number" value={formData.duration_minutes} onChange={handleChange} required />
+                <TextField
+                  select
+                  fullWidth
+                  label="Field *"
+                  name="field"
+                  value={formData.field}
+                  onChange={handleFieldChangeInModal}
+                  required
+                >
+                  {modalAvailableFields.map((f) => ( <MenuItem key={f.id} value={f.id}>{f.name}</MenuItem> ))}
+                </TextField>
               </Grid>
+
+              {/* Status Select (Done / Not Done) */}
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Water Quantity (Litres)" name="volume_litres" type="number" inputProps={{ step: '0.01' }} value={formData.volume_litres} onChange={handleChange} required />
+                <TextField
+                  select
+                  fullWidth
+                  label="Irrigation Status *"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleStatusChange}
+                  required
+                >
+                  <MenuItem value="completed">Done / Completed</MenuItem>
+                  <MenuItem value="not_done">Not Done</MenuItem>
+                </TextField>
               </Grid>
+
+              {/* Actual Water Used */}
               <Grid item xs={12} sm={6}>
-                <TextField select fullWidth label="Method" name="method" value={formData.method} onChange={handleChange}>
+                <TextField
+                  fullWidth
+                  label="Actual Water Used (Litres) *"
+                  name="volume_litres"
+                  type="number"
+                  inputProps={{ step: '0.01', min: '0' }}
+                  value={formData.volume_litres}
+                  onChange={handleChange}
+                  disabled={formData.status === 'not_done'}
+                  required={formData.status === 'completed'}
+                  helperText={formData.status === 'not_done' ? 'Set to 0 when status is Not Done' : 'Enter actual litres recorded'}
+                />
+              </Grid>
+
+              {/* Recommended Water (Optional / Reference) */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Recommended Water (Litres)"
+                  name="recommended_water_litres"
+                  type="number"
+                  inputProps={{ step: '0.01', min: '0' }}
+                  value={formData.recommended_water_litres}
+                  onChange={handleChange}
+                  placeholder="Optional recommendation"
+                />
+              </Grid>
+
+              {/* Duration */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Duration (minutes)"
+                  name="duration_minutes"
+                  type="number"
+                  value={formData.duration_minutes}
+                  onChange={handleChange}
+                />
+              </Grid>
+
+              {/* Method */}
+              <Grid item xs={12} sm={6}>
+                <TextField select fullWidth label="Irrigation Method" name="method" value={formData.method} onChange={handleChange}>
                   {['drip', 'sprinkler', 'flood', 'manual', 'surface'].map((m) => (
                     <MenuItem key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</MenuItem>
                   ))}
                 </TextField>
               </Grid>
+
+              {/* Water Source */}
               <Grid item xs={12} sm={6}>
                 <TextField select fullWidth label="Water Source" name="water_source" value={formData.water_source} onChange={handleChange}>
                   {['canal', 'borewell', 'rain', 'river', 'tank'].map((s) => (
@@ -377,17 +738,16 @@ const IrrigationHistory = () => {
                   ))}
                 </TextField>
               </Grid>
+
+              {/* Notes */}
               <Grid item xs={12}>
-                <TextField fullWidth label="Field Condition" name="field_condition" value={formData.field_condition} onChange={handleChange} placeholder="e.g. Moist, Dry topsoil" />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField fullWidth multiline rows={2} label="Notes" name="notes" value={formData.notes} onChange={handleChange} placeholder="Additional details..." />
+                <TextField fullWidth multiline rows={2} label="Notes" name="notes" value={formData.notes} onChange={handleChange} placeholder="Additional details or observations..." />
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
             <Button onClick={handleClose} color="inherit">Cancel</Button>
-            <Button type="submit" variant="contained" color="success">Save Record</Button>
+            <Button type="submit" variant="contained" color="success">Save Irrigation Record</Button>
           </DialogActions>
         </form>
       </Dialog>
