@@ -4,6 +4,7 @@ import {
   IconButton, Paper, MenuItem, TextField, Tooltip
 } from '@mui/material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import { useAuth } from '../../context/AuthContext';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -11,9 +12,13 @@ import InfoIcon from '@mui/icons-material/Info';
 import CloudRainIcon from '@mui/icons-material/Thunderstorm';
 import WaterIcon from '@mui/icons-material/Water';
 import SettingsIcon from '@mui/icons-material/Settings';
+import BuildIcon from '@mui/icons-material/Build';
 import { getAlerts, resolveAlert } from '../../services/api';
 
 const AlertsPage = () => {
+  const { user } = useAuth();
+  const isMaintenance = user?.role === 'maintenance';
+
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [severityFilter, setSeverityFilter] = useState('');
@@ -30,9 +35,11 @@ const AlertsPage = () => {
       if (severityFilter) params.severity = severityFilter;
       if (typeFilter) params.alert_type = typeFilter;
       const data = await getAlerts(params);
-      setAlerts(data);
+      const list = Array.isArray(data) ? data : (data?.results || []);
+      setAlerts(list);
     } catch (e) {
       console.error('Error fetching alerts:', e);
+      setAlerts([]);
     } finally {
       setLoading(false);
     }
@@ -65,21 +72,22 @@ const AlertsPage = () => {
       case 'irrigation':
         return <WaterIcon color="primary" />;
       default:
-        return <SettingsIcon color="action" />;
+        return isMaintenance ? <BuildIcon color="action" /> : <SettingsIcon color="action" />;
     }
   };
 
-  const activeAlerts = alerts.filter(a => !a.is_resolved);
-  const resolvedAlerts = alerts.filter(a => a.is_resolved);
+  const safeAlerts = Array.isArray(alerts) ? alerts : [];
+  const activeAlerts = safeAlerts.filter(a => !a?.is_resolved);
+  const resolvedAlerts = safeAlerts.filter(a => a?.is_resolved);
 
   return (
-    <DashboardLayout title="Alerts & System Notifications">
+    <DashboardLayout title={isMaintenance ? "Maintenance Notifications" : "Alerts & System Notifications"}>
       {/* Header */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b' }}>
-              System & Weather Alerts
+              {isMaintenance ? "Maintenance & Dispatch Notifications" : "System & Weather Alerts"}
             </Typography>
             <Chip
               label={`${activeAlerts.length} Active`}
@@ -88,7 +96,10 @@ const AlertsPage = () => {
             />
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Stay notified of high-priority weather events, moisture stress, and system recommendations.
+            {isMaintenance
+              ? "Stay notified of assigned complaints, urgent repair tasks, and dispatch updates."
+              : "Stay notified of high-priority weather events, moisture stress, and system recommendations."
+            }
           </Typography>
         </Box>
 
@@ -117,8 +128,8 @@ const AlertsPage = () => {
             sx={{ minWidth: 140 }}
           >
             <MenuItem value="">All Types</MenuItem>
-            <MenuItem value="weather">Weather</MenuItem>
-            <MenuItem value="irrigation">Irrigation</MenuItem>
+            {!isMaintenance && <MenuItem value="weather">Weather</MenuItem>}
+            {!isMaintenance && <MenuItem value="irrigation">Irrigation</MenuItem>}
             <MenuItem value="system">System</MenuItem>
           </TextField>
         </Stack>
@@ -127,19 +138,25 @@ const AlertsPage = () => {
       {/* Main Active Alerts List */}
       <Card elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0', mb: 3 }}>
         <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b', mb: 2 }}>
-          Active Unresolved Alerts
+          {isMaintenance ? "Active Maintenance Tasks & Alerts" : "Active Unresolved Alerts"}
         </Typography>
 
         {loading ? (
           <Box sx={{ py: 4, textAlign: 'center' }}><CircularProgress color="success" size={28} /></Box>
         ) : activeAlerts.length === 0 ? (
           <MuiAlert severity="success" sx={{ borderRadius: '12px' }}>
-            No active alerts! All fields and weather conditions are optimal.
+            {isMaintenance
+              ? "No active maintenance notifications! All assigned tasks are up to date."
+              : "No active alerts! All fields and weather conditions are optimal."
+            }
           </MuiAlert>
         ) : (
           <Stack spacing={2}>
             {activeAlerts.map((alert) => {
               const style = getSeverityStyle(alert.severity);
+              const isMaintenanceNotification = isMaintenance || alert.alert_type === 'maintenance' || Boolean(alert.complaint);
+              const complaintId = alert.complaint_id || (alert.complaint ? (typeof alert.complaint === 'object' ? alert.complaint.complaint_id : `CMP-${alert.complaint}`) : null);
+
               return (
                 <Paper
                   key={alert.id}
@@ -164,26 +181,33 @@ const AlertsPage = () => {
                         </Typography>
                         <Chip label={alert.severity.toUpperCase()} size="small" sx={{ bgcolor: style.border, color: style.color, fontWeight: 700, fontSize: 10 }} />
                         <Chip label={alert.alert_type} size="small" variant="outlined" sx={{ textTransform: 'capitalize' }} />
+                        <Chip label="Active" size="small" color="warning" sx={{ fontWeight: 700, fontSize: 10 }} />
                       </Stack>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                         {alert.message}
                       </Typography>
                       <Typography variant="caption" color="text.disabled">
-                        Field: <strong>{alert.field_name}</strong> | Created: {new Date(alert.created_at).toLocaleString()}
+                        Field: <strong>{alert.field_name || alert.field || 'N/A'}</strong>
+                        {complaintId && (
+                          <> | Complaint ID: <strong>{complaintId}</strong></>
+                        )}
+                        {' '}| Created: {new Date(alert.created_at).toLocaleString()}
                       </Typography>
                     </Box>
                   </Box>
 
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="success"
-                    startIcon={<CheckCircleIcon />}
-                    onClick={() => handleResolve(alert.id)}
-                    sx={{ borderRadius: '8px', textTransform: 'none', whiteSpace: 'nowrap' }}
-                  >
-                    Mark Resolved
-                  </Button>
+                  {!isMaintenanceNotification && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      color="success"
+                      startIcon={<CheckCircleIcon />}
+                      onClick={() => handleResolve(alert.id)}
+                      sx={{ borderRadius: '8px', textTransform: 'none', whiteSpace: 'nowrap' }}
+                    >
+                      Mark Resolved
+                    </Button>
+                  )}
                 </Paper>
               );
             })}

@@ -21,7 +21,7 @@ import WaterDropIcon from '@mui/icons-material/WaterDrop';
 
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getUnreadAlertCount, getAlerts, resolveAlert, getFields, getFarms } from '../../services/api';
+import { getUnreadAlertCount, getAlerts, resolveAlert, markAlertAsRead, getFields, getFarms } from '../../services/api';
 
 const ROLE_COLORS = {
   farmer: '#2E7D32',
@@ -52,7 +52,7 @@ const Topbar = ({ onMenuClick, title }) => {
 
   // ── State for Notifications Popover ──
   const [notifAnchor, setNotifAnchor] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(2);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [alertsList, setAlertsList] = useState([]);
   const [loadingAlerts, setLoadingAlerts] = useState(false);
 
@@ -62,11 +62,26 @@ const Topbar = ({ onMenuClick, title }) => {
   const [searchAnchorEl, setSearchAnchorEl] = useState(null);
   const [liveFields, setLiveFields] = useState([]);
 
-  // Fetch unread count & initial data
+  // Fetch unread count & initial data with background polling
   useEffect(() => {
     if (user) {
       fetchNotificationData();
       fetchFieldsData();
+
+      // Background polling every 15 seconds for live notification badge updates
+      const intervalId = setInterval(() => {
+        fetchNotificationData();
+      }, 15000);
+
+      const handleFocus = () => {
+        fetchNotificationData();
+      };
+      window.addEventListener('focus', handleFocus);
+
+      return () => {
+        clearInterval(intervalId);
+        window.removeEventListener('focus', handleFocus);
+      };
     }
   }, [user]);
 
@@ -94,13 +109,25 @@ const Topbar = ({ onMenuClick, title }) => {
     setNotifAnchor(event.currentTarget);
     setLoadingAlerts(true);
     try {
-      const data = await getAlerts();
+      const data = await getAlerts({ is_resolved: false });
       const list = Array.isArray(data) ? data : (data.results || []);
-      setAlertsList(list.slice(0, 5));
+      setAlertsList(list);
+      setUnreadCount(list.length);
     } catch (e) {
       console.error('Failed to fetch alerts:', e);
     } finally {
       setLoadingAlerts(false);
+    }
+  };
+
+  const handleAlertItemClick = async (alert) => {
+    if (!alert.is_read) {
+      try {
+        await markAlertAsRead(alert.id);
+        setAlertsList(prev => prev.map(a => a.id === alert.id ? { ...a, is_read: true } : a));
+      } catch (err) {
+        console.error('Failed to mark alert as read:', err);
+      }
     }
   };
 
@@ -320,7 +347,17 @@ const Topbar = ({ onMenuClick, title }) => {
             </Box>
             <Button
               size="small"
-              onClick={() => { setNotifAnchor(null); navigate('/farmer/alerts'); }}
+              onClick={() => {
+                setNotifAnchor(null);
+                const routeMap = {
+                  farmer: '/farmer/alerts',
+                  maintenance: '/maintenance/notifications',
+                  supervisor: '/supervisor/notifications',
+                  manager: '/manager/notifications',
+                  admin: '/admin/alerts'
+                };
+                navigate(routeMap[user?.role] || '/farmer/alerts');
+              }}
               sx={{ textTransform: 'none', fontWeight: 700, fontSize: '0.75rem', color: '#16a34a' }}
             >
               View All
@@ -342,10 +379,21 @@ const Topbar = ({ onMenuClick, title }) => {
                 {alertsList.map((alert) => {
                   const isCritical = alert.severity === 'critical' || alert.severity === 'High';
                   const isWarning = alert.severity === 'warning' || alert.severity === 'Medium';
+                  const isResolved = alert.is_resolved || alert.status === 'resolved';
+                  const isRead = alert.is_read;
+
                   return (
                     <ListItem
                       key={alert.id}
-                      sx={{ borderBottom: '1px solid #f1f5f9', py: 1.5, px: 2, '&:hover': { bgcolor: '#f8fafc' } }}
+                      onClick={() => handleAlertItemClick(alert)}
+                      sx={{
+                        borderBottom: '1px solid #f1f5f9',
+                        py: 1.5,
+                        px: 2,
+                        cursor: 'pointer',
+                        bgcolor: isRead ? '#ffffff' : '#f0fdf4',
+                        '&:hover': { bgcolor: isRead ? '#f8fafc' : '#dcfce7' }
+                      }}
                     >
                       <ListItemIcon sx={{ minWidth: 34 }}>
                         {isCritical ? <ErrorOutlineIcon color="error" fontSize="small" /> :
@@ -353,19 +401,46 @@ const Topbar = ({ onMenuClick, title }) => {
                          <InfoOutlinedIcon color="info" fontSize="small" />}
                       </ListItemIcon>
                       <ListItemText
-                        primary={alert.message || alert.title || 'System Notification'}
-                        secondary={new Date(alert.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        primaryTypographyProps={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}
-                        secondaryTypographyProps={{ fontSize: '0.7rem' }}
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: isRead ? 500 : 700, color: '#1e293b' }}>
+                              {alert.message || alert.title || 'System Notification'}
+                            </Typography>
+                          </Box>
+                        }
+                        secondary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                            <Typography variant="caption" sx={{ fontSize: '0.7rem', color: '#64748b' }}>
+                              {new Date(alert.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </Typography>
+                            <Chip
+                              label={isResolved ? 'Resolved' : 'Pending'}
+                              size="small"
+                              color={isResolved ? 'success' : 'warning'}
+                              variant={isResolved ? 'filled' : 'outlined'}
+                              sx={{ height: 16, fontSize: '0.65rem', fontWeight: 700 }}
+                            />
+                            {!isRead && (
+                              <Chip
+                                label="Unread"
+                                size="small"
+                                color="primary"
+                                sx={{ height: 16, fontSize: '0.65rem', fontWeight: 700 }}
+                              />
+                            )}
+                          </Box>
+                        }
                       />
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleResolveSingleAlert(e, alert.id)}
-                        title="Mark as resolved"
-                        sx={{ color: '#94a3b8', '&:hover': { color: '#16a34a' } }}
-                      >
-                        <CheckCircleIcon fontSize="small" />
-                      </IconButton>
+                      {!isResolved && !alert.complaint && alert.alert_type !== 'maintenance' && user?.role !== 'maintenance' && (
+                        <IconButton
+                          size="small"
+                          onClick={(e) => handleResolveSingleAlert(e, alert.id)}
+                          title="Mark as resolved"
+                          sx={{ color: '#94a3b8', '&:hover': { color: '#16a34a' } }}
+                        >
+                          <CheckCircleIcon fontSize="small" />
+                        </IconButton>
+                      )}
                     </ListItem>
                   );
                 })}
@@ -415,19 +490,9 @@ const Topbar = ({ onMenuClick, title }) => {
 
           <Divider sx={{ my: 0.5 }} />
 
-          <MenuItem onClick={() => { setProfileAnchor(null); navigate('/farmer/profile'); }}>
+          <MenuItem onClick={() => { setProfileAnchor(null); navigate(`/${user?.role || 'farmer'}/profile`); }}>
             <ListItemIcon><PersonIcon fontSize="small" sx={{ color: '#16a34a' }} /></ListItemIcon>
             <ListItemText primary="My Profile" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }} />
-          </MenuItem>
-
-          <MenuItem onClick={() => { setProfileAnchor(null); navigate('/farmer/fields'); }}>
-            <ListItemIcon><GrassIcon fontSize="small" sx={{ color: '#0284c7' }} /></ListItemIcon>
-            <ListItemText primary="Field Management" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }} />
-          </MenuItem>
-
-          <MenuItem onClick={() => { setProfileAnchor(null); navigate('/farmer/reports'); }}>
-            <ListItemIcon><AssessmentIcon fontSize="small" sx={{ color: '#d97706' }} /></ListItemIcon>
-            <ListItemText primary="Reports & Analytics" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }} />
           </MenuItem>
 
           <Divider sx={{ my: 0.5 }} />

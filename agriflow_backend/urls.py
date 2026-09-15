@@ -22,6 +22,8 @@ urlpatterns = [
     path('api/', include('recommendation.urls')),
     path('api/', include('ai_recommendation.urls')),
     path('api/', include('crop_health.urls')),
+    path('api/alerts/', include('alerts.urls')),
+    path('api/maintenance/', include('maintenance.urls')),
     path('api/', include('alerts.urls')),
     path('api/', include('maintenance.urls')),
     path('api/', include('reports.urls')),

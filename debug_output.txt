@@ -1,0 +1,215 @@
+Total Fields in DB: 16
+
+--- Field ID: 20 | Name: 'field 2' ---
+  Crop Type: Tomato
+  Crop Variety: Tomato — Arka Rakshak
+  Planting Date: 2026-09-14
+  Stored crop_stage (manual DB column): 'germination'
+  Variety 'Arka Rakshak' stage durations count: 5
+    - Stage: germination (0 to 7)
+    - Stage: vegetative (8 to 35)
+    - Stage: flowering (36 to 60)
+    - Stage: fruiting (61 to 90)
+    - Stage: harvesting (91 to 130)
+  Calculation Output: {'days_after_planting': 0, 'current_expected_stage': 'germination', 'current_expected_stage_display': 'Germination', 'next_expected_stage': 'vegetative', 'next_expected_stage_display': 'Vegetative', 'days_until_next_stage': 8, 'source_reference': 'ICAR-IIHR Research Bulletin 2021', 'has_stage_data': True, 'status': 'success', 'message': 'Expected current stage: Germination'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: 0
+    - calculated_crop_stage: germination
+    - calculated_crop_stage_display: Germination
+
+--- Field ID: 16 | Name: 'field1' ---
+  Crop Type: Banana
+  Crop Variety: None
+  Planting Date: 2026-09-09
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': 5, 'current_expected_stage': None, 'current_expected_stage_display': 'Variety Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_variety', 'message': 'No variety selected for variety-specific stage calculation'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: 5
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Variety Required
+
+--- Field ID: 15 | Name: 'field 1' ---
+  Crop Type: Coconut
+  Crop Variety: None
+  Planting Date: 2026-09-09
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': 5, 'current_expected_stage': None, 'current_expected_stage_display': 'Variety Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_variety', 'message': 'No variety selected for variety-specific stage calculation'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: 5
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Variety Required
+
+--- Field ID: 14 | Name: 'field 1' ---
+  Crop Type: Tapioca
+  Crop Variety: None
+  Planting Date: 2026-09-08
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': 6, 'current_expected_stage': None, 'current_expected_stage_display': 'Variety Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_variety', 'message': 'No variety selected for variety-specific stage calculation'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: 6
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Variety Required
+
+--- Field ID: 13 | Name: 'field 1' ---
+  Crop Type: Rice
+  Crop Variety: None
+  Planting Date: 2026-09-08
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': 6, 'current_expected_stage': None, 'current_expected_stage_display': 'Variety Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_variety', 'message': 'No variety selected for variety-specific stage calculation'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: 6
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Variety Required
+
+--- Field ID: 11 | Name: 'North Rice Field' ---
+  Crop Type: Paddy / Rice
+  Crop Variety: None
+  Planting Date: None
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': None, 'current_expected_stage': None, 'current_expected_stage_display': 'Planting Date Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_planting_date', 'message': 'No planting date provided'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: None
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Planting Date Required
+
+--- Field ID: 10 | Name: 'Paddy Sector A' ---
+  Crop Type: Paddy / Rice
+  Crop Variety: None
+  Planting Date: None
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': None, 'current_expected_stage': None, 'current_expected_stage_display': 'Planting Date Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_planting_date', 'message': 'No planting date provided'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: None
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Planting Date Required
+
+--- Field ID: 9 | Name: 'East Tea Sector A' ---
+  Crop Type: None
+  Crop Variety: None
+  Planting Date: 2026-01-15
+  Stored crop_stage (manual DB column): 'vegetative'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': 242, 'current_expected_stage': None, 'current_expected_stage_display': 'Variety Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_variety', 'message': 'No variety selected for variety-specific stage calculation'}
+  Serializer Output:
+    - crop_stage: vegetative
+    - days_after_planting: 242
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Variety Required
+
+--- Field ID: 8 | Name: 'Test Field Good' ---
+  Crop Type: None
+  Crop Variety: None
+  Planting Date: None
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': None, 'current_expected_stage': None, 'current_expected_stage_display': 'Planting Date Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_planting_date', 'message': 'No planting date provided'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: None
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Planting Date Required
+
+--- Field ID: 7 | Name: 'Test Field Good' ---
+  Crop Type: None
+  Crop Variety: None
+  Planting Date: None
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': None, 'current_expected_stage': None, 'current_expected_stage_display': 'Planting Date Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_planting_date', 'message': 'No planting date provided'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: None
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Planting Date Required
+
+--- Field ID: 6 | Name: 'Test Field Good' ---
+  Crop Type: None
+  Crop Variety: None
+  Planting Date: None
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': None, 'current_expected_stage': None, 'current_expected_stage_display': 'Planting Date Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_planting_date', 'message': 'No planting date provided'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: None
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Planting Date Required
+
+--- Field ID: 5 | Name: 'Paddy Field 1' ---
+  Crop Type: Paddy
+  Crop Variety: None
+  Planting Date: None
+  Stored crop_stage (manual DB column): 'vegetative'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': None, 'current_expected_stage': None, 'current_expected_stage_display': 'Planting Date Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_planting_date', 'message': 'No planting date provided'}
+  Serializer Output:
+    - crop_stage: vegetative
+    - days_after_planting: None
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Planting Date Required
+
+--- Field ID: 4 | Name: 'north' ---
+  Crop Type: Wheat
+  Crop Variety: None
+  Planting Date: 2026-08-12
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': 33, 'current_expected_stage': None, 'current_expected_stage_display': 'Variety Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_variety', 'message': 'No variety selected for variety-specific stage calculation'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: 33
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Variety Required
+
+--- Field ID: 3 | Name: 'South Maize Block' ---
+  Crop Type: None
+  Crop Variety: None
+  Planting Date: None
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': None, 'current_expected_stage': None, 'current_expected_stage_display': 'Planting Date Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_planting_date', 'message': 'No planting date provided'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: None
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Planting Date Required
+
+--- Field ID: 2 | Name: 'North Paddy Field' ---
+  Crop Type: None
+  Crop Variety: None
+  Planting Date: None
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': None, 'current_expected_stage': None, 'current_expected_stage_display': 'Planting Date Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_planting_date', 'message': 'No planting date provided'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: None
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Planting Date Required
+
+--- Field ID: 1 | Name: 'North field' ---
+  Crop Type: Rice
+  Crop Variety: None
+  Planting Date: 2026-08-01
+  Stored crop_stage (manual DB column): 'germination'
+  NO CROP VARIETY ASSIGNED!
+  Calculation Output: {'days_after_planting': 44, 'current_expected_stage': None, 'current_expected_stage_display': 'Variety Required', 'next_expected_stage': None, 'next_expected_stage_display': None, 'days_until_next_stage': None, 'source_reference': '', 'has_stage_data': False, 'status': 'no_variety', 'message': 'No variety selected for variety-specific stage calculation'}
+  Serializer Output:
+    - crop_stage: germination
+    - days_after_planting: 44
+    - calculated_crop_stage: None
+    - calculated_crop_stage_display: Variety Required
+

@@ -132,10 +132,22 @@ const AIRecommendationCard = ({ fieldId = null, farmId = null, refreshTrigger = 
 
       {/* Location label */}
       {data.field_name && (
-        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, mb: 2, display: 'block' }}>
-          📍 {data.field_name}{data.location ? ` — ${data.location}` : ''} ({data.crop_name || 'Crop'} • {data.crop_stage || 'Growth Stage'})
+        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, mb: 1, display: 'block' }}>
+          📍 {data.field_name}{data.location ? ` — ${data.location}` : ''} ({data.crop_name || 'Crop'}{data.crop_variety_name ? ` - ${data.crop_variety_name}` : ''} • {data.crop_stage || 'Growth Stage'}{data.days_after_planting !== null && data.days_after_planting !== undefined ? ` • Day ${data.days_after_planting}` : ''})
         </Typography>
       )}
+      {data.next_expected_stage && (
+        <Typography variant="caption" sx={{ color: '#0369a1', fontWeight: 600, mb: 1, display: 'block' }}>
+          🌱 Next Expected Stage: {data.next_expected_stage}{data.days_until_next_stage !== null ? ` (in ${data.days_until_next_stage} days)` : ''}
+        </Typography>
+      )}
+      {data.water_source_info && (
+        <Typography variant="caption" sx={{ color: '#0284c7', fontWeight: 600, mb: 2, display: 'block' }}>
+          📊 Data Source: {data.water_source_info}{data.source_reference ? ` (${data.source_reference})` : ''}
+        </Typography>
+      )}
+
+
 
       {/* Recommendation Banner */}
       <Box sx={{
@@ -182,7 +194,10 @@ const AIRecommendationCard = ({ fieldId = null, farmId = null, refreshTrigger = 
           <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.85)', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.05)' }}>
             <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">Previous Irrigation</Typography>
             <Typography variant="subtitle2" fontWeight={800} color="#475569">
-              {(data.yesterday_irrigation_liters != null) ? `${Number(data.yesterday_irrigation_liters).toLocaleString()} L` : '0 L'}
+              {`${Number(
+                data.recent_irrigation_liters ??
+                ((data.completed_today_irrigation_liters || 0) + (data.yesterday_irrigation_liters || 0))
+              ).toLocaleString()} L`}
             </Typography>
           </Box>
         </Grid>

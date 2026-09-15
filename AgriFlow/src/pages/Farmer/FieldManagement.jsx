@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Card, Grid, Button, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
   Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Switch, FormControlLabel, Alert, Snackbar } from '@mui/material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { getFields, createField, updateField, deleteField, getFarms, getCropTypes, getSoilTypes } from '../../services/api';
+import { getFields, createField, updateField, deleteField, getFarms, getCropTypes, getCropVarieties, getSoilTypes } from '../../services/api';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -11,6 +11,7 @@ const FieldManagement = () => {
   const [fields, setFields] = useState([]);
   const [farms, setFarms] = useState([]);
   const [cropTypes, setCropTypes] = useState([]);
+  const [cropVarieties, setCropVarieties] = useState([]);
   const [soilTypes, setSoilTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -21,7 +22,7 @@ const FieldManagement = () => {
   
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    name: '', area: '', farm: '', crop_type: '', soil_type: '', crop_stage: 'germination',
+    name: '', area: '', farm: '', crop_type: '', crop_variety: '', soil_type: '', crop_stage: 'germination',
     planting_date: '', district: '', state: 'Kerala', latitude: '', longitude: '', status: true
   });
 
@@ -32,12 +33,13 @@ const FieldManagement = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [fieldsData, farmsData, cropsData, soilsData] = await Promise.all([
-        getFields(), getFarms(), getCropTypes(), getSoilTypes()
+      const [fieldsData, farmsData, cropsData, varietiesData, soilsData] = await Promise.all([
+        getFields(), getFarms(), getCropTypes(), getCropVarieties(), getSoilTypes()
       ]);
       setFields(fieldsData);
       setFarms(farmsData);
       setCropTypes(cropsData);
+      setCropVarieties(varietiesData);
       setSoilTypes(soilsData);
     } catch (error) {
       showMessage('error', 'Failed to fetch data');
@@ -54,6 +56,7 @@ const FieldManagement = () => {
       setCurrentId(field.id);
       setFormData({
         name: field.name, area: field.area, farm: field.farm, crop_type: field.crop_type || '',
+        crop_variety: field.crop_variety || '',
         soil_type: field.soil_type || '', crop_stage: field.crop_stage || 'germination', planting_date: field.planting_date || '',
         district: field.district || '', state: field.state || 'Kerala',
         latitude: field.latitude !== null && field.latitude !== undefined ? field.latitude : '',
@@ -64,7 +67,7 @@ const FieldManagement = () => {
       setIsEditing(false);
       setCurrentId(null);
       setFormData({
-        name: '', area: '', farm: farms[0]?.id || '', crop_type: '', soil_type: '', crop_stage: 'germination',
+        name: '', area: '', farm: farms[0]?.id || '', crop_type: '', crop_variety: '', soil_type: '', crop_stage: 'germination',
         planting_date: '', district: farms[0]?.district || '', state: farms[0]?.state || 'Kerala',
         latitude: '', longitude: '', status: true
       });
@@ -76,20 +79,23 @@ const FieldManagement = () => {
 
   const handleChange = (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    setFormData({ ...formData, [e.target.name]: value });
+    if (e.target.name === 'crop_type') {
+      setFormData({ ...formData, crop_type: value, crop_variety: '' });
+    } else {
+      setFormData({ ...formData, [e.target.name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
 
-    console.log("Field payload (raw):", formData);
-
     const payload = {
       farm: parseInt(formData.farm, 10),
       name: (formData.name || '').trim(),
       area: parseFloat(formData.area) || 0,
       crop_type: formData.crop_type !== '' && formData.crop_type != null ? parseInt(formData.crop_type, 10) : null,
+      crop_variety: formData.crop_variety !== '' && formData.crop_variety != null ? parseInt(formData.crop_variety, 10) : null,
       soil_type: formData.soil_type !== '' && formData.soil_type != null ? parseInt(formData.soil_type, 10) : null,
       crop_stage: formData.crop_stage || 'germination',
       planting_date: formData.planting_date && formData.planting_date.trim() !== '' ? formData.planting_date : null,
@@ -100,8 +106,6 @@ const FieldManagement = () => {
       status: Boolean(formData.status),
     };
 
-    console.log("Field payload (clean):", payload);
-
     try {
       if (isEditing) {
         await updateField(currentId, payload);
@@ -111,7 +115,7 @@ const FieldManagement = () => {
         showMessage('success', 'Field created successfully');
       }
       handleClose();
-      fetchData(); // Refresh fields
+      fetchData();
     } catch (error) {
       console.error("Field save error:", error.response?.data || error);
       const errData = error.response?.data;
@@ -144,6 +148,16 @@ const FieldManagement = () => {
     }
   };
 
+  const varietiesList = Array.isArray(cropVarieties) ? cropVarieties : (cropVarieties?.results || []);
+  const selectedCropId = formData.crop_type ? parseInt(formData.crop_type, 10) : null;
+
+  const filteredVarieties = varietiesList.filter(v => {
+    if (!selectedCropId) return false;
+    const cropId = v.crop !== undefined ? v.crop : (v.crop_type !== undefined ? v.crop_type : v.crop_id);
+    return cropId === selectedCropId;
+  });
+
+
   return (
     <DashboardLayout title="Field Management">
       <Card elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
@@ -163,6 +177,8 @@ const FieldManagement = () => {
                   <TableCell sx={{ fontWeight: 600 }}>Farm</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Location (District, State)</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Crop Type</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Crop Variety</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Current Crop Stage</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Soil Type</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Area (Acres)</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
@@ -171,13 +187,26 @@ const FieldManagement = () => {
               </TableHead>
               <TableBody>
                 {fields.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} align="center">No fields found.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={10} align="center">No fields found.</TableCell></TableRow>
                 ) : fields.map((field) => (
                   <TableRow key={field.id} hover>
                     <TableCell sx={{ fontWeight: 500 }}>{field.name}</TableCell>
                     <TableCell>{field.farm_name}</TableCell>
                     <TableCell>{field.location_display || field.effective_district || '-'}</TableCell>
                     <TableCell>{field.crop_type_name || '-'}</TableCell>
+                    <TableCell>{field.crop_variety_name || '-'}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0284c7' }}>
+                          🌱 {field.calculated_crop_stage_display || (field.crop_stage ? field.crop_stage.charAt(0).toUpperCase() + field.crop_stage.slice(1) : 'Vegetative')}
+                        </Typography>
+                        {field.days_after_planting !== null && field.days_after_planting !== undefined && (
+                          <Typography variant="caption" sx={{ color: '#64748b' }}>
+                            Day {field.days_after_planting}{field.next_expected_stage_display ? ` • Next: ${field.next_expected_stage_display}` : ''}
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
                     <TableCell>{field.soil_type_name || '-'}</TableCell>
                     <TableCell>{field.area}</TableCell>
                     <TableCell>{field.status ? 'Active' : 'Inactive'}</TableCell>
@@ -216,21 +245,53 @@ const FieldManagement = () => {
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
+                <TextField 
+                  select 
+                  fullWidth 
+                  label="Crop Variety" 
+                  name="crop_variety" 
+                  value={formData.crop_variety} 
+                  onChange={handleChange} 
+                  disabled={!formData.crop_type}
+                  helperText={
+                    !formData.crop_type 
+                      ? "Select a crop first" 
+                      : (filteredVarieties.length === 0 ? "No varieties available for this crop" : "")
+                  }
+                >
+                  <MenuItem value=""><em>Standard / Default Variety</em></MenuItem>
+                  {filteredVarieties.map((v) => ( <MenuItem key={v.id} value={v.id}>{v.variety_name}</MenuItem> ))}
+                </TextField>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
                 <TextField select fullWidth label="Soil Type" name="soil_type" value={formData.soil_type} onChange={handleChange}>
                   <MenuItem value=""><em>None</em></MenuItem>
                   {soilTypes.map((s) => ( <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem> ))}
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField select fullWidth label="Crop Stage" name="crop_stage" value={formData.crop_stage} onChange={handleChange}>
-                  {['germination', 'vegetative', 'flowering', 'fruiting', 'harvesting'].map((stage) => (
-                    <MenuItem key={stage} value={stage}>{stage.charAt(0).toUpperCase() + stage.slice(1)}</MenuItem>
-                  ))}
-                </TextField>
+                <TextField fullWidth label="Planting Date" name="planting_date" type="date" value={formData.planting_date} onChange={handleChange} InputLabelProps={{ shrink: true }} helperText="Required for automatic crop stage calculation" />
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Planting Date" name="planting_date" type="date" value={formData.planting_date} onChange={handleChange} InputLabelProps={{ shrink: true }} />
+
+              {/* Automatic Crop Stage Info Banner */}
+              <Grid item xs={12}>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f0f9ff', borderColor: '#bae6fd', borderRadius: 2 }}>
+                  <Typography variant="subtitle2" sx={{ color: '#0369a1', fontWeight: 700, mb: 0.5 }}>
+                    🤖 Automatic Crop Stage Engine
+                  </Typography>
+                  {formData.planting_date ? (
+                    <Typography variant="body2" sx={{ color: '#0f172a' }}>
+                      Stage is dynamically calculated based on <strong>Planting Date</strong> and <strong>Variety Duration Baseline</strong> in PostgreSQL.
+                    </Typography>
+                  ) : (
+                    <Typography variant="body2" sx={{ color: '#64748b' }}>
+                      Select a <strong>Planting Date</strong> to enable automated daily stage progression (Germination → Vegetative → Flowering → Fruiting → Harvesting).
+                    </Typography>
+                  )}
+                </Paper>
               </Grid>
+
               <Grid item xs={12}>
                 <FormControlLabel control={<Switch checked={formData.status} onChange={handleChange} name="status" />} label="Active Status" />
               </Grid>
@@ -251,3 +312,4 @@ const FieldManagement = () => {
 };
 
 export default FieldManagement;
+

@@ -3,15 +3,33 @@ from .models import IrrigationHistory, RainfallConfirmation
 
 
 class IrrigationHistorySerializer(serializers.ModelSerializer):
+    farm_name = serializers.CharField(source='farm.name', read_only=True)
     field_name = serializers.CharField(source='field.name', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         model = IrrigationHistory
         fields = [
-            'id', 'field', 'field_name', 'method', 'water_source',
-            'volume_litres', 'duration_minutes', 'field_condition', 'created_by', 'irrigated_at', 'notes',
+            'id', 'farm', 'farm_name', 'field', 'field_name', 'status', 'status_display',
+            'recommended_water_litres', 'volume_litres', 'method', 'water_source',
+            'duration_minutes', 'field_condition', 'created_by', 'irrigated_at', 'notes',
         ]
         read_only_fields = ['id', 'irrigated_at', 'created_by']
+
+    def validate(self, attrs):
+        status_val = attrs.get('status', getattr(self.instance, 'status', 'completed'))
+        volume = attrs.get('volume_litres', getattr(self.instance, 'volume_litres', 0))
+
+        if volume is not None and float(volume) < 0:
+            raise serializers.ValidationError({"volume_litres": "Actual water used cannot be negative."})
+
+        if status_val == 'not_done':
+            attrs['volume_litres'] = 0
+        elif status_val == 'completed':
+            if volume is None:
+                raise serializers.ValidationError({"volume_litres": "Please enter the actual water used."})
+
+        return attrs
 
 
 class RainfallConfirmationSerializer(serializers.ModelSerializer):

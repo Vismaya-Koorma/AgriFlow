@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from master.models import CropType, SoilType
+from master.models import CropType, SoilType, CropVariety
 
 
 class Farm(models.Model):
@@ -40,7 +40,9 @@ class Field(models.Model):
 
     farm = models.ForeignKey(Farm, on_delete=models.CASCADE, related_name='fields')
     crop_type = models.ForeignKey(CropType, on_delete=models.SET_NULL, null=True, related_name='fields')
+    crop_variety = models.ForeignKey(CropVariety, on_delete=models.SET_NULL, null=True, blank=True, related_name='fields')
     soil_type = models.ForeignKey(SoilType, on_delete=models.SET_NULL, null=True, related_name='fields')
+
     name = models.CharField(max_length=255)
     area = models.DecimalField(max_digits=10, decimal_places=2, help_text='Area in acres')
     planting_date = models.DateField(blank=True, null=True)

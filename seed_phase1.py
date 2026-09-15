@@ -69,22 +69,6 @@ if not RainfallConfirmation.objects.filter(field=field1).exists():
     )
     print("Seeded Rainfall Confirmation.")
 
-# Seed Alerts
-if not Alert.objects.filter(field=field1).exists():
-    Alert.objects.create(
-        field=field1,
-        alert_type='weather',
-        severity='high',
-        title='Rain expected tomorrow',
-        message='75% probability of rain tomorrow. Postpone scheduled irrigation.'
-    )
-    Alert.objects.create(
-        field=field1,
-        alert_type='irrigation',
-        severity='medium',
-        title='No irrigation for several days',
-        message='Field 2 has not been irrigated for 3 days.'
-    )
-    print("Seeded Alerts.")
+# Seed Alerts dynamically evaluated on engine load
 
 print("Phase 1 database seeding complete!")

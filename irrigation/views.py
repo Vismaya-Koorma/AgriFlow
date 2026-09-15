@@ -47,20 +47,38 @@ class IrrigationHistoryViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.role in ['manager', 'admin'] or user.is_superuser:
-            qs = IrrigationHistory.objects.all().select_related('field')
+            qs = IrrigationHistory.objects.all().select_related('farm', 'field')
         else:
             user_farms = Farm.objects.filter(user=user)
-            user_fields = Field.objects.filter(farm__in=user_farms)
-            qs = IrrigationHistory.objects.filter(field__in=user_fields).select_related('field')
+            qs = IrrigationHistory.objects.filter(
+                Q(field__farm__in=user_farms) | Q(farm__in=user_farms) | Q(created_by=user)
+            ).select_related('farm', 'field')
+
+        farm_id = self.request.query_params.get('farm')
+        if farm_id:
+            qs = qs.filter(Q(farm__id=farm_id) | Q(field__farm__id=farm_id))
 
         field_id = self.request.query_params.get('field')
         if field_id:
             qs = qs.filter(field__id=field_id)
 
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+
+        start_date = self.request.query_params.get('start_date')
+        if start_date:
+            qs = qs.filter(irrigated_at__date__gte=start_date)
+
+        end_date = self.request.query_params.get('end_date')
+        if end_date:
+            qs = qs.filter(irrigated_at__date__lte=end_date)
+
         search = self.request.query_params.get('search')
         if search:
             qs = qs.filter(
                 Q(field__name__icontains=search) |
+                Q(farm__name__icontains=search) |
                 Q(method__icontains=search) |
                 Q(water_source__icontains=search) |
                 Q(notes__icontains=search)
@@ -69,9 +87,41 @@ class IrrigationHistoryViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         field = serializer.validated_data.get('field')
+        farm = serializer.validated_data.get('farm') or (field.farm if field else None)
+
         if field and field.farm.user != self.request.user and self.request.user.role not in ['manager', 'admin']:
             raise PermissionDenied("You don't own this field.")
-        serializer.save(created_by=self.request.user)
+
+        instance = serializer.save(created_by=self.request.user, farm=farm)
+        
+        # Auto-resolve pending irrigation alert for this field & user upon completed irrigation
+        if instance.status == 'completed' or instance.status == IrrigationHistory.Status.COMPLETED:
+            from alerts.services import resolve_irrigation_notification
+            resolve_irrigation_notification(field=field, user=self.request.user)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def water_consumed_24h(request):
+    """
+    Calculate SUM of actual water used for completed irrigation records
+    within the last 24 hours for the logged-in farmer.
+    """
+    user = request.user
+    day_ago = timezone.now() - timedelta(hours=24)
+
+    if user.role in ['manager', 'admin'] or user.is_superuser:
+        qs = IrrigationHistory.objects.filter(irrigated_at__gte=day_ago, status='completed')
+    else:
+        user_farms = Farm.objects.filter(user=user)
+        qs = IrrigationHistory.objects.filter(
+            Q(field__farm__in=user_farms) | Q(farm__in=user_farms) | Q(created_by=user),
+            irrigated_at__gte=day_ago,
+            status='completed'
+        )
+
+    total_litres = qs.aggregate(sum_vol=Sum('volume_litres'))['sum_vol'] or 0.00
+    return Response({'water_consumed_24h': float(total_litres)}, status=status.HTTP_200_OK)
 
 
 class RainfallConfirmationViewSet(viewsets.ModelViewSet):
@@ -96,6 +146,21 @@ class RainfallConfirmationViewSet(viewsets.ModelViewSet):
         rainfall_mm = serializer.validated_data.get('rainfall_mm') or rainfall_map.get(option, 0.0)
 
         serializer.save(confirmed_by=self.request.user, rainfall_mm=rainfall_mm)
+
+    @action(detail=False, methods=['get'], url_path='latest')
+    def latest(self, request):
+        user = request.user
+        if user.role in ['manager', 'admin'] or user.is_superuser:
+            latest_obj = RainfallConfirmation.objects.all().select_related('field').order_by('-confirmed_at').first()
+        else:
+            user_farms = Farm.objects.filter(user=user)
+            user_fields = Field.objects.filter(farm__in=user_farms)
+            latest_obj = RainfallConfirmation.objects.filter(field__in=user_fields).select_related('field').order_by('-confirmed_at').first()
+
+        if not latest_obj:
+            return Response(None, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(latest_obj)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # ─── WATER SOURCE VIEWSET ────────────────────────────────────────────────────

@@ -353,10 +353,10 @@ class RecommendationViewSet(viewsets.ModelViewSet):
         water_requirement_str = f"{water_litres:,} Liters" if water_litres > 0 else "0 Liters"
         status_code = "irrigate" if calc_res['irrigation_needed'] else "no_irrigation"
 
-        # Create Alert Notification if target_field is present and priority is MEDIUM or HIGH
+        # Create/Update Alert Notifications if target_field is present
         if target_field:
             try:
-                from alerts.services import create_irrigation_notification
+                from alerts.services import create_irrigation_notification, update_weather_notification
                 create_irrigation_notification(
                     field=target_field,
                     priority=priority,
@@ -364,9 +364,14 @@ class RecommendationViewSet(viewsets.ModelViewSet):
                     recommendation_title=rec_text,
                     reason=calc_res.get('reason', '')
                 )
+                update_weather_notification(
+                    field=target_field,
+                    rain_probability=live_weather.get('rain_probability', 0.0),
+                    condition=live_weather.get('condition', '')
+                )
             except Exception as e:
                 import logging
-                logging.getLogger(__name__).error(f"Failed to create irrigation alert: {e}")
+                logging.getLogger(__name__).error(f"Failed to update alert notifications: {e}")
 
         return Response({
             'recommendation': rec_text,

@@ -1,12 +1,57 @@
+import re
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 
+EMAIL_REGEX = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+INDIAN_PHONE_REGEX = r'^[6-9]\d{9}$'
+
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
-    confirm_password = serializers.CharField(write_only=True)
+    email = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        error_messages={
+            'required': 'Please enter a valid email address.',
+            'blank': 'Please enter a valid email address.',
+        }
+    )
+    phone_number = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        error_messages={
+            'required': 'Please enter a valid 10-digit mobile number.',
+            'blank': 'Please enter a valid 10-digit mobile number.',
+        }
+    )
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        error_messages={
+            'required': 'Password is required.',
+            'blank': 'Password is required.',
+            'min_length': 'Password must be at least 8 characters long.',
+        }
+    )
+    district = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default=''
+    )
+    state = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default='Kerala'
+    )
+    confirm_password = serializers.CharField(
+        write_only=True,
+        required=True,
+        error_messages={
+            'required': 'Passwords do not match.',
+            'blank': 'Passwords do not match.',
+        }
+    )
 
     class Meta:
         model = User
@@ -15,21 +60,62 @@ class RegisterSerializer(serializers.ModelSerializer):
             'district', 'state', 'role', 'password', 'confirm_password',
             'terms_accepted',
         ]
+        extra_kwargs = {
+            'username': {
+                'required': True,
+                'error_messages': {'required': 'This field is required.', 'blank': 'This field is required.'}
+            },
+            'full_name': {
+                'required': True,
+                'error_messages': {'required': 'This field is required.', 'blank': 'This field is required.'}
+            },
+        }
 
     def validate_username(self, value):
         username = value.strip().lower()
+        if not username:
+            raise serializers.ValidationError("This field is required.")
         if User.objects.filter(username__iexact=username).exists():
-            raise serializers.ValidationError("A user with this username already exists.")
+            raise serializers.ValidationError("Username is already taken.")
         return username
 
     def validate_email(self, value):
+        if not value:
+            raise serializers.ValidationError("Please enter a valid email address.")
         email = value.strip().lower()
+        if not re.match(EMAIL_REGEX, email):
+            raise serializers.ValidationError("Please enter a valid email address.")
         if User.objects.filter(email__iexact=email).exists():
-            raise serializers.ValidationError("A user with this email address already exists.")
+            raise serializers.ValidationError("Email address is already registered.")
         return email
 
+    def validate_phone_number(self, value):
+        if not value:
+            raise serializers.ValidationError("Please enter a valid 10-digit mobile number.")
+        phone = value.strip()
+        if not re.match(INDIAN_PHONE_REGEX, phone):
+            raise serializers.ValidationError("Please enter a valid 10-digit mobile number.")
+        if User.objects.filter(phone_number=phone).exists():
+            raise serializers.ValidationError("An account with this mobile number already exists.")
+        return phone
+
+    def validate_password(self, value):
+        if not value:
+            raise serializers.ValidationError("Password is required.")
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        if not re.search(r'[A-Z]', value):
+            raise serializers.ValidationError("Password must contain at least 1 uppercase letter.")
+        if not re.search(r'[a-z]', value):
+            raise serializers.ValidationError("Password must contain at least 1 lowercase letter.")
+        if not re.search(r'[0-9]', value):
+            raise serializers.ValidationError("Password must contain at least 1 number.")
+        if not re.search(r'[^a-zA-Z0-9]', value):
+            raise serializers.ValidationError("Password must contain at least 1 special character.")
+        return value
+
     def validate(self, data):
-        if data['password'] != data['confirm_password']:
+        if data.get('password') != data.get('confirm_password'):
             raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
         if not data.get('terms_accepted', False):
             raise serializers.ValidationError({'terms_accepted': 'You must accept the terms and conditions.'})
@@ -45,15 +131,25 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    password = serializers.CharField(write_only=True)
+    username = serializers.CharField(required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     def validate(self, data):
-        identifier = data.get('username', '').strip().lower()
+        identifier = data.get('username', '').strip()
         password = data.get('password', '')
 
-        if not identifier or not password:
-            raise serializers.ValidationError('Please provide both username/email and password.')
+        errors = {}
+        if not identifier:
+            errors['username'] = 'Please enter a valid email address.'
+        elif '@' in identifier or not re.match(r'^[a-zA-Z0-9_-]+$', identifier):
+            if not re.match(EMAIL_REGEX, identifier.lower()):
+                errors['username'] = 'Please enter a valid email address.'
+
+        if not password:
+            errors['password'] = 'Password is required.'
+
+        if errors:
+            raise serializers.ValidationError(errors)
 
         # Support login by email OR username (case-insensitive)
         user = (
@@ -63,11 +159,11 @@ class LoginSerializer(serializers.Serializer):
 
         if user and user.check_password(password):
             if not user.is_active:
-                raise serializers.ValidationError('Your account is inactive. Please contact support.')
+                raise serializers.ValidationError({'non_field_errors': ['Your account is inactive. Please contact support.']})
             data['user'] = user
             return data
 
-        raise serializers.ValidationError('Invalid username/email or password. Please check your credentials.')
+        raise serializers.ValidationError({'non_field_errors': ['Invalid email or password.']})
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

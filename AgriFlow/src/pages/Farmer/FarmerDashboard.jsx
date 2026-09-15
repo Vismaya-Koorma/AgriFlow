@@ -21,7 +21,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import CloudRainIcon from '@mui/icons-material/Thunderstorm';
 
 import { useNavigate } from 'react-router-dom';
-import { getFarms, getFields, getIrrigationHistory } from '../../services/api';
+import { getFarms, getFields, getIrrigationHistory, getWaterConsumed24h } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import WeatherCard from '../../components/cards/WeatherCard';
 import RecommendationCard from '../../components/cards/RecommendationCard';
@@ -100,13 +100,23 @@ const FarmerDashboard = () => {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const [farmsData, fieldsData, historyData] = await Promise.all([
-          getFarms(), getFields(), getIrrigationHistory()
+        const [farmsData, fieldsData, historyData, consumed24Data] = await Promise.all([
+          getFarms().catch((err) => { console.error('getFarms error:', err); return []; }),
+          getFields().catch((err) => { console.error('getFields error:', err); return []; }),
+          getIrrigationHistory().catch((err) => { console.error('getIrrigationHistory error:', err); return []; }),
+          getWaterConsumed24h().catch((err) => { console.error('getWaterConsumed24h error:', err); return null; }),
         ]);
 
-        const farmsList = Array.isArray(farmsData) ? farmsData : (farmsData?.results || []);
-        const fieldsList = Array.isArray(fieldsData) ? fieldsData : (fieldsData?.results || []);
-        const historyList = Array.isArray(historyData) ? historyData : (historyData?.results || []);
+        const extractArray = (data) => {
+          if (Array.isArray(data)) return data;
+          if (data && Array.isArray(data.results)) return data.results;
+          if (data && Array.isArray(data.data)) return data.data;
+          return [];
+        };
+
+        const farmsList = extractArray(farmsData);
+        const fieldsList = extractArray(fieldsData);
+        const historyList = extractArray(historyData);
 
         // Populate farms and fields selector
         setUserFarms(farmsList);
@@ -117,12 +127,14 @@ const FarmerDashboard = () => {
           setSelectedLocation({ fieldId: null, farmId: farmsList[0].id });
         }
 
-        const activeFields = fieldsList.filter((f) => f.status).length;
+        const activeFields = fieldsList.filter((f) => f.status !== false && f.is_active !== false).length;
         const now = Date.now();
         const dayAgo = now - 24 * 60 * 60 * 1000;
-        const litres24h = historyList
-          .filter((h) => new Date(h.irrigated_at).getTime() >= dayAgo)
-          .reduce((sum, h) => sum + Number(h.volume_litres || 0), 0);
+        const litres24h = consumed24Data?.water_consumed_24h !== undefined
+          ? Number(consumed24Data.water_consumed_24h)
+          : historyList
+              .filter((h) => new Date(h.irrigated_at).getTime() >= dayAgo && h.status !== 'not_done')
+              .reduce((sum, h) => sum + Number(h.volume_litres || 0), 0);
 
         setStats({
           farms: farmsList.length,
@@ -160,7 +172,7 @@ const FarmerDashboard = () => {
 
         const cropRows = fieldsList.slice(0, 5).map((field) => {
           const style = stageStyles[field.crop_stage] || stageStyles.germination;
-          const ndvi = field.status ? 0.85 : 0.62;
+          const ndvi = (field.status !== false && field.is_active !== false) ? 0.85 : 0.62;
           let harvest = '—';
           if (field.planting_date) {
             try {
@@ -248,7 +260,7 @@ const FarmerDashboard = () => {
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => navigate('/farmer/irrigation-history')}
+                  onClick={() => navigate('/farmer/irrigation-history', { state: { selectedFieldId: selectedLocation.fieldId, selectedFarmId: selectedLocation.farmId } })}
                   sx={{
                     bgcolor: '#1c4516',
                     '&:hover': { bgcolor: '#143310' },
@@ -266,7 +278,7 @@ const FarmerDashboard = () => {
                 <Button
                   variant="contained"
                   startIcon={<CloudRainIcon />}
-                  onClick={() => navigate('/farmer/irrigation-history')}
+                  onClick={() => navigate('/farmer/irrigation-history', { state: { selectedFieldId: selectedLocation.fieldId, selectedFarmId: selectedLocation.farmId } })}
                   sx={{
                     bgcolor: '#ffffff',
                     '&:hover': { bgcolor: '#f7faf5' },
@@ -532,7 +544,7 @@ const FarmerDashboard = () => {
                 <Grid item xs={6}>
                   <Paper
                     elevation={0}
-                    onClick={() => navigate('/farmer/irrigation-history')}
+                    onClick={() => navigate('/farmer/irrigation-history', { state: { selectedFieldId: selectedLocation.fieldId, selectedFarmId: selectedLocation.farmId } })}
                     sx={{
                       p: 2,
                       borderRadius: '16px',
@@ -556,7 +568,7 @@ const FarmerDashboard = () => {
                 <Grid item xs={6}>
                   <Paper
                     elevation={0}
-                    onClick={() => navigate('/farmer/irrigation-history')}
+                    onClick={() => navigate('/farmer/irrigation-history', { state: { selectedFieldId: selectedLocation.fieldId, selectedFarmId: selectedLocation.farmId } })}
                     sx={{
                       p: 2,
                       borderRadius: '16px',
