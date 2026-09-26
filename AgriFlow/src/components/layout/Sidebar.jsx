@@ -141,7 +141,7 @@ const Sidebar = ({ open, onClose }) => {
       <Divider />
 
       {/* Nav Items */}
-      <List sx={{ flex: 1, py: 1 }}>
+      <List sx={{ flex: 1, py: 1, overflowY: 'auto' }}>
         {navItems.map((item) => {
           const active = location.pathname === item.path;
           return (
@@ -149,32 +149,65 @@ const Sidebar = ({ open, onClose }) => {
               key={item.path}
               onClick={() => handleNav(item.path)}
               sx={{
-                mx: 1,
-                mb: 0.3,
-                borderRadius: '8px',
+                mx: 1.5,
+                mb: 0.5,
+                py: 0.8,
+                height: 40,
+                maxHeight: 40,
+                borderRadius: '10px',
                 bgcolor: active ? color : 'transparent',
                 color: active ? '#fff' : '#475569',
-                '&:hover': { bgcolor: active ? color : `${color}10` },
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': { bgcolor: active ? color : `${color}12`, color: active ? '#fff' : color },
               }}
             >
-              <ListItemIcon sx={{ color: active ? '#fff' : '#94a3b8', minWidth: 36 }}>
+              <ListItemIcon sx={{ color: active ? '#fff' : '#94a3b8', minWidth: 34 }}>
                 {item.icon}
               </ListItemIcon>
-              <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: active ? 600 : 400 }} />
+              <ListItemText
+                primary={item.label}
+                primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: active ? 600 : 500 }}
+              />
             </ListItemButton>
           );
         })}
       </List>
 
-      <Divider />
+      <Divider sx={{ mx: 2, borderColor: '#e2e8f0' }} />
 
-      {/* Logout */}
-      <ListItemButton onClick={handleLogout} sx={{ m: 1, borderRadius: '8px', color: '#ef4444', '&:hover': { bgcolor: '#fef2f2' } }}>
-        <ListItemIcon sx={{ color: '#ef4444', minWidth: 36 }}>
-          <LogoutIcon />
-        </ListItemIcon>
-        <ListItemText primary="Logout" primaryTypographyProps={{ fontSize: '0.875rem' }} />
-      </ListItemButton>
+      {/* Visually Attractive Compact Logout */}
+      <Box sx={{ p: 1.5, mt: 'auto' }}>
+        <ListItemButton
+          onClick={handleLogout}
+          sx={{
+            height: 40,
+            maxHeight: 40,
+            borderRadius: '10px',
+            bgcolor: '#fef2f2',
+            color: '#dc2626',
+            border: '1px solid rgba(220, 38, 38, 0.15)',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&:hover': {
+              bgcolor: '#fee2e2',
+              color: '#b91c1c',
+              borderColor: 'rgba(220, 38, 38, 0.3)',
+              boxShadow: '0 2px 8px rgba(220, 38, 38, 0.15)',
+              transform: 'translateY(-1px)',
+              '& .MuiListItemIcon-root': {
+                color: '#b91c1c',
+              },
+            },
+          }}
+        >
+          <ListItemIcon sx={{ color: '#dc2626', minWidth: 34, transition: 'color 0.2s ease-in-out' }}>
+            <LogoutIcon sx={{ fontSize: 19 }} />
+          </ListItemIcon>
+          <ListItemText
+            primary="Logout"
+            primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.01em' }}
+          />
+        </ListItemButton>
+      </Box>
     </Box>
   );
 

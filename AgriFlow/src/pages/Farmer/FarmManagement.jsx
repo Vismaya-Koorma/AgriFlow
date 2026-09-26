@@ -17,6 +17,7 @@ const FarmManagement = () => {
   
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({ name: '', location: '', district: '', total_area: '' });
+  const [formErrors, setFormErrors] = useState({ name: '', total_area: '' });
 
   useEffect(() => {
     fetchFarms();
@@ -37,6 +38,7 @@ const FarmManagement = () => {
   const showMessage = (type, text) => setMessage({ type, text });
 
   const handleOpen = (farm = null) => {
+    setFormErrors({ name: '', total_area: '' });
     if (farm) {
       setIsEditing(true);
       setCurrentId(farm.id);
@@ -51,23 +53,50 @@ const FarmManagement = () => {
 
   const handleClose = () => setOpen(false);
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    if (formErrors[name]) {
+      setFormErrors({ ...formErrors, [name]: '' });
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.name || !formData.name.trim()) {
+      errors.name = 'Farm name is required.';
+    }
+    const areaStr = String(formData.total_area || '').trim();
+    const areaVal = parseFloat(areaStr);
+    if (!areaStr) {
+      errors.total_area = 'Total area is required.';
+    } else if (isNaN(areaVal)) {
+      errors.total_area = 'Total area must be a valid number.';
+    } else if (areaVal <= 0) {
+      errors.total_area = 'Total area must be greater than 0.';
+    }
+    return errors;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
     
-    console.log("Farm payload (raw):", formData);
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      showMessage('error', 'Please fix validation errors before submitting.');
+      return;
+    }
+
+    setSaving(true);
 
     const payload = {
       name: (formData.name || '').trim(),
       location: (formData.location || '').trim() || null,
       district: (formData.district || '').trim() || null,
       state: 'Kerala',
-      total_area: parseFloat(formData.total_area) || 0,
+      total_area: parseFloat(formData.total_area),
     };
-
-    console.log("Farm payload (clean):", payload);
 
     try {
       if (isEditing) {
@@ -83,16 +112,23 @@ const FarmManagement = () => {
       console.error("Farm save error:", error.response?.data || error);
       const errData = error.response?.data;
       let errMsg = isEditing ? 'Failed to update farm' : 'Failed to create farm';
-      if (errData) {
-        if (typeof errData === 'string') {
-          errMsg = errData;
-        } else if (typeof errData === 'object') {
-          const details = Object.entries(errData)
-            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
-            .join(' | ');
-          if (details) errMsg += `: ${details}`;
+      
+      if (errData && typeof errData === 'object') {
+        const fieldErrs = {};
+        if (errData.name) fieldErrs.name = Array.isArray(errData.name) ? errData.name.join(', ') : String(errData.name);
+        if (errData.total_area) fieldErrs.total_area = Array.isArray(errData.total_area) ? errData.total_area.join(', ') : String(errData.total_area);
+        if (Object.keys(fieldErrs).length > 0) {
+          setFormErrors(prev => ({ ...prev, ...fieldErrs }));
         }
+
+        const details = Object.entries(errData)
+          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+          .join(' | ');
+        if (details) errMsg += `: ${details}`;
+      } else if (typeof errData === 'string') {
+        errMsg = errData;
       }
+
       showMessage('error', errMsg);
     } finally {
       setSaving(false);
@@ -158,7 +194,16 @@ const FarmManagement = () => {
           <DialogContent dividers>
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <TextField fullWidth label="Farm Name" name="name" value={formData.name} onChange={handleChange} required />
+                <TextField
+                  fullWidth
+                  label="Farm Name *"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  error={!!formErrors.name}
+                  helperText={formErrors.name}
+                  required
+                />
               </Grid>
               <Grid item xs={12}>
                 <TextField fullWidth label="Location" name="location" value={formData.location} onChange={handleChange} />
@@ -167,7 +212,18 @@ const FarmManagement = () => {
                 <TextField fullWidth label="District" name="district" value={formData.district} onChange={handleChange} />
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth label="Total Area (acres)" name="total_area" type="number" inputProps={{ step: '0.01' }} value={formData.total_area} onChange={handleChange} required />
+                <TextField
+                  fullWidth
+                  label="Total Area (acres) *"
+                  name="total_area"
+                  type="number"
+                  inputProps={{ step: '0.01' }}
+                  value={formData.total_area}
+                  onChange={handleChange}
+                  error={!!formErrors.total_area}
+                  helperText={formErrors.total_area}
+                  required
+                />
               </Grid>
             </Grid>
           </DialogContent>
@@ -177,6 +233,7 @@ const FarmManagement = () => {
           </DialogActions>
         </form>
       </Dialog>
+
       
       <Snackbar open={!!message.text} autoHideDuration={4000} onClose={() => setMessage({ type: '', text: '' })}>
         <Alert severity={message.type || 'info'} onClose={() => setMessage({ type: '', text: '' })}>{message.text}</Alert>

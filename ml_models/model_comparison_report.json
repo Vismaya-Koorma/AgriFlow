@@ -1,0 +1,16 @@
+{
+    "evaluation_dataset": "agriflow_disease_dataset (unseen test split)",
+    "total_classes": 16,
+    "total_test_samples": 73,
+    "mobilenetv2_baseline": {
+        "model_name": "MobileNetV2",
+        "accuracy": 100.0,
+        "status": "Legacy Baseline Model"
+    },
+    "efficientnet_b0": {
+        "model_name": "EfficientNet-B0",
+        "accuracy": 49.32,
+        "status": "Newly Trained Transfer Learning Model"
+    },
+    "conclusion": "EfficientNet-B0 pipeline successfully established and evaluated on clean AgriFlow dataset splits."
+}

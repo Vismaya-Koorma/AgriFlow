@@ -8,10 +8,14 @@ _sentence_model = None
 def get_sentence_transformer_model():
     global _sentence_model
     if _sentence_model is None:
-        from sentence_transformers import SentenceTransformer
-        # Load lightweight all-MiniLM-L6-v2 model
-        _sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
-    return _sentence_model
+        try:
+            from sentence_transformers import SentenceTransformer
+            # Load lightweight all-MiniLM-L6-v2 model
+            _sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
+        except Exception as e:
+            print(f"SentenceTransformer not available (using keyword matching fallback): {e}")
+            _sentence_model = False
+    return _sentence_model if _sentence_model is not False else None
 
 
 CROP_ALIAS_MAP = {
@@ -307,15 +311,27 @@ def analyze_text_symptoms(symptoms_text, crop_type="Crop"):
 
     # Encode Query & Filtered Knowledge Base
     model = get_sentence_transformer_model()
-    query_embedding = model.encode([sym_clean], convert_to_numpy=True)[0]
+    if model is not None:
+        query_embedding = model.encode([sym_clean], convert_to_numpy=True)[0]
 
-    descriptions = [item["description"] for item in filtered_kb]
-    kb_embeddings = model.encode(descriptions, convert_to_numpy=True)
+        descriptions = [item["description"] for item in filtered_kb]
+        kb_embeddings = model.encode(descriptions, convert_to_numpy=True)
 
-    # Cosine Similarity
-    norm_query = query_embedding / (np.linalg.norm(query_embedding) + 1e-9)
-    norm_kb = kb_embeddings / (np.linalg.norm(kb_embeddings, axis=1, keepdims=True) + 1e-9)
-    similarities = np.dot(norm_kb, norm_query)
+        # Cosine Similarity
+        norm_query = query_embedding / (np.linalg.norm(query_embedding) + 1e-9)
+        norm_kb = kb_embeddings / (np.linalg.norm(kb_embeddings, axis=1, keepdims=True) + 1e-9)
+        similarities = np.dot(norm_kb, norm_query)
+    else:
+        # Fallback: Keyword Jaccard matching on descriptions
+        words = set(sym_clean.lower().split())
+        similarities = []
+        for item in filtered_kb:
+            desc_words = set(item["description"].lower().split())
+            intersection = words.intersection(desc_words)
+            union = words.union(desc_words)
+            score = len(intersection) / float(len(union)) if union else 0.0
+            similarities.append(score)
+        similarities = np.array(similarities)
 
     # Calculate disease-level softmax probability distribution vector
     exp_sims = np.exp((similarities - np.max(similarities)) / 0.1)  # Temperature T_text = 0.1

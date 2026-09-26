@@ -213,8 +213,14 @@ export const deleteFarm = async (id) => {
 
 // ─── Field APIs ────────────────────────────────────────────────────────────
 
-export const getFields = async (farmId = null) => {
-  const url = farmId ? `/fields/?farm=${farmId}` : '/fields/';
+export const getFields = async (farmIdOrParams = null) => {
+  let url = '/fields/';
+  if (typeof farmIdOrParams === 'object' && farmIdOrParams !== null) {
+    const qp = new URLSearchParams(farmIdOrParams);
+    url = `/fields/?${qp.toString()}`;
+  } else if (farmIdOrParams) {
+    url = `/fields/?farm=${farmIdOrParams}`;
+  }
   const response = await api.get(url);
   return response.data;
 };
@@ -231,6 +237,11 @@ export const updateField = async (id, fieldData) => {
 
 export const deleteField = async (id) => {
   const response = await api.delete(`/fields/${id}/`);
+  return response.data;
+};
+
+export const verifyField = async (fieldId, statusData) => {
+  const response = await api.post(`/fields/${fieldId}/verify/`, statusData);
   return response.data;
 };
 
@@ -572,6 +583,7 @@ export const getWaterAllocationRequests = async (params = {}) => {
   const qp = new URLSearchParams();
   if (params.search) qp.append('search', params.search);
   if (params.status) qp.append('status', params.status);
+  if (params.supervisor_status) qp.append('supervisor_status', params.supervisor_status);
   if (params.priority) qp.append('priority', params.priority);
   if (qp.toString()) url += `?${qp.toString()}`;
   const response = await api.get(url);
@@ -580,6 +592,11 @@ export const getWaterAllocationRequests = async (params = {}) => {
 
 export const createWaterAllocationRequest = async (requestData) => {
   const response = await api.post('/water-allocation-requests/', requestData);
+  return response.data;
+};
+
+export const verifyWaterAllocationRequest = async (requestId, verificationData) => {
+  const response = await api.post(`/water-allocation-requests/${requestId}/supervisor-verify/`, verificationData);
   return response.data;
 };
 

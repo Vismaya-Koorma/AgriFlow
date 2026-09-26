@@ -1,0 +1,18 @@
+{
+    "maize___common_rust": 0,
+    "maize___gray_leaf_spot": 1,
+    "maize___healthy": 2,
+    "maize___northern_leaf_blight": 3,
+    "pepper___bacterial_spot": 4,
+    "pepper___healthy": 5,
+    "tomato___bacterial_spot": 6,
+    "tomato___early_blight": 7,
+    "tomato___healthy": 8,
+    "tomato___late_blight": 9,
+    "tomato___leaf_mold": 10,
+    "tomato___mosaic_virus": 11,
+    "tomato___septoria_leaf_spot": 12,
+    "tomato___spider_mites_two_spotted": 13,
+    "tomato___target_spot": 14,
+    "tomato___yellow_leaf_curl_virus": 15
+}

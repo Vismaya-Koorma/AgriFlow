@@ -50,6 +50,48 @@ def normalize_crop_key(crop_str):
     return CROP_ALIAS_MAP.get(clean, clean)
 
 
+def load_efficientnet_model():
+    """
+    Loads the newly trained PyTorch EfficientNet-B0 model and class mapping.
+    """
+    global _efficientnet_model, _efficientnet_class_indices
+
+    if _efficientnet_model is not None and _efficientnet_class_indices is not None:
+        return _efficientnet_model, _efficientnet_class_indices
+
+    if not os.path.exists(EFFNET_MODEL_PATH) or not os.path.exists(EFFNET_CLASSES_PATH):
+        return None, None
+
+    try:
+        import torch
+        import torch.nn as nn
+        from torchvision import models
+
+        with open(EFFNET_CLASSES_PATH, "r") as f:
+            mapping = json.load(f)
+            class_indices = {v: k for k, v in mapping.items()}
+
+        num_classes = len(class_indices)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        model = models.efficientnet_b0(weights=None)
+        num_ftrs = model.classifier[1].in_features
+        model.classifier[1] = nn.Sequential(
+            nn.Dropout(p=0.3),
+            nn.Linear(num_ftrs, num_classes)
+        )
+        model.load_state_dict(torch.load(EFFNET_MODEL_PATH, map_location=device))
+        model.to(device)
+        model.eval()
+
+        _efficientnet_model = model
+        _efficientnet_class_indices = class_indices
+        return model, class_indices
+    except Exception as e:
+        print(f"EfficientNet-B0 loading error (using MobileNetV2 fallback): {e}")
+        return None, None
+
+
 def load_crop_model(crop_key):
     """
     Dynamically loads the dedicated MobileNetV2 Keras model and class mapping for a specific crop.
@@ -372,12 +414,10 @@ def analyze_crop_image(image_input, crop_type="Crop"):
         }
 
     try:
-        import cv2
-
-        # 5. Preprocess Image (224x224 RGB, rescaled to [0,1])
-        img_np = np.array(pil_img)
-        img_resized = cv2.resize(img_np, (224, 224))
-        img_rescaled = img_resized.astype(np.float32) / 255.0
+        # 5. Preprocess Image using PIL (224x224 RGB, rescaled to [0,1])
+        img_resized = pil_img.resize((224, 224))
+        img_np = np.array(img_resized)
+        img_rescaled = img_np.astype(np.float32) / 255.0
         img_batch = np.expand_dims(img_rescaled, axis=0)
 
         # 6. Predict using Crop's MobileNetV2 Model

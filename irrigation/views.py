@@ -271,7 +271,7 @@ class WaterAllocationRequestViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['manager', 'admin'] or user.is_superuser:
+        if user.role in ['supervisor', 'manager', 'admin'] or user.is_superuser:
             qs = WaterAllocationRequest.objects.all().select_related('farmer', 'farm', 'field')
         else:
             qs = WaterAllocationRequest.objects.filter(farmer=user).select_related('farmer', 'farm', 'field')
@@ -279,6 +279,10 @@ class WaterAllocationRequestViewSet(viewsets.ModelViewSet):
         req_status = self.request.query_params.get('status')
         if req_status:
             qs = qs.filter(status=req_status)
+
+        sup_status = self.request.query_params.get('supervisor_status')
+        if sup_status:
+            qs = qs.filter(supervisor_status=sup_status)
 
         priority = self.request.query_params.get('priority')
         if priority:
@@ -299,10 +303,53 @@ class WaterAllocationRequestViewSet(viewsets.ModelViewSet):
         field = serializer.validated_data.get('field')
         farm = serializer.validated_data.get('farm') or getattr(field, 'farm', None)
 
-        if field and field.farm.user != self.request.user and self.request.user.role not in ['manager', 'admin']:
+        if field and field.farm.user != self.request.user and self.request.user.role not in ['manager', 'admin', 'supervisor']:
             raise PermissionDenied("You can only request allocations for your own fields.")
 
         serializer.save(farmer=self.request.user, farm=farm)
+
+    @action(detail=True, methods=['post'], url_path='supervisor-verify')
+    def supervisor_verify(self, request, pk=None):
+        """
+        Supervisor / Manager / Admin action to verify or reject a water allocation request.
+        """
+        if request.user.role not in ['supervisor', 'manager', 'admin'] and not request.user.is_superuser:
+            return Response({'error': 'Only Supervisors, Managers, or Admins can verify water requests.'}, status=status.HTTP_403_FORBIDDEN)
+
+        alloc_req = self.get_object()
+        status_param = request.data.get('status')
+        notes = (request.data.get('notes') or '').strip()
+
+        if status_param not in ['verified', 'rejected']:
+            return Response({'error': "Status must be either 'verified' or 'rejected'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            alloc_req.supervisor_status = status_param
+            alloc_req.supervisor_notes = notes
+            alloc_req.verified_by_supervisor = request.user
+            alloc_req.supervisor_reviewed_at = timezone.now()
+
+            if status_param == 'rejected':
+                alloc_req.status = WaterAllocationRequest.RequestStatus.REJECTED
+                alloc_req.reason = notes or "Request rejected during field verification."
+
+            alloc_req.save()
+
+            # Create Alert Notification for Farmer
+            Alert.objects.create(
+                field=alloc_req.field,
+                alert_type=Alert.AlertType.SYSTEM,
+                severity=Alert.Severity.MEDIUM if status_param == 'rejected' else Alert.Severity.LOW,
+                title=f"Water Request Supervisor Verification: {status_param.title()}",
+                message=f"Supervisor verification for {alloc_req.field.name} was {status_param}. {notes}".strip(),
+                is_resolved=False
+            )
+
+        serializer = self.get_serializer(alloc_req)
+        return Response({
+            'message': f"Allocation request #{alloc_req.id} supervisor verification updated to '{status_param}'.",
+            'request': serializer.data
+        }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], url_path='approve')
     def approve(self, request, pk=None):

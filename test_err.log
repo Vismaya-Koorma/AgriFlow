@@ -1,0 +1,30 @@
+Starting Maintenance Workflow Functionality Test...
+Logged in successfully as Maintenance Worker.
+Maintenance Dashboard page loaded.
+No pending task requires Accept, checking active tasks...
+No active progress task found or progress dialog handled: Message: no such element: Unable to locate element: {"method":"xpath","selector":"//button[contains(.,'Progress')]"}
+  (Session info: chrome=153.0.8010.53); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
+Stacktrace:
+	chromedriver!GetHandleVerifier [0x7ff6765b1035+5a95]
+	chromedriver!(No symbol) [0x7ff6764d2c70]
+	chromedriver!(No symbol) [0x7ff6762f4a7d]
+	chromedriver!(No symbol) [0x7ff67634ff91]
+	chromedriver!(No symbol) [0x7ff67635025c]
+	chromedriver!(No symbol) [0x7ff6763a2f67]
+	chromedriver!(No symbol) [0x7ff67639fbea]
+	chromedriver!(No symbol) [0x7ff676341d02]
+	chromedriver!(No symbol) [0x7ff676342b13]
+	chromedriver!GetHandleVerifier [0x7ff6769d1411+425e71]
+	chromedriver!GetHandleVerifier [0x7ff6769fca47+4514a7]
+	chromedriver!GetHandleVerifier [0x7ff6769f094e+4453ae]
+	chromedriver!GetHandleVerifier [0x7ff6766abf6e+1009ce]
+	chromedriver!(No symbol) [0x7ff6764e0a05]
+	chromedriver!(No symbol) [0x7ff6764dbcf4]
+	chromedriver!(No symbol) [0x7ff6764dbe84]
+	chromedriver!(No symbol) [0x7ff6764c66ac]
+	KERNEL32!BaseThreadInitThunk [0x7fff74d0cd87+17]
+	ntdll!RtlUserThreadStart [0x7fff7706caec+2c]
+
+PASSED: Maintenance Workflow Test completed successfully.
+
+---STDERR---
