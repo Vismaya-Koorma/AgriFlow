@@ -1,0 +1,133 @@
+{
+    "dataset_name": "AgriFlow PlantVillage Subset",
+    "official_source": "https://github.com/spMohanty/PlantVillage-Dataset",
+    "source_citation": "Mohanty et al., 'Using Deep Learning for Image-Based Plant Disease Detection', Frontiers in Plant Science, 2016.",
+    "random_seed": 42,
+    "total_classes": 16,
+    "total_images": 615,
+    "matched_agriflow_crops": [
+        "Pepper",
+        "Tomato",
+        "Maize"
+    ],
+    "unsupported_plantvillage_crops": [
+        "Apple",
+        "Blueberry",
+        "Cherry_(including_sour)",
+        "Grape",
+        "Orange",
+        "Peach",
+        "Potato",
+        "Raspberry",
+        "Soybean",
+        "Squash",
+        "Strawberry"
+    ],
+    "unavailable_agriflow_crops": [
+        "Rice / Paddy",
+        "Wheat",
+        "Sugarcane",
+        "Cotton",
+        "Coconut",
+        "Banana",
+        "Tapioca"
+    ],
+    "class_breakdown": {
+        "maize___gray_leaf_spot": {
+            "total": 15,
+            "train": 12,
+            "val": 1,
+            "test": 2
+        },
+        "maize___common_rust": {
+            "total": 45,
+            "train": 36,
+            "val": 4,
+            "test": 5
+        },
+        "maize___northern_leaf_blight": {
+            "total": 24,
+            "train": 16,
+            "val": 4,
+            "test": 4
+        },
+        "maize___healthy": {
+            "total": 165,
+            "train": 132,
+            "val": 16,
+            "test": 17
+        },
+        "pepper___bacterial_spot": {
+            "total": 15,
+            "train": 12,
+            "val": 1,
+            "test": 2
+        },
+        "pepper___healthy": {
+            "total": 24,
+            "train": 16,
+            "val": 4,
+            "test": 4
+        },
+        "tomato___bacterial_spot": {
+            "total": 24,
+            "train": 16,
+            "val": 4,
+            "test": 4
+        },
+        "tomato___early_blight": {
+            "total": 75,
+            "train": 60,
+            "val": 7,
+            "test": 8
+        },
+        "tomato___late_blight": {
+            "total": 75,
+            "train": 60,
+            "val": 7,
+            "test": 8
+        },
+        "tomato___leaf_mold": {
+            "total": 45,
+            "train": 36,
+            "val": 4,
+            "test": 5
+        },
+        "tomato___septoria_leaf_spot": {
+            "total": 15,
+            "train": 12,
+            "val": 1,
+            "test": 2
+        },
+        "tomato___spider_mites_two_spotted": {
+            "total": 24,
+            "train": 16,
+            "val": 4,
+            "test": 4
+        },
+        "tomato___target_spot": {
+            "total": 15,
+            "train": 12,
+            "val": 1,
+            "test": 2
+        },
+        "tomato___yellow_leaf_curl_virus": {
+            "total": 15,
+            "train": 12,
+            "val": 1,
+            "test": 2
+        },
+        "tomato___mosaic_virus": {
+            "total": 15,
+            "train": 12,
+            "val": 1,
+            "test": 2
+        },
+        "tomato___healthy": {
+            "total": 24,
+            "train": 16,
+            "val": 4,
+            "test": 4
+        }
+    }
+}

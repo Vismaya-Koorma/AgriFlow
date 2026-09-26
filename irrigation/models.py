@@ -179,6 +179,11 @@ class WaterAllocationRequest(models.Model):
         COMPLETED = 'completed', 'Completed'
         CANCELLED = 'cancelled', 'Cancelled'
 
+    class SupervisorStatus(models.TextChoices):
+        PENDING_REVIEW = 'pending_review', 'Pending Review'
+        VERIFIED = 'verified', 'Verified'
+        REJECTED = 'rejected', 'Rejected'
+
     farmer = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='water_requests')
     farm = models.ForeignKey('farms.Farm', on_delete=models.CASCADE, related_name='water_requests')
     field = models.ForeignKey('farms.Field', on_delete=models.CASCADE, related_name='water_requests')
@@ -186,6 +191,14 @@ class WaterAllocationRequest(models.Model):
     approved_amount_liters = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     priority = models.CharField(max_length=20, choices=Priority.choices, default=Priority.MEDIUM)
     status = models.CharField(max_length=25, choices=RequestStatus.choices, default=RequestStatus.PENDING)
+    supervisor_status = models.CharField(
+        max_length=25, choices=SupervisorStatus.choices, default=SupervisorStatus.PENDING_REVIEW
+    )
+    supervisor_notes = models.TextField(blank=True, null=True, help_text="Notes recorded during supervisor field verification")
+    verified_by_supervisor = models.ForeignKey(
+        'accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='supervisor_verified_requests'
+    )
+    supervisor_reviewed_at = models.DateTimeField(null=True, blank=True)
     reason = models.TextField(blank=True, null=True, help_text="Reason for rejection or approval notes")
     requested_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)

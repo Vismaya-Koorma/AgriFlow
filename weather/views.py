@@ -102,3 +102,64 @@ class WeatherDataViewSet(viewsets.ModelViewSet):
         _, forecast_data = fetch_open_meteo_data(lat, lon, city_name=city_name)
 
         return Response({'has_location': True, 'forecast': forecast_data})
+
+    @action(detail=False, methods=['get'], url_path='crop-stage')
+    def crop_stage(self, request):
+        """Calculate automatic crop growth stage based on crop and sowing_date."""
+        from datetime import datetime
+        from django.utils import timezone
+
+        crop_name = request.query_params.get('crop') or request.query_params.get('crop_type') or 'General'
+        sowing_date_str = request.query_params.get('sowing_date') or request.query_params.get('planting_date')
+
+        if not sowing_date_str:
+            return Response({
+                'success': False,
+                'error': 'validation_error',
+                'message': 'Please provide a valid sowing_date parameter (e.g. YYYY-MM-DD).'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            sowing_date = datetime.strptime(sowing_date_str.strip(), '%Y-%m-%d').date()
+        except ValueError:
+            return Response({
+                'success': False,
+                'error': 'invalid_date_format',
+                'message': 'Invalid sowing_date format. Please use YYYY-MM-DD format.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        today = timezone.now().date()
+        days_after_planting = max(0, (today - sowing_date).days)
+
+        # Stage calculation thresholds (Days After Planting)
+        if days_after_planting <= 15:
+            current_stage = "Germination"
+            next_stage = "Vegetative"
+            days_until_next = 16 - days_after_planting
+        elif days_after_planting <= 45:
+            current_stage = "Vegetative"
+            next_stage = "Flowering"
+            days_until_next = 46 - days_after_planting
+        elif days_after_planting <= 75:
+            current_stage = "Flowering"
+            next_stage = "Fruiting"
+            days_until_next = 76 - days_after_planting
+        elif days_after_planting <= 110:
+            current_stage = "Fruiting"
+            next_stage = "Harvesting"
+            days_until_next = 111 - days_after_planting
+        else:
+            current_stage = "Harvesting"
+            next_stage = None
+            days_until_next = None
+
+        return Response({
+            'success': True,
+            'crop': crop_name,
+            'sowing_date': sowing_date_str,
+            'days_after_planting': days_after_planting,
+            'current_stage': current_stage,
+            'crop_stage': current_stage,
+            'next_stage': next_stage,
+            'days_until_next_stage': days_until_next
+        })

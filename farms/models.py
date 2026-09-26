@@ -38,6 +38,11 @@ class Field(models.Model):
         FRUITING = 'fruiting', 'Fruiting'
         HARVESTING = 'harvesting', 'Harvesting'
 
+    class VerificationStatus(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        VERIFIED = 'verified', 'Verified'
+        REJECTED = 'rejected', 'Rejected'
+
     farm = models.ForeignKey(Farm, on_delete=models.CASCADE, related_name='fields')
     crop_type = models.ForeignKey(CropType, on_delete=models.SET_NULL, null=True, related_name='fields')
     crop_variety = models.ForeignKey(CropVariety, on_delete=models.SET_NULL, null=True, blank=True, related_name='fields')
@@ -51,6 +56,12 @@ class Field(models.Model):
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     district = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, default='Kerala', blank=True, null=True)
+    verification_status = models.CharField(
+        max_length=20, choices=VerificationStatus.choices, default=VerificationStatus.PENDING
+    )
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_fields'
+    )
     status = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

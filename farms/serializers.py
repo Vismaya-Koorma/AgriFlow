@@ -43,6 +43,8 @@ class FieldSerializer(serializers.ModelSerializer):
     stage_source_reference = serializers.SerializerMethodField()
     has_stage_duration_data = serializers.SerializerMethodField()
 
+    verified_by_username = serializers.CharField(source='verified_by.username', read_only=True, default=None)
+
     class Meta:
         model = Field
         fields = [
@@ -54,18 +56,21 @@ class FieldSerializer(serializers.ModelSerializer):
             'stage_source_reference', 'has_stage_duration_data',
             'district', 'state', 'latitude', 'longitude',
             'effective_district', 'effective_state', 'location_display',
+            'verification_status', 'verified_by', 'verified_by_username',
             'status', 'is_active', 'created_at', 'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'verification_status', 'verified_by', 'created_at', 'updated_at']
 
     def _get_stage_info(self, obj):
         if not hasattr(obj, '_cached_stage_info'):
             obj._cached_stage_info = calculate_expected_crop_stage(
                 crop_variety=obj.crop_variety,
                 planting_date=obj.planting_date,
-                fallback_stage=None
+                fallback_stage=obj.crop_stage,
+                crop_type=obj.crop_type
             )
         return obj._cached_stage_info
+
 
 
     def get_days_after_planting(self, obj):

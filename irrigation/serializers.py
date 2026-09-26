@@ -84,7 +84,9 @@ class WaterAllocationRequestSerializer(serializers.ModelSerializer):
     location = serializers.CharField(source='farm.location', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    supervisor_status_display = serializers.CharField(source='get_supervisor_status_display', read_only=True)
     reviewed_by_username = serializers.CharField(source='reviewed_by.username', read_only=True)
+    verified_by_supervisor_username = serializers.CharField(source='verified_by_supervisor.username', read_only=True, default=None)
 
     class Meta:
         model = WaterAllocationRequest
@@ -92,10 +94,16 @@ class WaterAllocationRequestSerializer(serializers.ModelSerializer):
             'id', 'farmer', 'farmer_name', 'farmer_username', 'farm', 'farm_name',
             'field', 'field_name', 'location', 'requested_amount_liters',
             'approved_amount_liters', 'priority', 'priority_display', 'status',
-            'status_display', 'reason', 'requested_at', 'reviewed_at', 'reviewed_by',
+            'status_display', 'supervisor_status', 'supervisor_status_display',
+            'supervisor_notes', 'verified_by_supervisor', 'verified_by_supervisor_username',
+            'supervisor_reviewed_at', 'reason', 'requested_at', 'reviewed_at', 'reviewed_by',
             'reviewed_by_username', 'recommendation'
         ]
-        read_only_fields = ['id', 'farmer', 'farm', 'status', 'approved_amount_liters', 'requested_at', 'reviewed_at', 'reviewed_by']
+        read_only_fields = [
+            'id', 'farmer', 'farm', 'status', 'approved_amount_liters',
+            'supervisor_status', 'supervisor_notes', 'verified_by_supervisor',
+            'supervisor_reviewed_at', 'requested_at', 'reviewed_at', 'reviewed_by'
+        ]
 
 
 class WaterAllocationSerializer(serializers.ModelSerializer):

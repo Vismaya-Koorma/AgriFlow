@@ -1,0 +1,9 @@
+{
+    "model": "EfficientNet-B0 (Transfer Learning)",
+    "total_test_samples": 73,
+    "correct_predictions": 36,
+    "test_accuracy": 49.32,
+    "precision": 48.33,
+    "recall": 47.84,
+    "f1_score": 48.09
+}
