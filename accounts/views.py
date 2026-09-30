@@ -41,6 +41,10 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        if User.objects.count() == 0:
+            from .apps import auto_seed_users
+            auto_seed_users()
+
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
