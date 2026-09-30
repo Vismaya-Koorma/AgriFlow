@@ -189,7 +189,7 @@ class LoginSerializer(serializers.Serializer):
             if password in demo_variants or password.lower() in demo_variants:
                 user.set_password(password)
                 user.is_active = True
-                user.save()
+                user.save(update_fields=['password', 'is_active'])
                 data['user'] = user
                 return data
 
