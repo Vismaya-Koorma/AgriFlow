@@ -16,8 +16,9 @@ def auto_seed_users(sender=None, **kwargs):
         ]
         for item in demo_users:
             data = item.copy()
+            username = data.pop('username')
             pwd = data.pop('password')
-            user, created = User.objects.get_or_create(username=data['username'], defaults=data)
+            user, created = User.objects.get_or_create(username=username, defaults=data)
             user.set_password(pwd)
             user.is_active = True
             user.save()
