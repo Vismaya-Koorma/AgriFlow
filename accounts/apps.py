@@ -2,8 +2,8 @@ from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 
 
-def auto_seed_users(sender, **kwargs):
-    if sender.name != 'accounts':
+def auto_seed_users(sender=None, **kwargs):
+    if sender is not None and getattr(sender, 'name', None) != 'accounts':
         return
     try:
         from accounts.models import User
@@ -14,14 +14,15 @@ def auto_seed_users(sender, **kwargs):
             {'username': 'maintenance', 'email': 'suresh@agriflow.in', 'full_name': 'Suresh Pillai', 'role': 'maintenance', 'password': 'maintenance123', 'district': 'Kollam', 'state': 'Kerala', 'terms_accepted': True},
             {'username': 'admin', 'email': 'admin@agriflow.in', 'full_name': 'AgriFlow Admin', 'role': 'admin', 'password': 'admin123', 'district': 'Thiruvananthapuram', 'state': 'Kerala', 'terms_accepted': True, 'is_staff': True, 'is_superuser': True},
         ]
-        for data in demo_users:
+        for item in demo_users:
+            data = item.copy()
             pwd = data.pop('password')
             user, _ = User.objects.get_or_create(username=data['username'], defaults=data)
             user.set_password(pwd)
             user.is_active = True
             user.save()
-    except Exception:
-        pass
+    except Exception as e:
+        print("Auto seed error:", e)
 
 
 class AccountsConfig(AppConfig):
