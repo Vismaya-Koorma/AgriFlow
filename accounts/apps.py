@@ -8,11 +8,11 @@ def auto_seed_users(sender=None, **kwargs):
     try:
         from accounts.models import User
         demo_users = [
-            {'username': 'farmer', 'email': 'ramesh@agriflow.in', 'full_name': 'Ramesh Kumar', 'role': 'farmer', 'password': 'Farmer123!', 'district': 'Alappuzha', 'state': 'Kerala', 'terms_accepted': True},
-            {'username': 'supervisor', 'email': 'anil@agriflow.in', 'full_name': 'Anil Menon', 'role': 'supervisor', 'password': 'Supervisor123!', 'district': 'Ernakulam', 'state': 'Kerala', 'terms_accepted': True},
-            {'username': 'manager', 'email': 'priya@agriflow.in', 'full_name': 'Priya Nair', 'role': 'manager', 'password': 'Manager123!', 'district': 'Thiruvananthapuram', 'state': 'Kerala', 'terms_accepted': True},
-            {'username': 'maintenance', 'email': 'suresh@agriflow.in', 'full_name': 'Suresh Pillai', 'role': 'maintenance', 'password': 'Maintenance123!', 'district': 'Kollam', 'state': 'Kerala', 'terms_accepted': True},
-            {'username': 'admin', 'email': 'admin@agriflow.in', 'full_name': 'AgriFlow Admin', 'role': 'admin', 'password': 'Admin123!', 'district': 'Thiruvananthapuram', 'state': 'Kerala', 'terms_accepted': True, 'is_staff': True, 'is_superuser': True},
+            {'username': 'farmer', 'email': 'ramesh@agriflow.in', 'full_name': 'Ramesh Kumar', 'phone_number': '9876543201', 'role': 'farmer', 'password': 'farmer123', 'district': 'Alappuzha', 'state': 'Kerala', 'terms_accepted': True},
+            {'username': 'supervisor', 'email': 'anil@agriflow.in', 'full_name': 'Anil Menon', 'phone_number': '9876543202', 'role': 'supervisor', 'password': 'supervisor123', 'district': 'Ernakulam', 'state': 'Kerala', 'terms_accepted': True},
+            {'username': 'manager', 'email': 'priya@agriflow.in', 'full_name': 'Priya Nair', 'phone_number': '9876543203', 'role': 'manager', 'password': 'manager123', 'district': 'Thiruvananthapuram', 'state': 'Kerala', 'terms_accepted': True},
+            {'username': 'maintenance', 'email': 'suresh@agriflow.in', 'full_name': 'Suresh Pillai', 'phone_number': '9876543204', 'role': 'maintenance', 'password': 'maintenance123', 'district': 'Kollam', 'state': 'Kerala', 'terms_accepted': True},
+            {'username': 'admin', 'email': 'admin@agriflow.in', 'full_name': 'AgriFlow Admin', 'phone_number': '9876543205', 'role': 'admin', 'password': 'admin123', 'district': 'Thiruvananthapuram', 'state': 'Kerala', 'terms_accepted': True, 'is_staff': True, 'is_superuser': True},
         ]
         for item in demo_users:
             data = item.copy()
