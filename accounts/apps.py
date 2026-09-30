@@ -18,7 +18,12 @@ def auto_seed_users(sender=None, **kwargs):
             data = item.copy()
             username = data.pop('username')
             pwd = data.pop('password')
-            user, created = User.objects.get_or_create(username=username, defaults=data)
+            email = data.get('email')
+            user = User.objects.filter(username=username).first() or User.objects.filter(email=email).first()
+            if not user:
+                user = User(username=username)
+            for k, v in data.items():
+                setattr(user, k, v)
             user.set_password(pwd)
             user.is_active = True
             user.save()
