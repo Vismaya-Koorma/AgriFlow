@@ -41,6 +41,9 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        from .apps import auto_seed_users
+        auto_seed_users()
+
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
@@ -63,6 +66,22 @@ class LoginView(APIView):
                 }
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SeedView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from .apps import auto_seed_users
+        try:
+            auto_seed_users()
+            users = list(User.objects.values('id', 'username', 'role', 'email', 'is_active'))
+            return Response({'status': 'seeded', 'count': len(users), 'users': users})
+        except Exception as e:
+            return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request):
+        return self.get(request)
 
 
 class LogoutView(APIView):

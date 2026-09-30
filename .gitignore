@@ -52,3 +52,7 @@ agriflow_disease_dataset/
 plantvillage_official/
 plantvillage_raw/
 plantvillage_repo/
+
+# Security & Utility Scripts
+fix_passwords.py
+scripts/
