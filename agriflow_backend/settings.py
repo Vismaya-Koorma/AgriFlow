@@ -28,11 +28,8 @@ if not SECRET_KEY:
     else:
         raise ValueError("SECRET_KEY environment variable must be set in production mode!")
 
-_allowed_hosts = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com').split(',')
+_allowed_hosts = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts if h.strip()]
-for _h in ['.onrender.com', 'agriflow-jcg4.onrender.com']:
-    if _h not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(_h)
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
@@ -163,12 +160,12 @@ SIMPLE_JWT = {
 # ─── CORS ────────────────────────────────────────────────────────────────────
 _cors_origins = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000'
+    'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,https://agriflow-frontend-q8jd.onrender.com'
 )
-CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(',') if o.strip()]
-for _default_origin in ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173', 'http://127.0.0.1:5173']:
-    if _default_origin not in CORS_ALLOWED_ORIGINS:
-        CORS_ALLOWED_ORIGINS.append(_default_origin)
+CORS_ALLOWED_ORIGINS = [o.strip().rstrip('/') for o in _cors_origins.split(',') if o.strip()]
+if 'https://agriflow-frontend-q8jd.onrender.com' not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append('https://agriflow-frontend-q8jd.onrender.com')
+
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
@@ -182,7 +179,9 @@ CORS_ALLOW_HEADERS = [
 
 # ─── CSRF ────────────────────────────────────────────────────────────────────
 _csrf_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(',') if o.strip()]
+CSRF_TRUSTED_ORIGINS = [o.strip().rstrip('/') for o in _csrf_origins.split(',') if o.strip()]
+if 'https://agriflow-frontend-q8jd.onrender.com' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://agriflow-frontend-q8jd.onrender.com')
 if RENDER_EXTERNAL_HOSTNAME:
     _render_csrf = f"https://{RENDER_EXTERNAL_HOSTNAME}"
     if _render_csrf not in CSRF_TRUSTED_ORIGINS:
