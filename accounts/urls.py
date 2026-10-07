@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
     RegisterView, LoginView, LogoutView, TokenRefreshAPIView,
-    ProfileView, ChangePasswordView, DashboardView, SeedView,
+    ProfileView, ChangePasswordView, DashboardView,
+    GoogleInitView, GoogleOAuthCallbackView, GoogleTokenExchangeView,
 )
 from .admin_views import (
     AdminDashboardSummaryView, AdminUserViewSet, AdminFarmOverviewView, AdminActivityLogView
@@ -10,12 +11,14 @@ from .admin_views import (
 urlpatterns = [
     path('auth/register/', RegisterView.as_view(), name='auth-register'),
     path('auth/login/', LoginView.as_view(), name='auth-login'),
-    path('auth/seed/', SeedView.as_view(), name='auth-seed'),
     path('auth/logout/', LogoutView.as_view(), name='auth-logout'),
     path('auth/refresh/', TokenRefreshAPIView.as_view(), name='auth-refresh'),
     path('auth/profile/', ProfileView.as_view(), name='auth-profile'),
     path('auth/change-password/', ChangePasswordView.as_view(), name='auth-change-password'),
+    path('auth/google/redirect/', GoogleInitView.as_view(), name='auth-google-redirect'),
+    path('auth/google/exchange/', GoogleTokenExchangeView.as_view(), name='auth-google-exchange'),
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
+
 
     # Admin Platform & Management Endpoints
     path('admin/dashboard/summary/', AdminDashboardSummaryView.as_view(), name='admin-dashboard-summary'),

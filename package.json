@@ -1,0 +1,9 @@
+{
+  "name": "agriflow-root",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm --prefix AgriFlow run dev",
+    "build": "npm --prefix AgriFlow run build"
+  }
+}

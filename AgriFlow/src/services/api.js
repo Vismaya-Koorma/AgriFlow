@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://agriflow-jcg4.onrender.com/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -148,6 +149,21 @@ export const loginUser = async (username, password) => {
   }
   return response.data;
 };
+
+export const getGoogleAuthUrl = async () => {
+  const response = await api.get('/auth/google/redirect/?json=true');
+  return response.data.url;
+};
+
+export const exchangeGoogleCode = async (code) => {
+  const response = await api.post('/auth/google/exchange/', { code });
+  if (response.data.tokens) {
+    setAuthTokens(response.data.tokens);
+    localStorage.setItem('agriflow_user', JSON.stringify(response.data.user));
+  }
+  return response.data;
+};
+
 
 export const logoutUser = async () => {
   try {

@@ -3,16 +3,22 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import root_view, health_check_view
 
+from accounts.views import GoogleOAuthCallbackView
+
 urlpatterns = [
     # System endpoints
     path('', root_view, name='root'),
     path('api/health/', health_check_view, name='health-check'),
+
+    # Direct Google OAuth Redirect Callback Endpoint
+    path('accounts/google/login/callback/', GoogleOAuthCallbackView.as_view(), name='google-oauth-callback'),
 
     # Django Admin
     path('admin/', admin.site.urls),
 
     # Authentication Endpoints
     path('api/', include('accounts.urls')),
+
 
     # Feature App Endpoints
     path('api/', include('master.urls')),

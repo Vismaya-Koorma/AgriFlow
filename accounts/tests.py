@@ -168,3 +168,86 @@ class UserValidationTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('non_field_errors', response.data)
         self.assertIn("Invalid email or password.", response.data['non_field_errors'])
+
+
+# ─── GOOGLE OAUTH 2.0 TESTS ───────────────────────────────────────────────────
+
+from unittest.mock import patch, MagicMock
+
+
+class GoogleAuthTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.init_url = '/api/auth/google/redirect/'
+        self.callback_url = '/accounts/google/login/callback/'
+        self.exchange_url = '/api/auth/google/exchange/'
+
+        # Existing user with manager role to test role preservation
+        self.manager_user = User.objects.create_user(
+            username='existing_manager',
+            email='manager@example.com',
+            password='Password123!',
+            full_name='Manager User',
+            role=User.Role.MANAGER,
+        )
+
+    def test_google_init_redirect(self):
+        response = self.client.get(self.init_url + '?json=true')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('url', response.data)
+        self.assertIn('accounts.google.com', response.data['url'])
+
+    @patch('requests.get')
+    @patch('requests.post')
+    def test_google_callback_existing_user_preserves_role(self, mock_post, mock_get):
+        mock_post.return_value = MagicMock(
+            status_code=200,
+            headers={'content-type': 'application/json'},
+            json=lambda: {'access_token': 'fake_google_access_token'}
+        )
+        mock_get.return_value = MagicMock(
+            status_code=200,
+            json=lambda: {'email': 'manager@example.com', 'email_verified': True, 'name': 'Manager User'}
+        )
+
+        response = self.client.get(self.callback_url + '?code=valid_google_code')
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        redirect_url = response.url
+        self.assertIn('code=', redirect_url)
+        self.assertNotIn('access=', redirect_url)
+
+        code = redirect_url.split('code=')[1]
+        exchange_resp = self.client.post(self.exchange_url, {'code': code}, format='json')
+        self.assertEqual(exchange_resp.status_code, status.HTTP_200_OK)
+        self.assertIn('tokens', exchange_resp.data)
+        self.assertEqual(exchange_resp.data['user']['role'], 'manager')
+
+    @patch('requests.get')
+    @patch('requests.post')
+    def test_google_callback_new_user_gets_farmer_role(self, mock_post, mock_get):
+        mock_post.return_value = MagicMock(
+            status_code=200,
+            headers={'content-type': 'application/json'},
+            json=lambda: {'access_token': 'fake_google_access_token'}
+        )
+        mock_get.return_value = MagicMock(
+            status_code=200,
+            json=lambda: {'email': 'new_google_user@example.com', 'email_verified': True, 'name': 'New Google User'}
+        )
+
+        response = self.client.get(self.callback_url + '?code=valid_google_code')
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        code = response.url.split('code=')[1]
+
+        exchange_resp = self.client.post(self.exchange_url, {'code': code}, format='json')
+        self.assertEqual(exchange_resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(exchange_resp.data['user']['role'], 'farmer')
+
+        # Single-use security check: Re-exchanging same code MUST fail
+        second_exchange = self.client.post(self.exchange_url, {'code': code}, format='json')
+        self.assertEqual(second_exchange.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_exchange_invalid_code(self):
+        response = self.client.post(self.exchange_url, {'code': 'invalid_code'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
