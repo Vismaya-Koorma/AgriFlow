@@ -3,6 +3,7 @@ import {
   loginUser as apiLogin,
   registerUser as apiRegister,
   logoutUser as apiLogout,
+  exchangeGoogleCode as apiExchangeGoogleCode,
   getUserProfile,
   clearAuthTokens,
 } from '../services/api';
@@ -129,6 +130,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ─── Google Token Exchange ───────────────────────────────────────────────────
+  const loginWithGoogleCode = async (tempCode) => {
+    try {
+      setLoading(true);
+      const data = await apiExchangeGoogleCode(tempCode);
+      const loggedUser = {
+        ...data.user,
+        name: data.user.full_name || data.user.name || data.user.username,
+        full_name: data.user.full_name || data.user.name || data.user.username,
+      };
+      setUser(loggedUser);
+      localStorage.setItem('agriflow_user', JSON.stringify(loggedUser));
+      return { success: true, user: loggedUser };
+    } catch (err) {
+      const errData = err.response?.data;
+      const errorMsg = errData?.error || 'Google authentication failed. Please try again.';
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ─── Logout ──────────────────────────────────────────────────────────────────
   const logout = async () => {
     await apiLogout();
@@ -136,10 +159,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, registerUser, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, registerUser, loginWithGoogleCode, loading }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
 
 export const useAuth = () => useContext(AuthContext);
