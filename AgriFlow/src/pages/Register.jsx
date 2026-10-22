@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -57,12 +57,14 @@ const DISTRICTS = [
 
 const Register = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { registerUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
   const [termsOpen, setTermsOpen] = useState(false);
+  const [bannerError, setBannerError] = useState('');
 
   const {
     register,
@@ -70,6 +72,7 @@ const Register = () => {
     watch,
     control,
     setError,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -87,6 +90,36 @@ const Register = () => {
   });
 
   const password = watch('password', '');
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlError = params.get('error');
+    const urlErrorCode = params.get('error_code');
+    const urlEmail = params.get('email');
+
+    const stateError = location.state?.error;
+    const stateErrorCode = location.state?.errorCode;
+    const stateEmail = location.state?.email;
+
+    const error = urlError ? decodeURIComponent(urlError) : stateError;
+    const errorCode = urlErrorCode || stateErrorCode;
+    const email = urlEmail ? decodeURIComponent(urlEmail) : stateEmail;
+
+    if (errorCode === 'GOOGLE_ACCOUNT_NOT_REGISTERED' || error) {
+      const msg = error || 'This email is not registered with AgriFlow. Please register first.';
+      setBannerError(msg);
+      setToast({ open: true, message: msg, severity: 'warning' });
+    }
+
+    if (email) {
+      const cleanEmail = email.trim().toLowerCase();
+      setValue('email', cleanEmail, { shouldValidate: true });
+    }
+
+    if (urlError || urlErrorCode || urlEmail) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [location, setValue]);
 
   const onSubmit = async (data) => {
     setLoading(true);
@@ -182,6 +215,12 @@ const Register = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
               Enter your details to register as a farmer.
             </Typography>
+
+            {bannerError && (
+              <Alert severity="warning" sx={{ mb: 2.5, borderRadius: '12px', fontWeight: 500 }}>
+                {bannerError}
+              </Alert>
+            )}
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate>
               <Grid container spacing={2}>
