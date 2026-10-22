@@ -195,18 +195,24 @@ class GoogleOAuthCallbackView(APIView):
     """
     Handles callback from Google OAuth redirect:
     http://127.0.0.1:8000/accounts/google/login/callback/
-    Exchanges authorization code for Google user profile, finds/creates AgriFlow user,
-    generates a single-use short-lived exchange code, and redirects to frontend (NO JWT tokens in URL).
+    Exchanges authorization code for Google user profile, checks if user is registered,
+    generates a single-use short-lived exchange code for registered users,
+    and redirects unregistered users to registration page.
     """
     permission_classes = [AllowAny]
 
     def get(self, request):
-        frontend_login = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173').rstrip('/') + '/login'
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+        frontend_login = f"{frontend_url}/login"
+        frontend_register = f"{frontend_url}/register"
+
         code = request.GET.get('code')
         error = request.GET.get('error')
 
         if error or not code:
             err_msg = error or 'Google login was cancelled or failed.'
+            if request.query_params.get('json') == 'true' or 'application/json' in request.headers.get('Accept', ''):
+                return Response({'error': err_msg, 'error_code': 'OAUTH_CALLBACK_ERROR'}, status=status.HTTP_400_BAD_REQUEST)
             return redirect(f"{frontend_login}?error={urllib.parse.quote(err_msg)}")
 
         # Exchange authorization code with Google
@@ -224,6 +230,8 @@ class GoogleOAuthCallbackView(APIView):
             if token_resp.status_code != 200:
                 err_data = token_resp.json() if token_resp.headers.get('content-type', '').startswith('application/json') else {}
                 err_msg = err_data.get('error_description') or 'Failed to exchange authorization code with Google.'
+                if request.query_params.get('json') == 'true' or 'application/json' in request.headers.get('Accept', ''):
+                    return Response({'error': err_msg, 'error_code': 'GOOGLE_TOKEN_EXCHANGE_FAILED'}, status=status.HTTP_400_BAD_REQUEST)
                 return redirect(f"{frontend_login}?error={urllib.parse.quote(err_msg)}")
 
             token_data = token_resp.json()
@@ -236,45 +244,86 @@ class GoogleOAuthCallbackView(APIView):
                 timeout=10
             )
             if userinfo_resp.status_code != 200:
-                return redirect(f"{frontend_login}?error={urllib.parse.quote('Failed to fetch user profile from Google.')}")
+                err_msg = 'Failed to fetch user profile from Google.'
+                if request.query_params.get('json') == 'true' or 'application/json' in request.headers.get('Accept', ''):
+                    return Response({'error': err_msg, 'error_code': 'GOOGLE_USERINFO_FAILED'}, status=status.HTTP_400_BAD_REQUEST)
+                return redirect(f"{frontend_login}?error={urllib.parse.quote(err_msg)}")
 
             userinfo = userinfo_resp.json()
             email = userinfo.get('email', '').strip().lower()
             email_verified = userinfo.get('email_verified', False)
 
+            # Validate ID Token claims if present
+            id_token = token_data.get('id_token')
+            if id_token:
+                try:
+                    import jwt
+                    claims = jwt.decode(id_token, options={"verify_signature": False})
+                    exp = claims.get('exp')
+                    if exp and exp < time.time():
+                        err_msg = 'Google token has expired.'
+                        if request.query_params.get('json') == 'true' or 'application/json' in request.headers.get('Accept', ''):
+                            return Response({'error': err_msg, 'error_code': 'GOOGLE_TOKEN_EXPIRED'}, status=status.HTTP_400_BAD_REQUEST)
+                        return redirect(f"{frontend_login}?error={urllib.parse.quote(err_msg)}")
+
+                    iss = claims.get('iss')
+                    if iss and iss not in ('accounts.google.com', 'https://accounts.google.com'):
+                        err_msg = 'Invalid token issuer.'
+                        if request.query_params.get('json') == 'true' or 'application/json' in request.headers.get('Accept', ''):
+                            return Response({'error': err_msg, 'error_code': 'INVALID_TOKEN_ISSUER'}, status=status.HTTP_400_BAD_REQUEST)
+                        return redirect(f"{frontend_login}?error={urllib.parse.quote(err_msg)}")
+
+                    client_id = getattr(settings, 'GOOGLE_CLIENT_ID', '')
+                    aud = claims.get('aud')
+                    if client_id and aud and aud != client_id:
+                        err_msg = 'Invalid token audience.'
+                        if request.query_params.get('json') == 'true' or 'application/json' in request.headers.get('Accept', ''):
+                            return Response({'error': err_msg, 'error_code': 'INVALID_TOKEN_AUDIENCE'}, status=status.HTTP_400_BAD_REQUEST)
+                        return redirect(f"{frontend_login}?error={urllib.parse.quote(err_msg)}")
+
+                    if 'email_verified' in claims and not claims.get('email_verified'):
+                        email_verified = False
+
+                    if not email and claims.get('email'):
+                        email = claims.get('email', '').strip().lower()
+                except Exception:
+                    pass
+
             if not email or not email_verified:
-                return redirect(f"{frontend_login}?error={urllib.parse.quote('Google account email is not verified or missing.')}")
+                err_msg = 'Google account email is not verified or missing.'
+                if request.query_params.get('json') == 'true' or 'application/json' in request.headers.get('Accept', ''):
+                    return Response({'error': err_msg, 'error_code': 'GOOGLE_EMAIL_UNVERIFIED'}, status=status.HTTP_400_BAD_REQUEST)
+                return redirect(f"{frontend_login}?error={urllib.parse.quote(err_msg)}")
 
-            # Find existing user by verified email or create safe new user
-            user = User.objects.filter(email__iexact=email).first()
+            # Normalize email
+            normalized_email = User.objects.normalize_email(email).strip().lower()
+
+            # Find existing user by verified normalized email
+            user = User.objects.filter(email__iexact=normalized_email).first()
             if not user:
-                # Generate unique username from email prefix
-                base_username = email.split('@')[0]
-                base_username = ''.join(c for c in base_username if c.isalnum() or c in '_-')[:30] or 'google_user'
-                username = base_username
-                counter = 1
-                while User.objects.filter(username__iexact=username).exists():
-                    username = f"{base_username}_{counter}"
-                    counter += 1
+                err_msg = 'This email is not registered with AgriFlow. Please register first.'
+                if request.query_params.get('json') == 'true' or 'application/json' in request.headers.get('Accept', ''):
+                    return Response({
+                        'error': err_msg,
+                        'error_code': 'GOOGLE_ACCOUNT_NOT_REGISTERED',
+                        'email': normalized_email,
+                    }, status=status.HTTP_404_NOT_FOUND)
 
-                full_name = userinfo.get('name') or userinfo.get('given_name') or base_username
-
-                # New Google users ALWAYS get default 'farmer' role
-                user = User.objects.create(
-                    username=username,
-                    email=email,
-                    full_name=full_name,
-                    role=User.Role.FARMER,
-                    is_active=True,
-                    terms_accepted=True,
+                redirect_url = (
+                    f"{frontend_register}?"
+                    f"error={urllib.parse.quote(err_msg)}"
+                    f"&error_code=GOOGLE_ACCOUNT_NOT_REGISTERED"
+                    f"&email={urllib.parse.quote(normalized_email)}"
                 )
-                user.set_unusable_password()
-                user.save()
+                return redirect(redirect_url)
 
             if not user.is_active:
-                return redirect(f"{frontend_login}?error={urllib.parse.quote('Your account is inactive. Please contact support.')}")
+                err_msg = 'Your account is inactive. Please contact support.'
+                if request.query_params.get('json') == 'true' or 'application/json' in request.headers.get('Accept', ''):
+                    return Response({'error': err_msg, 'error_code': 'ACCOUNT_INACTIVE'}, status=status.HTTP_400_BAD_REQUEST)
+                return redirect(f"{frontend_login}?error={urllib.parse.quote(err_msg)}")
 
-            # Create single-use short-lived exchange token (5 minutes)
+            # Create single-use short-lived exchange token (5 minutes) for verified registered user
             temp_code = secrets.token_urlsafe(32)
             cache.set(f"google_auth_code_{temp_code}", user.id, timeout=300)
             GOOGLE_TEMP_CODES[temp_code] = {'user_id': user.id, 'expires_at': time.time() + 300}
@@ -283,7 +332,10 @@ class GoogleOAuthCallbackView(APIView):
             return redirect(f"{frontend_login}?code={temp_code}")
 
         except Exception as e:
-            return redirect(f"{frontend_login}?error={urllib.parse.quote('An error occurred during Google authentication.')}")
+            err_msg = 'An error occurred during Google authentication.'
+            if request.query_params.get('json') == 'true' or 'application/json' in request.headers.get('Accept', ''):
+                return Response({'error': err_msg, 'error_code': 'GOOGLE_AUTH_ERROR'}, status=status.HTTP_400_BAD_REQUEST)
+            return redirect(f"{frontend_login}?error={urllib.parse.quote(err_msg)}")
 
 
 class GoogleTokenExchangeView(APIView):
@@ -314,7 +366,10 @@ class GoogleTokenExchangeView(APIView):
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
-            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                'error': 'This email is not registered with AgriFlow. Please register first.',
+                'error_code': 'GOOGLE_ACCOUNT_NOT_REGISTERED'
+            }, status=status.HTTP_404_NOT_FOUND)
 
         if not user.is_active:
             return Response({'error': 'Your account is inactive. Please contact support.'}, status=status.HTTP_400_BAD_REQUEST)

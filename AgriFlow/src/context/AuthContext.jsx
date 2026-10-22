@@ -146,7 +146,9 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       const errData = err.response?.data;
       const errorMsg = errData?.error || 'Google authentication failed. Please try again.';
-      return { success: false, error: errorMsg };
+      const errorCode = errData?.error_code;
+      const email = errData?.email;
+      return { success: false, error: errorMsg, errorCode, email };
     } finally {
       setLoading(false);
     }

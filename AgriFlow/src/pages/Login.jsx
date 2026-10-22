@@ -60,6 +60,21 @@ const Login = () => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     const error = params.get('error');
+    const errorCode = params.get('error_code');
+    const email = params.get('email');
+
+    if (errorCode === 'GOOGLE_ACCOUNT_NOT_REGISTERED') {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      const msg = error ? decodeURIComponent(error) : 'This email is not registered with AgriFlow. Please register first.';
+      navigate('/register', {
+        state: {
+          error: msg,
+          errorCode: 'GOOGLE_ACCOUNT_NOT_REGISTERED',
+          email: email ? decodeURIComponent(email) : '',
+        },
+      });
+      return;
+    }
 
     if (error) {
       setServerError(decodeURIComponent(error));
@@ -72,6 +87,14 @@ const Login = () => {
         .then((result) => {
           if (result.success) {
             navigate(ROLE_PATHS[result.user?.role] || '/farmer');
+          } else if (result.errorCode === 'GOOGLE_ACCOUNT_NOT_REGISTERED') {
+            navigate('/register', {
+              state: {
+                error: result.error || 'This email is not registered with AgriFlow. Please register first.',
+                errorCode: 'GOOGLE_ACCOUNT_NOT_REGISTERED',
+                email: result.email || '',
+              },
+            });
           } else {
             setServerError(result.error || 'Google authentication failed.');
           }
