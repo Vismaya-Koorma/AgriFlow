@@ -30,8 +30,6 @@ urlpatterns = [
     path('api/', include('crop_health.urls')),
     path('api/alerts/', include('alerts.urls')),
     path('api/maintenance/', include('maintenance.urls')),
-    path('api/', include('alerts.urls')),
-    path('api/', include('maintenance.urls')),
     path('api/', include('reports.urls')),
     path('api/decision-intelligence/', include('decision_intelligence.urls')),
 

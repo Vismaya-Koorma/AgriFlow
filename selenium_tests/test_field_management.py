@@ -1,10 +1,26 @@
+import os
+import sys
 import time
 import random
 import traceback
+
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+def get_chrome_driver():
+    options = Options()
+    options.add_argument("--remote-allow-origins=*")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1920,1080")
+    return webdriver.Chrome(options=options)
 
 def fill_input_field(driver, element, value):
     """Fill input using native value setter and events for React compatibility."""
@@ -12,7 +28,8 @@ def fill_input_field(driver, element, value):
         var element = arguments[0];
         var val = arguments[1];
         element.focus();
-        var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        var proto = (element instanceof HTMLTextAreaElement) ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+        var nativeInputValueSetter = Object.getOwnPropertyDescriptor(proto, "value").set;
         nativeInputValueSetter.call(element, val);
         var inputEvent = new Event('input', { bubbles: true });
         element.dispatchEvent(inputEvent);
@@ -23,14 +40,15 @@ def fill_input_field(driver, element, value):
 
 def main():
     print("Starting Field Management Functionality Test...")
-    driver = webdriver.Chrome()
+    driver = get_chrome_driver()
     
     try:
         # 1. Login as Farmer
         driver.get("http://localhost:3000/login")
         driver.maximize_window()
         
-        driver.find_element(By.NAME, "username").send_keys("farmer")
+        user_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "username")))
+        user_input.send_keys("farmer")
         driver.find_element(By.NAME, "password").send_keys("farmer123")
         driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
         
