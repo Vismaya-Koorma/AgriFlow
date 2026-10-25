@@ -22,6 +22,30 @@ def is_supervisor_assigned_to_field(user, field):
     return getattr(user, 'role', '').lower() == 'supervisor'
 
 
+def ensure_default_inspection_criteria():
+    if FieldInspectionCriterion.objects.filter(is_active=True).exists():
+        return
+    defaults = [
+        ('crop_health', 'Plant Canopy Vigour & Uniformity', 'Assess vegetative vigour, foliage density, leaf coloration, and stand uniformity across the field plot.', True, False, 1),
+        ('crop_health', 'Vegetative / Reproductive Stage Alignment', 'Verify actual physiological crop stage matches expected crop variety growth duration baseline.', True, False, 2),
+        ('irrigation_water', 'Water Source Adequacy & Supply Reliability', 'Check operational availability of water source (canal branch, borewell, or storage pond) and delivery capacity.', True, True, 3),
+        ('irrigation_water', 'Irrigation Distribution & Moisture Uniformity', 'Assess whether water is evenly distributed across rows without severe dry patches or unintended runoff.', True, False, 4),
+        ('soil_drainage', 'Soil Drainage & Absence of Severe Waterlogging', 'Ensure field plot has adequate drainage slope and channels; absence of prolonged root zone inundation.', True, True, 5),
+        ('soil_drainage', 'Soil Tilth, Structure & Root Zone Health', 'Evaluate soil structure, aeration, and absence of severe soil compaction or crusting.', True, False, 6),
+        ('pest_disease', 'Absence of Quarantine / Severe Pathogen Outbreak', 'Inspect field for destructive quarantine pests or critical unchecked fungal/bacterial leaf blight epidemics.', True, True, 7),
+        ('pest_disease', 'Pest Infestation Below Economic Injury Level', 'Verify scouting practices and that minor pest activity remains below actionable economic injury thresholds.', True, False, 8),
+        ('fertilizer_practices', 'Balanced Nutrient & Fertilizer Application', 'Verify application of required basal/top-dress fertilizers or bio-fertilizers according to crop stage.', True, False, 9),
+        ('fertilizer_practices', 'Standard Agronomic & Mulching Practices', 'Check weed control, mulching, row spacing, and adherence to approved agronomic recommendations.', True, False, 10),
+        ('field_maintenance', 'Weed Management & Boundary Cleanliness', 'Check field plot boundaries, perimeter bunds, and inter-row weed clearance.', True, False, 11),
+        ('field_maintenance', 'Field Bund Integrity & Erosion Protection', 'Inspect field bunds, water retention dikes, and soil erosion mitigation measures.', True, False, 12),
+        ('corrective_actions', 'Resolution of Past Inspection Deficiencies', 'Verify that all previously flagged non-conformances and corrective actions have been satisfactorily resolved.', False, True, 13),
+    ]
+    for cat, name, desc, mand, crit, order in defaults:
+        FieldInspectionCriterion.objects.create(
+            category=cat, name=name, description=desc, is_mandatory=mand, is_critical=crit, order=order, is_active=True
+        )
+
+
 def get_applicable_criteria_for_field(field):
     """
     Returns active inspection criteria applicable to this field based on:
@@ -29,6 +53,7 @@ def get_applicable_criteria_for_field(field):
     - Crop stage (if specified on criterion)
     - Previous corrective actions applicability
     """
+    ensure_default_inspection_criteria()
     criteria_qs = FieldInspectionCriterion.objects.filter(is_active=True).prefetch_related('applicable_crop_types')
     applicable = []
 
