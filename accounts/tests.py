@@ -237,10 +237,10 @@ class GoogleAuthTests(TestCase):
         self.assertEqual(exchange_resp.data['user']['email'], 'farmer@example.com')
         self.assertEqual(exchange_resp.data['user']['role'], 'farmer')
 
-    # 2. Unregistered Google email → no account is created, no login token/session is issued, and registration flow is shown
+    # 2. Unregistered Google email → automatically creates user account and allows login
     @patch('requests.get')
     @patch('requests.post')
-    def test_unregistered_google_email_redirects_to_registration_without_creating_user(self, mock_post, mock_get):
+    def test_unregistered_google_email_auto_creates_user_and_logs_in(self, mock_post, mock_get):
         mock_post.return_value = MagicMock(
             status_code=200,
             headers={'content-type': 'application/json'},
@@ -258,22 +258,26 @@ class GoogleAuthTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
         redirect_url = response.url
 
-        # Must redirect to /register with error_code and email
-        self.assertIn('/register', redirect_url)
-        self.assertIn('GOOGLE_ACCOUNT_NOT_REGISTERED', redirect_url)
-        self.assertIn('never_registered%40example.com', redirect_url)
-        self.assertIn('This email is not registered with AgriFlow. Please register first.', urllib.parse.unquote(redirect_url))
+        # Must redirect to /login with code (NOT /register)
+        self.assertIn('/login', redirect_url)
+        self.assertNotIn('/register', redirect_url)
+        self.assertIn('code=', redirect_url)
 
-        # Crucial check: NO user was created in the database!
-        self.assertEqual(User.objects.count(), initial_count)
-        self.assertFalse(User.objects.filter(email='never_registered@example.com').exists())
+        # Check: User account was automatically created in the database
+        self.assertEqual(User.objects.count(), initial_count + 1)
+        created_user = User.objects.filter(email='never_registered@example.com').first()
+        self.assertIsNotNone(created_user)
+        self.assertEqual(created_user.full_name, 'New User')
+        self.assertEqual(created_user.role, User.Role.FARMER)
+        self.assertTrue(created_user.is_active)
 
-        # JSON API flow
-        json_resp = self.client.get(self.callback_url + '?code=valid_google_code&json=true')
-        self.assertEqual(json_resp.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(json_resp.data['error_code'], 'GOOGLE_ACCOUNT_NOT_REGISTERED')
-        self.assertEqual(json_resp.data['email'], 'never_registered@example.com')
-        self.assertEqual(User.objects.count(), initial_count)
+        # Extract exchange code from redirect URL
+        code_param = redirect_url.split('code=')[1].split('&')[0]
+        exchange_resp = self.client.post(self.exchange_url, {'code': code_param}, format='json')
+        self.assertEqual(exchange_resp.status_code, status.HTTP_200_OK)
+        self.assertIn('access', exchange_resp.data['tokens'])
+        self.assertIn('refresh', exchange_resp.data['tokens'])
+        self.assertEqual(exchange_resp.data['user']['email'], 'never_registered@example.com')
 
     # 3. Email with different letter casing → correctly matches an existing account
     @patch('requests.get')

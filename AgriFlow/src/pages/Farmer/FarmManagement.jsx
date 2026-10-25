@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Card, Grid, Button, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
-  Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Snackbar } from '@mui/material';
+import {
+  Box, Typography, Card, Grid, Button, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
+  Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Snackbar, Stack
+} from '@mui/material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getFarms, createFarm, updateFarm, deleteFarm } from '../../services/api';
 import EditIcon from '@mui/icons-material/Edit';
@@ -27,7 +29,7 @@ const FarmManagement = () => {
     setLoading(true);
     try {
       const data = await getFarms();
-      setFarms(data);
+      setFarms(Array.isArray(data) ? data : (data?.results || []));
     } catch (error) {
       showMessage('error', 'Failed to fetch farms');
     } finally {
@@ -150,18 +152,28 @@ const FarmManagement = () => {
   return (
     <DashboardLayout title="Farm Management">
       <Card elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>My Farms</Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>Add Farm</Button>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>My Farms</Typography>
+            <Typography variant="body2" sx={{ color: '#64748b' }}>
+              Manage registered farm holdings and land details.
+            </Typography>
+          </Box>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()} sx={{ borderRadius: '8px' }}>
+            Add Farm
+          </Button>
         </Box>
         
-        {loading ? ( <Typography>Loading farms...</Typography> ) : (
+        {loading ? (
+          <Typography sx={{ py: 3, textAlign: 'center', color: '#64748b' }}>Loading farms...</Typography>
+        ) : (
           <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: '8px' }}>
             <Table>
               <TableHead sx={{ bgcolor: '#f8fafc' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Farm Name</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>District</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Total Area (Acres)</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Created At</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
@@ -169,16 +181,21 @@ const FarmManagement = () => {
               </TableHead>
               <TableBody>
                 {farms.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} align="center">No farms found.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} align="center">No farms found.</TableCell></TableRow>
                 ) : farms.map((farm) => (
                   <TableRow key={farm.id} hover>
-                    <TableCell sx={{ fontWeight: 500 }}>{farm.name}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{farm.name}</TableCell>
                     <TableCell>{farm.location || '-'}</TableCell>
-                    <TableCell>{farm.total_area}</TableCell>
-                    <TableCell>{new Date(farm.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>{farm.district || '-'}</TableCell>
+                    <TableCell>{farm.total_area} Acres</TableCell>
+                    <TableCell>{farm.created_at ? new Date(farm.created_at).toLocaleDateString() : '-'}</TableCell>
                     <TableCell align="right">
-                      <IconButton color="primary" onClick={() => handleOpen(farm)}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton color="error" onClick={() => handleDelete(farm.id)}><DeleteIcon fontSize="small" /></IconButton>
+                      <IconButton color="primary" size="small" onClick={() => handleOpen(farm)} title="Edit Farm">
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton color="error" size="small" onClick={() => handleDelete(farm.id)} title="Delete Farm">
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -188,6 +205,7 @@ const FarmManagement = () => {
         )}
       </Card>
       
+      {/* Add / Edit Farm Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <form onSubmit={handleSubmit}>
           <DialogTitle>{isEditing ? 'Edit Farm' : 'Add New Farm'}</DialogTitle>
@@ -234,7 +252,6 @@ const FarmManagement = () => {
         </form>
       </Dialog>
 
-      
       <Snackbar open={!!message.text} autoHideDuration={4000} onClose={() => setMessage({ type: '', text: '' })}>
         <Alert severity={message.type || 'info'} onClose={() => setMessage({ type: '', text: '' })}>{message.text}</Alert>
       </Snackbar>

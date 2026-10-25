@@ -1,5 +1,8 @@
+import os
+from django.conf import settings
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.views.static import serve
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import root_view, health_check_view
 
@@ -32,7 +35,12 @@ urlpatterns = [
     path('api/maintenance/', include('maintenance.urls')),
     path('api/', include('reports.urls')),
     path('api/decision-intelligence/', include('decision_intelligence.urls')),
+    path('api/field-visits/', include('field_visits.urls')),
 
     # JWT Token Refresh
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # Media and uploaded file serving
+    re_path(r'^complaints/(?P<path>.*)$', serve, {'document_root': os.path.join(settings.BASE_DIR, 'complaints')}),
+    re_path(r'^crop_health_leaves/(?P<path>.*)$', serve, {'document_root': os.path.join(settings.BASE_DIR, 'crop_health_leaves')}),
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]

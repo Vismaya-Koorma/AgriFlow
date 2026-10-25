@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, Typography, Grid, Card, Chip, Button, Table, TableHead,
   TableBody, TableRow, TableCell, TableContainer, Stack, Dialog,
   DialogTitle, DialogContent, DialogActions, TextField, Alert, CircularProgress,
-  IconButton, Tooltip as MuiTooltip
+  IconButton, InputAdornment
 } from '@mui/material';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import StatCard from '../../components/cards/StatCard';
 import PeopleIcon from '@mui/icons-material/People';
@@ -15,7 +15,8 @@ import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { analytics } from '../../data/analytics';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 import {
   getFields, verifyField,
   getWaterAllocationRequests, verifyWaterAllocationRequest
@@ -27,6 +28,7 @@ const STATUS_COLOR = {
   pending: 'warning',
   pending_review: 'warning',
   verified: 'success',
+  needs_improvement: 'secondary',
   rejected: 'error',
   approved: 'success'
 };
@@ -35,6 +37,7 @@ const SupervisorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Real Data States
   const [fieldList, setFieldList] = useState([]);
@@ -99,18 +102,34 @@ const SupervisorDashboard = () => {
         status: actionType,
         notes: verificationNotes
       });
-      setSuccessMsg(`Water request #${selectedReq.id} supervisor status set to '${actionType}'.`);
+      setSuccessMsg(`Water request #${selectedReq.id} marked as ${actionType}.`);
       setNotesModalOpen(false);
       fetchDashboardData();
     } catch (err) {
-      setErrorMsg(err.response?.data?.error || `Failed to verify water allocation request.`);
+      setErrorMsg(err.response?.data?.error || 'Failed to submit verification.');
     }
   };
 
-  // Summary Metrics
-  const pendingFieldsCount = fieldList.filter(f => f.verification_status === 'pending').length;
-  const verifiedFieldsCount = fieldList.filter(f => f.verification_status === 'verified').length;
-  const pendingWaterReqsCount = waterRequests.filter(r => r.supervisor_status === 'pending_review').length;
+  // Filter fields based on search
+  const filteredFields = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return fieldList;
+    return fieldList.filter((f) => {
+      const name = String(f.name || '').toLowerCase();
+      const farm = String(f.farm_name || '').toLowerCase();
+      const crop = String(f.crop_type_name || '').toLowerCase();
+      const variety = String(f.crop_variety_name || '').toLowerCase();
+      const status = String(f.verification_status || '').toLowerCase();
+      const location = String(f.district || f.location_display || '').toLowerCase();
+      return name.includes(term) || farm.includes(term) || crop.includes(term) || variety.includes(term) || status.includes(term) || location.includes(term);
+    });
+  }, [fieldList, searchTerm]);
+
+  // Derived metrics
+  const verifiedFieldsCount = fieldList.filter((f) => f.verification_status === 'verified').length;
+  const pendingFieldsCount = fieldList.filter((f) => f.verification_status === 'pending').length;
+  const rejectedFieldsCount = fieldList.filter((f) => f.verification_status === 'rejected' || f.verification_status === 'needs_improvement').length;
+  const pendingWaterCount = waterRequests.filter((r) => r.status === 'pending').length;
 
   return (
     <DashboardLayout title="Field Supervisor Dashboard">
@@ -144,7 +163,7 @@ const SupervisorDashboard = () => {
           { title: 'Total Registered Fields', value: fieldList.length.toString(), icon: <PeopleIcon />, color: '#1565C0' },
           { title: 'Pending Field Verification', value: pendingFieldsCount.toString(), icon: <HourglassEmptyIcon />, color: '#E65100' },
           { title: 'Verified Fields', value: verifiedFieldsCount.toString(), icon: <VerifiedIcon />, color: '#2E7D32' },
-          { title: 'Pending Water Reviews', value: pendingWaterReqsCount.toString(), icon: <WaterDropIcon />, color: '#0288D1' },
+          { title: 'Pending Water Requests', value: pendingWaterCount.toString(), icon: <WaterDropIcon />, color: '#00838F' },
         ].map((c) => (
           <Grid item xs={12} sm={6} lg={3} key={c.title}>
             <StatCard {...c} />
@@ -165,7 +184,7 @@ const SupervisorDashboard = () => {
                   data={[
                     { name: 'Verified', value: verifiedFieldsCount },
                     { name: 'Pending', value: pendingFieldsCount },
-                    { name: 'Rejected', value: fieldList.filter(f => f.verification_status === 'rejected').length }
+                    { name: 'Rejected', value: rejectedFieldsCount }
                   ]}
                   cx="50%" cy="50%" innerRadius={55} outerRadius={85}
                   dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={false}
@@ -180,38 +199,45 @@ const SupervisorDashboard = () => {
           </Card>
         </Grid>
 
-        {/* Weekly Usage Overview */}
-        <Grid item xs={12} md={8}>
-          <Card elevation={0} sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#1e293b' }}>
-              Weekly Water Usage Overview
-            </Typography>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={analytics.weeklyWaterUsage}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Bar dataKey="usage" fill="#1565C0" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Grid>
-
         {/* 1. Field Verification Table */}
-        <Grid item xs={12}>
+        <Grid item xs={12} md={8}>
           <Card elevation={0} sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-            <Box sx={{ px: 3, py: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                Field Ground Truth Verification List
-              </Typography>
-              <Chip label={`${fieldList.length} Total Fields`} size="small" color="primary" variant="outlined" />
+            <Box sx={{ px: 3, py: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { sm: 'center' }, gap: 2 }}>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                  Field Ground Truth Verification List
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                  Inspect and verify ground truth status of registered fields.
+                </Typography>
+              </Box>
+              <TextField
+                size="small"
+                placeholder="Search fields, crop, status..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{ width: { xs: '100%', sm: 260 } }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" sx={{ color: '#94a3b8' }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchTerm ? (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => setSearchTerm('')}>
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : null
+                }}
+              />
             </Box>
             <TableContainer>
-              <Table>
+              <Table size="small">
                 <TableHead sx={{ bgcolor: '#f8fafc' }}>
                   <TableRow>
-                    {['Field Name', 'Farm', 'Crop Type', 'Soil Type', 'Stage', 'Location', 'Verification Status', 'Actions'].map((h) => (
+                    {['Field Name', 'Farm', 'Crop & Variety', 'Soil Type', 'Stage', 'Location', 'Verification Status', 'Actions'].map((h) => (
                       <TableCell key={h} sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.8rem' }}>{h}</TableCell>
                     ))}
                   </TableRow>
@@ -223,21 +249,41 @@ const SupervisorDashboard = () => {
                         <CircularProgress size={24} />
                       </TableCell>
                     </TableRow>
-                  ) : fieldList.length === 0 ? (
+                  ) : filteredFields.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} align="center" sx={{ py: 3, color: '#94a3b8' }}>
-                        No fields available for verification.
+                        {searchTerm ? 'No matching fields found.' : 'No fields available for verification.'}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    fieldList.map((f) => (
+                    filteredFields.map((f) => (
                       <TableRow key={f.id} hover>
                         <TableCell sx={{ fontWeight: 600 }}>{f.name}</TableCell>
                         <TableCell>{f.farm_name || 'N/A'}</TableCell>
-                        <TableCell>{f.crop_type_name || 'N/A'}</TableCell>
-                        <TableCell>{f.soil_type_name || 'N/A'}</TableCell>
-                        <TableCell>{f.crop_stage || 'N/A'}</TableCell>
-                        <TableCell>{f.district || f.location_display || 'N/A'}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {f.crop_type_name || '-'}
+                          </Typography>
+                          {f.crop_variety_name && (
+                            <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                              Var: {f.crop_variety_name}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>{f.soil_type_name || '-'}</TableCell>
+                        <TableCell>
+                          {(f.crop_variety || f.crop_variety_name) && f.crop_stage ? (
+                            <Chip
+                              label={f.crop_stage.toUpperCase()}
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontSize: '0.7rem' }}
+                            />
+                          ) : (
+                            <Typography variant="body2" sx={{ color: '#94a3b8' }}>-</Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>{f.district || f.location_display || '-'}</TableCell>
                         <TableCell>
                           <Chip
                             label={(f.verification_status || 'pending').toUpperCase()}
@@ -246,7 +292,7 @@ const SupervisorDashboard = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <Stack direction="row" spacing={1}>
+                          <Stack direction="row" spacing={0.5}>
                             {f.verification_status !== 'verified' && (
                               <Button
                                 size="small"
@@ -254,7 +300,7 @@ const SupervisorDashboard = () => {
                                 color="success"
                                 startIcon={<CheckCircleIcon />}
                                 onClick={() => handleVerifyField(f.id, 'verified')}
-                                sx={{ borderRadius: '6px', fontSize: '0.75rem', py: 0.3 }}
+                                sx={{ fontSize: '0.7rem', py: 0.3, textTransform: 'none' }}
                               >
                                 Verify
                               </Button>
@@ -266,7 +312,7 @@ const SupervisorDashboard = () => {
                                 color="error"
                                 startIcon={<CancelIcon />}
                                 onClick={() => handleVerifyField(f.id, 'rejected')}
-                                sx={{ borderRadius: '6px', fontSize: '0.75rem', py: 0.3 }}
+                                sx={{ fontSize: '0.7rem', py: 0.3, textTransform: 'none' }}
                               >
                                 Reject
                               </Button>
@@ -282,20 +328,20 @@ const SupervisorDashboard = () => {
           </Card>
         </Grid>
 
-        {/* 2. Water Allocation Request Verification Table */}
+        {/* 2. Water Allocation Requests Verification Table */}
         <Grid item xs={12}>
           <Card elevation={0} sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
             <Box sx={{ px: 3, py: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                Water Allocation Requests — Supervisor Field Review
+                Farmer Water Allocation Requests
               </Typography>
-              <Chip label={`${waterRequests.length} Requests`} size="small" color="secondary" variant="outlined" />
+              <Chip label={`${waterRequests.length} Total Requests`} size="small" color="secondary" variant="outlined" />
             </Box>
             <TableContainer>
               <Table>
                 <TableHead sx={{ bgcolor: '#f8fafc' }}>
                   <TableRow>
-                    {['Req #', 'Farmer', 'Farm', 'Field', 'Requested Vol (L)', 'Priority', 'Supervisor Status', 'Actions'].map((h) => (
+                    {['Request ID', 'Field Name', 'Water Required', 'Required Date', 'Urgency', 'Farmer', 'Verification Status', 'Actions'].map((h) => (
                       <TableCell key={h} sx={{ fontWeight: 600, color: '#64748b', fontSize: '0.8rem' }}>{h}</TableCell>
                     ))}
                   </TableRow>
@@ -310,52 +356,62 @@ const SupervisorDashboard = () => {
                   ) : waterRequests.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} align="center" sx={{ py: 3, color: '#94a3b8' }}>
-                        No water allocation requests found for supervisor review.
+                        No water allocation requests found.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    waterRequests.map((r) => (
-                      <TableRow key={r.id} hover>
-                        <TableCell sx={{ fontWeight: 600 }}>#{r.id}</TableCell>
-                        <TableCell>{r.farmer_name || r.farmer_username}</TableCell>
-                        <TableCell>{r.farm_name}</TableCell>
-                        <TableCell>{r.field_name}</TableCell>
-                        <TableCell sx={{ fontWeight: 600, color: '#1565C0' }}>
-                          {Number(r.requested_amount_liters).toLocaleString()} L
-                        </TableCell>
-                        <TableCell>
-                          <Chip label={r.priority_display || r.priority} size="small" color={r.priority === 'critical' || r.priority === 'high' ? 'error' : 'default'} />
-                        </TableCell>
+                    waterRequests.map((req) => (
+                      <TableRow key={req.id} hover>
+                        <TableCell sx={{ fontWeight: 600 }}>#{req.id}</TableCell>
+                        <TableCell>{req.field_name || `Field #${req.field}`}</TableCell>
+                        <TableCell>{req.water_amount_litres} Litres</TableCell>
+                        <TableCell>{req.required_date}</TableCell>
                         <TableCell>
                           <Chip
-                            label={(r.supervisor_status_display || r.supervisor_status || 'pending_review').toUpperCase()}
-                            color={STATUS_COLOR[r.supervisor_status] || 'warning'}
+                            label={(req.urgency || 'MEDIUM').toUpperCase()}
+                            size="small"
+                            color={req.urgency === 'high' ? 'error' : req.urgency === 'low' ? 'default' : 'warning'}
+                            sx={{ fontWeight: 600 }}
+                          />
+                        </TableCell>
+                        <TableCell>{req.farmer_name || req.farmer_username || 'Farmer'}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={(req.status || 'pending').toUpperCase()}
+                            color={STATUS_COLOR[req.status] || 'warning'}
                             size="small"
                           />
                         </TableCell>
                         <TableCell>
                           <Stack direction="row" spacing={1}>
-                            {r.supervisor_status !== 'verified' && (
-                              <Button
-                                size="small"
-                                variant="contained"
-                                color="success"
-                                onClick={() => handleOpenReqModal(r, 'verified')}
-                                sx={{ borderRadius: '6px', fontSize: '0.75rem', py: 0.3 }}
-                              >
-                                Verify Ground Truth
-                              </Button>
+                            {req.status === 'pending' && (
+                              <>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="success"
+                                  startIcon={<CheckCircleIcon />}
+                                  onClick={() => handleOpenReqModal(req, 'verified')}
+                                  sx={{ fontSize: '0.75rem', textTransform: 'none' }}
+                                >
+                                  Verify
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="error"
+                                  startIcon={<CancelIcon />}
+                                  onClick={() => handleOpenReqModal(req, 'rejected')}
+                                  sx={{ fontSize: '0.75rem', textTransform: 'none' }}
+                                >
+                                  Reject
+                                </Button>
+                              </>
                             )}
-                            {r.supervisor_status !== 'rejected' && (
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="error"
-                                onClick={() => handleOpenReqModal(r, 'rejected')}
-                                sx={{ borderRadius: '6px', fontSize: '0.75rem', py: 0.3 }}
-                              >
-                                Reject Request
-                              </Button>
+                            {req.status !== 'pending' && (
+                              <Typography variant="caption" sx={{ color: '#64748b' }}>
+                                Processed
+                              </Typography>
                             )}
                           </Stack>
                         </TableCell>
@@ -369,35 +425,32 @@ const SupervisorDashboard = () => {
         </Grid>
       </Grid>
 
-      {/* Supervisor Review Notes Modal */}
+      {/* Verification Notes Dialog for Water Allocation Requests */}
       <Dialog open={notesModalOpen} onClose={() => setNotesModalOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>
-          {actionType === 'verified' ? 'Confirm Supervisor Verification' : 'Reject Water Allocation Request'}
+        <DialogTitle>
+          {actionType === 'verified' ? 'Verify Water Request Ground Truth' : 'Reject Water Request Ground Truth'}
         </DialogTitle>
         <DialogContent dividers>
-          <Typography variant="body2" sx={{ mb: 2, color: '#475569' }}>
-            Request #{selectedReq?.id} for field <strong>{selectedReq?.field_name}</strong> ({selectedReq?.requested_amount_liters} L)
+          <Typography variant="body2" sx={{ mb: 2, color: '#64748b' }}>
+            Request #{selectedReq?.id} for <strong>{selectedReq?.water_amount_litres}L</strong> ({selectedReq?.field_name}).
           </Typography>
           <TextField
             fullWidth
             multiline
             rows={3}
-            label="Supervisor Inspection Notes"
+            label="Supervisor Inspection Notes / Observations"
             value={verificationNotes}
             onChange={(e) => setVerificationNotes(e.target.value)}
-            placeholder="Enter field observation details or reasons for verification outcome..."
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setNotesModalOpen(false)} color="inherit">
-            Cancel
-          </Button>
+        <DialogActions>
+          <Button onClick={() => setNotesModalOpen(false)}>Cancel</Button>
           <Button
-            onClick={handleVerifyRequestSubmit}
             variant="contained"
             color={actionType === 'verified' ? 'success' : 'error'}
+            onClick={handleVerifyRequestSubmit}
           >
-            Submit {actionType.toUpperCase()}
+            Confirm {actionType === 'verified' ? 'Verification' : 'Rejection'}
           </Button>
         </DialogActions>
       </Dialog>

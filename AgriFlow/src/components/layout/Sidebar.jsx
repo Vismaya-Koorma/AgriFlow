@@ -32,6 +32,7 @@ const NAV_CONFIG = {
     { label: 'My Farms', path: '/farmer/farms', icon: <AgricultureIcon /> },
     { label: 'My Fields', path: '/farmer/fields', icon: <GrassIcon /> },
     { label: 'Irrigation History', path: '/farmer/irrigation-history', icon: <WaterDropIcon /> },
+    { label: 'Supervisor Visits', path: '/farmer/supervisor-visits', icon: <AssignmentIcon /> },
     { label: 'Maintenance', path: '/farmer/complaints', icon: <BuildIcon /> },
     { label: 'Reports', path: '/farmer/reports', icon: <BarChartIcon /> },
     { label: 'Alerts', path: '/farmer/alerts', icon: <NotificationsIcon /> },
@@ -40,11 +41,9 @@ const NAV_CONFIG = {
   supervisor: [
     { label: 'Dashboard', path: '/supervisor', icon: <DashboardIcon /> },
     { label: 'Assigned Farmers', path: '/supervisor/farmers', icon: <PeopleIcon /> },
+    { label: 'Farm Visits', path: '/supervisor/visits', icon: <AssignmentIcon /> },
     { label: 'Field Verification', path: '/supervisor/verification', icon: <VerifiedIcon /> },
     { label: 'Crop Validation', path: '/supervisor/crops', icon: <GrassIcon /> },
-    { label: 'Priority List', path: '/supervisor/priority', icon: <ListAltIcon /> },
-    { label: 'Reports', path: '/supervisor/reports', icon: <BarChartIcon /> },
-    { label: 'Notifications', path: '/supervisor/notifications', icon: <NotificationsIcon /> },
     { label: 'Profile', path: '/supervisor/profile', icon: <PersonIcon /> },
   ],
   manager: [
@@ -71,6 +70,7 @@ const NAV_CONFIG = {
     { label: 'Decision Intelligence', path: '/admin/decision-intelligence', icon: <AutoAwesomeIcon /> },
     { label: 'Users', path: '/admin/users', icon: <PeopleIcon /> },
     { label: 'Farm Management', path: '/admin/farms', icon: <AgricultureIcon /> },
+    { label: 'Supervisor Visits', path: '/admin/supervisor-visits', icon: <AssignmentIcon /> },
     { label: 'Analytics', path: '/admin/analytics', icon: <BarChartIcon /> },
     { label: 'Alerts', path: '/admin/alerts', icon: <NotificationsIcon /> },
     { label: 'Settings', path: '/admin/settings', icon: <SettingsIcon /> },
@@ -99,6 +99,7 @@ const Sidebar = ({ open, onClose }) => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isDark = theme.palette.mode === 'dark';
 
   if (!user) return null;
 
@@ -116,7 +117,7 @@ const Sidebar = ({ open, onClose }) => {
   };
 
   const content = (
-    <Box sx={{ width: SIDEBAR_WIDTH, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#fff' }}>
+    <Box sx={{ width: SIDEBAR_WIDTH, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>
       {/* Brand */}
       <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5, bgcolor: color }}>
         <Avatar src="/agriflow-logo.jpg" alt="AgriFlow Logo" sx={{ width: 38, height: 38, border: "2px solid rgba(255,255,255,0.8)", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }} />
@@ -126,19 +127,19 @@ const Sidebar = ({ open, onClose }) => {
       </Box>
 
       {/* User Info */}
-      <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 1.5, bgcolor: '#f5f5f5' }}>
+      <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 1.5, bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc' }}>
         <Avatar sx={{ bgcolor: color, width: 36, height: 36, fontSize: '0.85rem', fontWeight: 700 }}>
           {(user?.full_name?.trim() || user?.name?.trim() || user?.username?.trim() || 'U')[0].toUpperCase()}
         </Avatar>
         <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b', lineHeight: 1.1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.1 }}>
             {user.full_name || user.name || user.username}
           </Typography>
-          <Typography variant="caption" sx={{ color: '#64748b', textTransform: 'capitalize' }}>{user.role}</Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'capitalize' }}>{user.role}</Typography>
         </Box>
       </Box>
 
-      <Divider />
+      <Divider sx={{ borderColor: 'divider' }} />
 
       {/* Nav Items */}
       <List sx={{ flex: 1, py: 1, overflowY: 'auto' }}>
@@ -156,12 +157,12 @@ const Sidebar = ({ open, onClose }) => {
                 maxHeight: 40,
                 borderRadius: '10px',
                 bgcolor: active ? color : 'transparent',
-                color: active ? '#fff' : '#475569',
+                color: active ? '#fff' : (isDark ? '#cbd5e1' : '#475569'),
                 transition: 'all 0.2s ease-in-out',
-                '&:hover': { bgcolor: active ? color : `${color}12`, color: active ? '#fff' : color },
+                '&:hover': { bgcolor: active ? color : `${color}18`, color: active ? '#fff' : color },
               }}
             >
-              <ListItemIcon sx={{ color: active ? '#fff' : '#94a3b8', minWidth: 34 }}>
+              <ListItemIcon sx={{ color: active ? '#fff' : (isDark ? '#94a3b8' : '#64748b'), minWidth: 34 }}>
                 {item.icon}
               </ListItemIcon>
               <ListItemText
@@ -173,7 +174,7 @@ const Sidebar = ({ open, onClose }) => {
         })}
       </List>
 
-      <Divider sx={{ mx: 2, borderColor: '#e2e8f0' }} />
+      <Divider sx={{ mx: 2, borderColor: 'divider' }} />
 
       {/* Visually Attractive Compact Logout */}
       <Box sx={{ p: 1.5, mt: 'auto' }}>
@@ -183,23 +184,23 @@ const Sidebar = ({ open, onClose }) => {
             height: 40,
             maxHeight: 40,
             borderRadius: '10px',
-            bgcolor: '#fef2f2',
-            color: '#dc2626',
-            border: '1px solid rgba(220, 38, 38, 0.15)',
+            bgcolor: isDark ? 'rgba(239, 68, 68, 0.12)' : '#fef2f2',
+            color: '#ef4444',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             '&:hover': {
-              bgcolor: '#fee2e2',
-              color: '#b91c1c',
-              borderColor: 'rgba(220, 38, 38, 0.3)',
+              bgcolor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+              color: '#dc2626',
+              borderColor: 'rgba(239, 68, 68, 0.4)',
               boxShadow: '0 2px 8px rgba(220, 38, 38, 0.15)',
               transform: 'translateY(-1px)',
               '& .MuiListItemIcon-root': {
-                color: '#b91c1c',
+                color: '#dc2626',
               },
             },
           }}
         >
-          <ListItemIcon sx={{ color: '#dc2626', minWidth: 34, transition: 'color 0.2s ease-in-out' }}>
+          <ListItemIcon sx={{ color: '#ef4444', minWidth: 34, transition: 'color 0.2s ease-in-out' }}>
             <LogoutIcon sx={{ fontSize: 19 }} />
           </ListItemIcon>
           <ListItemText
@@ -214,13 +215,26 @@ const Sidebar = ({ open, onClose }) => {
   return (
     <>
       {/* Mobile Drawer */}
-      <Drawer variant="temporary" open={open} onClose={onClose} ModalProps={{ keepMounted: true }}
-        sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH } }}>
+      <Drawer
+        variant="temporary"
+        open={open}
+        onClose={onClose}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH, bgcolor: 'background.paper', borderColor: 'divider' }
+        }}
+      >
         {content}
       </Drawer>
       {/* Desktop permanent */}
-      <Drawer variant="permanent"
-        sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH, boxSizing: 'border-box' } }}>
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', md: 'block' },
+          '& .MuiDrawer-paper': { width: SIDEBAR_WIDTH, boxSizing: 'border-box', bgcolor: 'background.paper', borderColor: 'divider' }
+        }}
+      >
         {content}
       </Drawer>
     </>

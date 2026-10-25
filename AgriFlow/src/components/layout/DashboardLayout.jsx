@@ -9,12 +9,12 @@ const DashboardLayout = ({ children, title }) => {
   const { open, toggleSidebar, closeSidebar } = useSidebar();
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f8fafc' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       <Sidebar open={open} onClose={closeSidebar} />
       <Box component="main" sx={{ flex: 1, ml: { md: `${SIDEBAR_WIDTH}px` }, display: 'flex', flexDirection: 'column' }}>
         <Topbar onMenuClick={toggleSidebar} title={title} />
         <Toolbar />
-        <Box sx={{ p: { xs: 2, sm: 3 }, flex: 1 }}>
+        <Box sx={{ p: { xs: 2, sm: 3 }, flex: 1, bgcolor: 'background.default' }}>
           {children}
         </Box>
       </Box>

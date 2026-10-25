@@ -1,8 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import theme from './theme';
+import { CustomThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 
@@ -25,6 +23,9 @@ import FarmerComplaints from './pages/Farmer/FarmerComplaints';
 
 import AdminFarmManagement from './pages/Admin/AdminFarmManagement';
 import AdminSettings from './pages/Admin/AdminSettings';
+import AdminSupervisorVisits from './pages/Admin/AdminSupervisorVisits';
+import SupervisorVisits from './pages/Supervisor/SupervisorVisits';
+import FarmerSupervisorVisits from './pages/Farmer/FarmerSupervisorVisits';
 
 import ErrorBoundary from './components/common/ErrorBoundary';
 
@@ -33,8 +34,7 @@ import DecisionIntelligence from './pages/Manager/DecisionIntelligence';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <CustomThemeProvider>
       <AuthProvider>
         <Router>
           <Routes>
@@ -70,6 +70,7 @@ function App() {
             <Route path="/farmer/alerts" element={
               <ProtectedRoute role="farmer"><AlertsPage /></ProtectedRoute>
             } />
+            <Route path="/farmer/supervisor-visits" element={<ProtectedRoute role="farmer"><FarmerSupervisorVisits /></ProtectedRoute>} />
             <Route path="/farmer/profile" element={
               <ProtectedRoute role="farmer"><Profile /></ProtectedRoute>
             } />
@@ -95,6 +96,7 @@ function App() {
             <Route path="/supervisor/notifications" element={
               <ProtectedRoute role="supervisor"><AlertsPage /></ProtectedRoute>
             } />
+            <Route path="/supervisor/visits" element={<ProtectedRoute role="supervisor"><SupervisorVisits /></ProtectedRoute>} />
             <Route path="/supervisor/profile" element={
               <ProtectedRoute role="supervisor"><Profile /></ProtectedRoute>
             } />
@@ -167,6 +169,7 @@ function App() {
             <Route path="/admin/alerts" element={
               <ProtectedRoute role="admin"><AlertsPage /></ProtectedRoute>
             } />
+            <Route path="/admin/supervisor-visits" element={<ProtectedRoute role="admin"><AdminSupervisorVisits /></ProtectedRoute>} />
             <Route path="/admin/settings" element={
               <ProtectedRoute role="admin"><AdminSettings /></ProtectedRoute>
             } />
@@ -178,7 +181,7 @@ function App() {
           </Routes>
         </Router>
       </AuthProvider>
-    </ThemeProvider>
+    </CustomThemeProvider>
   );
 }
 

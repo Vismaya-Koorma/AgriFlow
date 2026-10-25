@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'maintenance',
     'reports',
     'decision_intelligence',
+    'field_visits',
 ]
 
 MIDDLEWARE = [
@@ -133,6 +134,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR
+
 # ─── Django REST Framework ───────────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -198,7 +202,7 @@ GOOGLE_REDIRECT_URI = os.environ.get(
     'GOOGLE_REDIRECT_URI',
     'http://127.0.0.1:8000/accounts/google/login/callback/'
 )
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
 
 
 

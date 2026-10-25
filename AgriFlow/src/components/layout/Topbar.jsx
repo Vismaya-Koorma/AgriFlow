@@ -18,6 +18,9 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
+import { useThemeMode } from '../../context/ThemeContext';
 
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -31,20 +34,58 @@ const ROLE_COLORS = {
   admin: '#6A1B9A',
 };
 
-const DEFAULT_PAGES = [
-  { name: 'Dashboard', path: '/farmer', icon: DashboardIcon },
-  { name: 'Farm Management', path: '/farmer/farms', icon: GrassIcon },
-  { name: 'Field Management', path: '/farmer/fields', icon: GrassIcon },
-  { name: 'Irrigation History', path: '/farmer/irrigation-history', icon: WaterDropIcon },
-  { name: 'Reports & Analytics', path: '/farmer/reports', icon: AssessmentIcon },
-  { name: 'Alerts & Notifications', path: '/farmer/alerts', icon: NotificationsIcon },
-  { name: 'User Profile', path: '/farmer/profile', icon: PersonIcon },
-];
+const ROLE_PAGES = {
+  farmer: [
+    { name: 'Dashboard', path: '/farmer', icon: DashboardIcon },
+    { name: 'Crop Health AI', path: '/farmer/crop-health', icon: AssessmentIcon },
+    { name: 'My Farms', path: '/farmer/farms', icon: GrassIcon },
+    { name: 'My Fields', path: '/farmer/fields', icon: GrassIcon },
+    { name: 'Irrigation History', path: '/farmer/irrigation-history', icon: WaterDropIcon },
+    { name: 'Supervisor Visits', path: '/farmer/supervisor-visits', icon: AssessmentIcon },
+    { name: 'Maintenance', path: '/farmer/complaints', icon: AssessmentIcon },
+    { name: 'Reports & Analytics', path: '/farmer/reports', icon: AssessmentIcon },
+    { name: 'Alerts', path: '/farmer/alerts', icon: NotificationsIcon },
+    { name: 'User Profile', path: '/farmer/profile', icon: PersonIcon },
+  ],
+  supervisor: [
+    { name: 'Supervisor Dashboard', path: '/supervisor', icon: DashboardIcon },
+    { name: 'Assigned Farmers', path: '/supervisor/farmers', icon: PersonIcon },
+    { name: 'Farm Visits', path: '/supervisor/visits', icon: AssessmentIcon },
+    { name: 'Field Ground Truth Verification', path: '/supervisor/verification', icon: GrassIcon },
+    { name: 'Crop Validation', path: '/supervisor/crops', icon: GrassIcon },
+    { name: 'User Profile', path: '/supervisor/profile', icon: PersonIcon },
+  ],
+  manager: [
+    { name: 'Dashboard', path: '/manager', icon: DashboardIcon },
+    { name: 'Decision Intelligence', path: '/manager/decision-intelligence', icon: AssessmentIcon },
+    { name: 'Water Demand', path: '/manager/demand', icon: WaterDropIcon },
+    { name: 'Water Allocation', path: '/manager/allocation', icon: WaterDropIcon },
+    { name: 'Reports', path: '/manager/reports', icon: AssessmentIcon },
+    { name: 'Profile', path: '/manager/profile', icon: PersonIcon },
+  ],
+  maintenance: [
+    { name: 'Dashboard', path: '/maintenance', icon: DashboardIcon },
+    { name: 'Complaints', path: '/maintenance/complaints', icon: AssessmentIcon },
+    { name: 'Assigned Tasks', path: '/maintenance/tasks', icon: AssessmentIcon },
+    { name: 'Repair History', path: '/maintenance/history', icon: AssessmentIcon },
+    { name: 'Profile', path: '/maintenance/profile', icon: PersonIcon },
+  ],
+  admin: [
+    { name: 'Admin Dashboard', path: '/admin', icon: DashboardIcon },
+    { name: 'User Management', path: '/admin/users', icon: PersonIcon },
+    { name: 'Farm Management', path: '/admin/farms', icon: GrassIcon },
+    { name: 'Supervisor Visits', path: '/admin/supervisor-visits', icon: AssessmentIcon },
+    { name: 'Analytics', path: '/admin/analytics', icon: AssessmentIcon },
+    { name: 'System Settings', path: '/admin/settings', icon: AssessmentIcon },
+  ],
+};
 
 const Topbar = ({ onMenuClick, title }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
+  const { mode, isDarkMode, toggleTheme } = useThemeMode();
+  const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // ── State for User Menu ──
@@ -153,14 +194,44 @@ const Topbar = ({ onMenuClick, title }) => {
     }
   };
 
-  const filteredPages = DEFAULT_PAGES.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const currentRolePages = ROLE_PAGES[user?.role] || ROLE_PAGES.farmer;
+  const trimmedSearch = searchQuery.trim().toLowerCase();
 
-  const filteredFields = liveFields.filter(f =>
-    f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (f.crop_type_name && f.crop_type_name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredPages = trimmedSearch
+    ? currentRolePages.filter(p => p.name.toLowerCase().includes(trimmedSearch))
+    : [];
+
+  const filteredFields = trimmedSearch
+    ? liveFields.filter(f => {
+        const name = (f.name || '').toLowerCase();
+        const farm = (f.farm_name || '').toLowerCase();
+        const farmer = (f.farmer_name || f.farmer_username || '').toLowerCase();
+        const crop = (f.crop_type_name || '').toLowerCase();
+        const variety = (f.crop_variety_name || '').toLowerCase();
+        const soil = (f.soil_type_name || '').toLowerCase();
+        const stage = (f.crop_stage || '').toLowerCase();
+        const status = (f.verification_status || '').toLowerCase();
+        return (
+          name.includes(trimmedSearch) ||
+          farm.includes(trimmedSearch) ||
+          farmer.includes(trimmedSearch) ||
+          crop.includes(trimmedSearch) ||
+          variety.includes(trimmedSearch) ||
+          soil.includes(trimmedSearch) ||
+          stage.includes(trimmedSearch) ||
+          status.includes(trimmedSearch)
+        );
+      }).slice(0, 8)
+    : [];
+
+  const getFieldDestination = (field) => {
+    if (user?.role === 'supervisor') {
+      return `/supervisor?search=${encodeURIComponent(field.name)}`;
+    } else if (user?.role === 'admin') {
+      return `/admin/farms`;
+    }
+    return `/farmer/fields`;
+  };
 
   const handleSelectSearchResult = (path) => {
     setSearchQuery('');
@@ -173,9 +244,10 @@ const Topbar = ({ onMenuClick, title }) => {
       if (filteredPages.length > 0) {
         handleSelectSearchResult(filteredPages[0].path);
       } else if (filteredFields.length > 0) {
-        handleSelectSearchResult('/farmer/fields');
-      } else {
-        handleSelectSearchResult('/farmer');
+        handleSelectSearchResult(getFieldDestination(filteredFields[0]));
+      } else if (trimmedSearch) {
+        const defaultPath = user?.role === 'supervisor' ? `/supervisor?search=${encodeURIComponent(trimmedSearch)}` : `/${user?.role || 'farmer'}`;
+        handleSelectSearchResult(defaultPath);
       }
     }
   };
@@ -193,8 +265,10 @@ const Topbar = ({ onMenuClick, title }) => {
       position="fixed"
       elevation={0}
       sx={{
-        bgcolor: '#fff',
-        borderBottom: '1px solid #e2e8f0',
+        bgcolor: 'background.paper',
+        color: 'text.primary',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
         zIndex: theme.zIndex.drawer + 1,
         ml: { md: '240px' },
         width: { md: 'calc(100% - 240px)' },
@@ -232,9 +306,9 @@ const Topbar = ({ onMenuClick, title }) => {
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: '24px',
-                bgcolor: '#f8fafc',
+                bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#f8fafc',
                 fontSize: '0.875rem',
-                '& fieldset': { borderColor: searchQuery ? '#22c55e' : '#e2e8f0' }
+                '& fieldset': { borderColor: searchQuery ? '#22c55e' : (isDark ? '#334155' : '#e2e8f0') }
               },
             }}
             InputProps={{
@@ -285,7 +359,7 @@ const Topbar = ({ onMenuClick, title }) => {
                 <ListItem
                   button
                   key={`field-${field.id}`}
-                  onClick={() => handleSelectSearchResult('/farmer/fields')}
+                  onClick={() => handleSelectSearchResult(getFieldDestination(field))}
                   sx={{ borderRadius: '8px', '&:hover': { bgcolor: '#f1f5f9' } }}
                 >
                   <ListItemIcon sx={{ minWidth: 36, color: '#0284c7' }}>
@@ -293,9 +367,9 @@ const Topbar = ({ onMenuClick, title }) => {
                   </ListItemIcon>
                   <ListItemText
                     primary={field.name}
-                    secondary={field.crop_type_name ? `Crop: ${field.crop_type_name}` : 'Field'}
+                    secondary={`${field.farm_name || 'Farm'} • ${field.crop_type_name || 'Crop'}${field.crop_variety_name ? ` (${field.crop_variety_name})` : ''}${field.verification_status ? ` • [${field.verification_status.toUpperCase()}]` : ''}`}
                     primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 600 }}
-                    secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                    secondaryTypographyProps={{ fontSize: '0.75rem', color: '#64748b' }}
                   />
                 </ListItem>
               ))}
@@ -314,19 +388,41 @@ const Topbar = ({ onMenuClick, title }) => {
         {/* Current Date Display */}
         <Typography
           variant="body2"
-          sx={{ color: '#64748b', fontWeight: 600, display: { xs: 'none', lg: 'block' }, whiteSpace: 'nowrap' }}
+          sx={{ color: 'text.secondary', fontWeight: 600, display: { xs: 'none', lg: 'block' }, whiteSpace: 'nowrap' }}
         >
           {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </Typography>
 
-        {/* ── 2. ACTIVE NOTIFICATION BELL ── */}
-        <Tooltip title="Notifications">
-          <IconButton onClick={handleOpenNotifications} sx={{ color: '#475569' }}>
-            <Badge badgeContent={unreadCount} color="error">
-              <NotificationsIcon />
-            </Badge>
+        {/* ── THEME TOGGLE (DARK / LIGHT MODE) ── */}
+        <Tooltip title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+          <IconButton
+            onClick={toggleTheme}
+            sx={{
+              color: isDarkMode ? '#facc15' : '#475569',
+              bgcolor: isDark ? 'rgba(250, 204, 21, 0.1)' : 'rgba(0, 0, 0, 0.04)',
+              borderRadius: '10px',
+              p: 1,
+              transition: 'all 0.2s',
+              '&:hover': {
+                bgcolor: isDark ? 'rgba(250, 204, 21, 0.2)' : 'rgba(0, 0, 0, 0.08)',
+                transform: 'scale(1.05)',
+              }
+            }}
+          >
+            {isDarkMode ? <LightModeOutlinedIcon fontSize="small" /> : <DarkModeOutlinedIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
+
+        {/* ── 2. ACTIVE NOTIFICATION BELL ── */}
+        {user?.role !== 'supervisor' && (
+          <Tooltip title="Notifications">
+            <IconButton onClick={handleOpenNotifications} sx={{ color: '#475569' }}>
+              <Badge badgeContent={unreadCount} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+        )}
 
         {/* Notifications Popover Dropdown */}
         <Popover
@@ -339,7 +435,7 @@ const Topbar = ({ onMenuClick, title }) => {
             sx: { width: 360, borderRadius: '16px', mt: 1.5, p: 0, boxShadow: '0 20px 30px -10px rgba(0,0,0,0.15)' }
           }}
         >
-          <Box sx={{ p: 2, bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ p: 2, bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc', borderBottom: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <NotificationsIcon sx={{ color: '#6366f1', fontSize: 20 }} />
               <Typography variant="subtitle2" fontWeight={800} color="#1e293b">Notifications</Typography>
@@ -493,6 +589,16 @@ const Topbar = ({ onMenuClick, title }) => {
           <MenuItem onClick={() => { setProfileAnchor(null); navigate(`/${user?.role || 'farmer'}/profile`); }}>
             <ListItemIcon><PersonIcon fontSize="small" sx={{ color: '#16a34a' }} /></ListItemIcon>
             <ListItemText primary="My Profile" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }} />
+          </MenuItem>
+
+          <MenuItem onClick={() => { setProfileAnchor(null); toggleTheme(); }}>
+            <ListItemIcon sx={{ color: isDarkMode ? '#facc15' : '#475569' }}>
+              {isDarkMode ? <LightModeOutlinedIcon fontSize="small" /> : <DarkModeOutlinedIcon fontSize="small" />}
+            </ListItemIcon>
+            <ListItemText
+              primary={isDarkMode ? 'Light Mode' : 'Dark Mode'}
+              primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
+            />
           </MenuItem>
 
           <Divider sx={{ my: 0.5 }} />

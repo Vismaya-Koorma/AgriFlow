@@ -2,6 +2,15 @@ import axios from 'axios';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
+export const getImageUrl = (url) => {
+  if (!url) return '';
+  if (typeof url !== 'string') return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const backendBase = (API_BASE_URL || 'http://localhost:8000/api').replace(/\/api\/?$/, '');
+  const cleanPath = url.startsWith('/') ? url : `/${url}`;
+  return `${backendBase}${cleanPath}`;
+};
+
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -151,7 +160,8 @@ export const loginUser = async (username, password) => {
 };
 
 export const getGoogleAuthUrl = async () => {
-  const response = await api.get('/auth/google/redirect/?json=true');
+  const frontendOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const response = await api.get(`/auth/google/redirect/?json=true&frontend_url=${encodeURIComponent(frontendOrigin)}`);
   return response.data.url;
 };
 
@@ -258,6 +268,61 @@ export const deleteField = async (id) => {
 
 export const verifyField = async (fieldId, statusData) => {
   const response = await api.post(`/fields/${fieldId}/verify/`, statusData);
+  return response.data;
+};
+
+export const getFieldCriteria = async (fieldId) => {
+  const response = await api.get(`/fields/${fieldId}/criteria/`);
+  return response.data;
+};
+
+export const inspectField = async (fieldId, payload) => {
+  const response = await api.post(`/fields/${fieldId}/inspect/`, payload);
+  return response.data;
+};
+
+export const rejectFieldWithReason = async (fieldId, payload) => {
+  const response = await api.post(`/fields/${fieldId}/reject/`, payload);
+  return response.data;
+};
+
+export const getFieldInspections = async (fieldId) => {
+  const response = await api.get(`/fields/${fieldId}/inspections/`);
+  return response.data;
+};
+
+export const getFieldLatestInspection = async (fieldId) => {
+  const response = await api.get(`/fields/${fieldId}/latest-inspection/`);
+  return response.data;
+};
+
+export const scheduleFieldReinspection = async (fieldId, payload) => {
+  const response = await api.post(`/fields/${fieldId}/schedule-reinspection/`, payload);
+  return response.data;
+};
+
+export const getInspectionCriteria = async (params = null) => {
+  let url = '/inspection-criteria/';
+  if (params) {
+    const qp = new URLSearchParams(params);
+    url = `/inspection-criteria/?${qp.toString()}`;
+  }
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const getCorrectiveActions = async (params = null) => {
+  let url = '/corrective-actions/';
+  if (params) {
+    const qp = new URLSearchParams(params);
+    url = `/corrective-actions/?${qp.toString()}`;
+  }
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const updateCorrectiveAction = async (id, payload) => {
+  const response = await api.patch(`/corrective-actions/${id}/`, payload);
   return response.data;
 };
 
@@ -674,6 +739,78 @@ export const runWhatIfSimulation = async (simData) => {
 
 export const getSimulationHistory = async () => {
   const response = await api.get('/decision-intelligence/simulation-history/');
+  return response.data;
+};
+
+
+// --- FIELD SUPERVISOR VISITS & FARM ASSIGNMENT API -----------------------
+export const getSupervisorAssignments = async (params) => {
+  const response = await api.get('/field-visits/assignments/', { params });
+  return response.data;
+};
+
+export const createSupervisorAssignment = async (data) => {
+  const response = await api.post('/field-visits/assignments/', data);
+  return response.data;
+};
+
+export const updateSupervisorAssignment = async (id, data) => {
+  const response = await api.put(`/field-visits/assignments/${id}/`, data);
+  return response.data;
+};
+
+export const toggleSupervisorAssignmentStatus = async (id, reason = '') => {
+  const response = await api.post(`/field-visits/assignments/${id}/toggle-status/`, { reason });
+  return response.data;
+};
+
+export const getAssignmentOptions = async () => {
+  const response = await api.get('/field-visits/assignments/options/');
+  return response.data;
+};
+
+export const getFarmVisits = async (params) => {
+  const response = await api.get('/field-visits/visits/', { params });
+  return response.data;
+};
+
+export const getFarmVisitById = async (id) => {
+  const response = await api.get(`/field-visits/visits/${id}/`);
+  return response.data;
+};
+
+export const startFarmVisit = async (id) => {
+  const response = await api.post(`/field-visits/visits/${id}/start/`);
+  return response.data;
+};
+
+export const completeFarmVisit = async (id, inspectionData) => {
+  const response = await api.post(`/field-visits/visits/${id}/complete/`, inspectionData);
+  return response.data;
+};
+
+export const rescheduleFarmVisit = async (id, rescheduleData) => {
+  const response = await api.post(`/field-visits/visits/${id}/reschedule/`, rescheduleData);
+  return response.data;
+};
+
+export const cancelFarmVisit = async (id, cancelData) => {
+  const response = await api.post(`/field-visits/visits/${id}/cancel/`, cancelData);
+  return response.data;
+};
+
+export const getVisitStats = async () => {
+  const response = await api.get('/field-visits/visits/stats/');
+  return response.data;
+};
+
+export const triggerGenerateVisits = async (weeks = 4) => {
+  const response = await api.post('/field-visits/visits/generate-schedule/', { weeks });
+  return response.data;
+};
+
+export const getInspectionReports = async (params) => {
+  const response = await api.get('/field-visits/reports/', { params });
   return response.data;
 };
 

@@ -56,3 +56,5 @@ plantvillage_repo/
 # Security & Utility Scripts
 fix_passwords.py
 scripts/
+complaints/
+git_commit_report/

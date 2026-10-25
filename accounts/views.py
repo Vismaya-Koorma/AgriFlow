@@ -156,6 +156,7 @@ class DashboardView(APIView):
 
 # ─── GOOGLE OAUTH 2.0 AUTHENTICATION VIEWS ────────────────────────────────────
 
+import re
 import secrets
 import time
 import urllib.parse
@@ -175,6 +176,16 @@ class GoogleInitView(APIView):
         client_id = getattr(settings, 'GOOGLE_CLIENT_ID', '')
         redirect_uri = getattr(settings, 'GOOGLE_REDIRECT_URI', 'http://127.0.0.1:8000/accounts/google/login/callback/')
 
+        # Determine target frontend URL for redirect back
+        frontend_url = request.query_params.get('frontend_url')
+        if not frontend_url:
+            referer = request.META.get('HTTP_REFERER')
+            if referer:
+                parsed_ref = urllib.parse.urlparse(referer)
+                frontend_url = f"{parsed_ref.scheme}://{parsed_ref.netloc}"
+        if not frontend_url:
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+
         params = {
             'response_type': 'code',
             'client_id': client_id,
@@ -182,6 +193,7 @@ class GoogleInitView(APIView):
             'scope': 'openid email profile',
             'access_type': 'online',
             'prompt': 'select_account',
+            'state': frontend_url.rstrip('/'),
         }
         auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
 
@@ -202,9 +214,23 @@ class GoogleOAuthCallbackView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173').rstrip('/')
-        frontend_login = f"{frontend_url}/login"
-        frontend_register = f"{frontend_url}/register"
+        state = request.GET.get('state')
+        allowed_origins = getattr(settings, 'CORS_ALLOWED_ORIGINS', [])
+        default_frontend = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000').rstrip('/')
+
+        target_frontend = default_frontend
+        if state:
+            state_clean = state.strip().rstrip('/')
+            is_valid = (
+                state_clean in allowed_origins or
+                re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', state_clean) or
+                state_clean.endswith('.onrender.com')
+            )
+            if is_valid:
+                target_frontend = state_clean
+
+        frontend_login = f"{target_frontend}/login"
+        frontend_register = f"{target_frontend}/register"
 
         code = request.GET.get('code')
         error = request.GET.get('error')
@@ -298,24 +324,35 @@ class GoogleOAuthCallbackView(APIView):
             # Normalize email
             normalized_email = User.objects.normalize_email(email).strip().lower()
 
-            # Find existing user by verified normalized email
+            # Find existing user by verified normalized email or auto-create account
             user = User.objects.filter(email__iexact=normalized_email).first()
             if not user:
-                err_msg = 'This email is not registered with AgriFlow. Please register first.'
-                if request.query_params.get('json') == 'true' or 'application/json' in request.headers.get('Accept', ''):
-                    return Response({
-                        'error': err_msg,
-                        'error_code': 'GOOGLE_ACCOUNT_NOT_REGISTERED',
-                        'email': normalized_email,
-                    }, status=status.HTTP_404_NOT_FOUND)
+                raw_name = userinfo.get('name', '').strip()
+                if not raw_name:
+                    given = userinfo.get('given_name', '').strip()
+                    family = userinfo.get('family_name', '').strip()
+                    raw_name = f"{given} {family}".strip()
+                if not raw_name:
+                    raw_name = normalized_email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
 
-                redirect_url = (
-                    f"{frontend_register}?"
-                    f"error={urllib.parse.quote(err_msg)}"
-                    f"&error_code=GOOGLE_ACCOUNT_NOT_REGISTERED"
-                    f"&email={urllib.parse.quote(normalized_email)}"
+                base_username = "".join(c for c in normalized_email.split('@')[0] if c.isalnum() or c in ('_', '-')) or 'user'
+                base_username = base_username[:100]
+                username = base_username
+                counter = 1
+                while User.objects.filter(username__iexact=username).exists():
+                    suffix = f"_{counter}"
+                    username = f"{base_username[:100 - len(suffix)]}{suffix}"
+                    counter += 1
+
+                user = User.objects.create_user(
+                    username=username,
+                    email=normalized_email,
+                    password=secrets.token_urlsafe(32),
+                    full_name=raw_name[:255],
+                    role=User.Role.FARMER,
+                    terms_accepted=True,
+                    is_active=True
                 )
-                return redirect(redirect_url)
 
             if not user.is_active:
                 err_msg = 'Your account is inactive. Please contact support.'
@@ -327,6 +364,14 @@ class GoogleOAuthCallbackView(APIView):
             temp_code = secrets.token_urlsafe(32)
             cache.set(f"google_auth_code_{temp_code}", user.id, timeout=300)
             GOOGLE_TEMP_CODES[temp_code] = {'user_id': user.id, 'expires_at': time.time() + 300}
+
+            if request.query_params.get('json') == 'true':
+                return Response({
+                    'code': temp_code,
+                    'user_id': user.id,
+                    'email': user.email,
+                    'message': 'Google authentication successful.'
+                }, status=status.HTTP_200_OK)
 
             # Redirect to React frontend login page WITH exchange code ONLY (zero JWTs in URL)
             return redirect(f"{frontend_login}?code={temp_code}")

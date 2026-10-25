@@ -171,7 +171,10 @@ const FarmerDashboard = () => {
         setRecentActivities(activities.slice(0, 5));
 
         const cropRows = fieldsList.slice(0, 5).map((field) => {
-          const style = stageStyles[field.crop_stage] || stageStyles.germination;
+          const hasVariety = Boolean(field.crop_variety || field.crop_variety_name);
+          const style = (hasVariety && field.crop_stage && stageStyles[field.crop_stage])
+            ? stageStyles[field.crop_stage]
+            : { stage: hasVariety ? 'NOT SET' : '—', stageColor: '#f1f5f9', stageTextColor: '#64748b' };
           const ndvi = (field.status !== false && field.is_active !== false) ? 0.85 : 0.62;
           let harvest = '—';
           if (field.planting_date) {

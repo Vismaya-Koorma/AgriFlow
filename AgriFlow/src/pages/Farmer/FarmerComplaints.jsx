@@ -15,7 +15,7 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import { getFarms, getFields } from '../../services/api';
+import { getFarms, getFields, getImageUrl } from '../../services/api';
 import api from '../../services/api';
 
 const COMPLAINT_TYPES = [
@@ -364,9 +364,21 @@ const FarmerComplaints = () => {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>{c.title}</Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
-                          {c.category?.replace('_', ' ')}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+                            {c.category?.replace('_', ' ')}
+                          </Typography>
+                          {c.complaint_image && (
+                            <Chip
+                              icon={<PhotoCameraIcon sx={{ fontSize: '12px !important' }} />}
+                              label="Photo"
+                              size="small"
+                              variant="outlined"
+                              color="info"
+                              sx={{ height: 18, fontSize: '0.65rem', px: 0.3 }}
+                            />
+                          )}
+                        </Box>
                       </TableCell>
                       <TableCell>
                         <Chip label={priorityObj.label} color={priorityObj.color} size="small" sx={{ fontWeight: 600, textTransform: 'capitalize' }} />
@@ -615,12 +627,20 @@ const FarmerComplaints = () => {
                   </Typography>
                   {selectedComplaint.complaint_image && (
                     <Box sx={{ mt: 2 }}>
-                      <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 0.5 }}>REPORTED IMAGE</Typography>
-                      <img
-                        src={selectedComplaint.complaint_image}
-                        alt="Reported complaint"
-                        style={{ maxWidth: '100%', maxHeight: 220, borderRadius: 8, border: '1px solid #cbd5e1' }}
-                      />
+                      <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 0.5 }}>REPORTED IMAGE (Click to open full view)</Typography>
+                      <Box
+                        component="a"
+                        href={getImageUrl(selectedComplaint.complaint_image)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ display: 'inline-block', position: 'relative', cursor: 'pointer' }}
+                      >
+                        <img
+                          src={getImageUrl(selectedComplaint.complaint_image)}
+                          alt="Reported complaint"
+                          style={{ maxWidth: '100%', maxHeight: 280, borderRadius: 8, border: '1px solid #cbd5e1', objectFit: 'contain', display: 'block' }}
+                        />
+                      </Box>
                     </Box>
                   )}
                 </Paper>
@@ -645,12 +665,20 @@ const FarmerComplaints = () => {
                     )}
                     {selectedComplaint.completion_image && (
                       <Box sx={{ mt: 2 }}>
-                        <Typography variant="caption" color="#166534" fontWeight={600} display="block" sx={{ mb: 0.5 }}>COMPLETION PROOF IMAGE</Typography>
-                        <img
-                          src={selectedComplaint.completion_image}
-                          alt="Completion proof"
-                          style={{ maxWidth: '100%', maxHeight: 220, borderRadius: 8, border: '1px solid #86efac' }}
-                        />
+                        <Typography variant="caption" color="#166534" fontWeight={600} display="block" sx={{ mb: 0.5 }}>COMPLETION PROOF IMAGE (Click to open full view)</Typography>
+                        <Box
+                          component="a"
+                          href={getImageUrl(selectedComplaint.completion_image)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{ display: 'inline-block', position: 'relative', cursor: 'pointer' }}
+                        >
+                          <img
+                            src={getImageUrl(selectedComplaint.completion_image)}
+                            alt="Completion proof"
+                            style={{ maxWidth: '100%', maxHeight: 280, borderRadius: 8, border: '1px solid #86efac', objectFit: 'contain', display: 'block' }}
+                          />
+                        </Box>
                       </Box>
                     )}
                   </Paper>

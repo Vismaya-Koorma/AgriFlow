@@ -315,7 +315,8 @@ const IrrigationHistory = () => {
       setRefreshTrigger(prev => prev + 1);
       if (rainField) fetchAIForField(rainField);
     } catch (err) {
-      showMessage('error', 'Failed to confirm rainfall');
+      const serverMsg = err.response?.data?.detail || err.response?.data?.error || (typeof err.response?.data === 'string' ? err.response.data : null);
+      showMessage('error', serverMsg || 'Failed to confirm rainfall');
     }
   };
 

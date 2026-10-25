@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Card, Grid, Button, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
-  Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Switch, FormControlLabel, Alert, Snackbar } from '@mui/material';
+import {
+  Box, Typography, Card, Grid, Button, Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
+  Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Switch,
+  FormControlLabel, Alert, Snackbar, Chip, Stack
+} from '@mui/material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { getFields, createField, updateField, deleteField, getFarms, getCropTypes, getCropVarieties, getSoilTypes } from '../../services/api';
+import {
+  getFields, createField, updateField, deleteField, getFarms,
+  getCropTypes, getCropVarieties, getSoilTypes
+} from '../../services/api';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -14,12 +20,12 @@ const FieldManagement = () => {
   const [cropVarieties, setCropVarieties] = useState([]);
   const [soilTypes, setSoilTypes] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
+  // Field Edit Dialog
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
-  
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '', area: '', farm: '', crop_type: '', crop_variety: '', soil_type: '', crop_stage: 'germination',
@@ -36,11 +42,11 @@ const FieldManagement = () => {
       const [fieldsData, farmsData, cropsData, varietiesData, soilsData] = await Promise.all([
         getFields(), getFarms(), getCropTypes(), getCropVarieties(), getSoilTypes()
       ]);
-      setFields(fieldsData);
-      setFarms(farmsData);
-      setCropTypes(cropsData);
-      setCropVarieties(varietiesData);
-      setSoilTypes(soilsData);
+      setFields(Array.isArray(fieldsData) ? fieldsData : (fieldsData?.results || []));
+      setFarms(Array.isArray(farmsData) ? farmsData : (farmsData?.results || []));
+      setCropTypes(Array.isArray(cropsData) ? cropsData : (cropsData?.results || []));
+      setCropVarieties(Array.isArray(varietiesData) ? varietiesData : (varietiesData?.results || []));
+      setSoilTypes(Array.isArray(soilsData) ? soilsData : (soilsData?.results || []));
     } catch (error) {
       showMessage('error', 'Failed to fetch data');
     } finally {
@@ -97,7 +103,7 @@ const FieldManagement = () => {
       crop_type: formData.crop_type !== '' && formData.crop_type != null ? parseInt(formData.crop_type, 10) : null,
       crop_variety: formData.crop_variety !== '' && formData.crop_variety != null ? parseInt(formData.crop_variety, 10) : null,
       soil_type: formData.soil_type !== '' && formData.soil_type != null ? parseInt(formData.soil_type, 10) : null,
-      crop_stage: formData.crop_stage || 'germination',
+      crop_stage: formData.crop_variety ? (formData.crop_stage || 'germination') : 'germination',
       planting_date: formData.planting_date && formData.planting_date.trim() !== '' ? formData.planting_date : null,
       district: formData.district ? formData.district.trim() : null,
       state: formData.state ? formData.state.trim() : 'Kerala',
@@ -157,18 +163,24 @@ const FieldManagement = () => {
     return cropId === selectedCropId;
   });
 
-
   return (
     <DashboardLayout title="Field Management">
       <Card elevation={0} sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>My Fields</Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()} disabled={farms.length === 0}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b' }}>My Fields</Typography>
+            <Typography variant="body2" sx={{ color: '#64748b' }}>
+              Manage registered crop fields and agricultural plots.
+            </Typography>
+          </Box>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()} disabled={farms.length === 0} sx={{ borderRadius: '8px' }}>
             Add Field
           </Button>
         </Box>
         
-        {loading ? ( <Typography>Loading fields...</Typography> ) : (
+        {loading ? (
+          <Typography sx={{ py: 3, textAlign: 'center', color: '#64748b' }}>Loading fields...</Typography>
+        ) : (
           <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: '8px' }}>
             <Table>
               <TableHead sx={{ bgcolor: '#f8fafc' }}>
@@ -176,43 +188,69 @@ const FieldManagement = () => {
                   <TableCell sx={{ fontWeight: 600 }}>Field Name</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Farm</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Location (District, State)</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Crop Type</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Crop Variety</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Current Crop Stage</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Crop & Variety</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Current Stage</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Soil Type</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Area (Acres)</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Field Status</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {fields.length === 0 ? (
-                  <TableRow><TableCell colSpan={10} align="center">No fields found.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} align="center">No fields found.</TableCell></TableRow>
                 ) : fields.map((field) => (
                   <TableRow key={field.id} hover>
-                    <TableCell sx={{ fontWeight: 500 }}>{field.name}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{field.name}</TableCell>
                     <TableCell>{field.farm_name}</TableCell>
                     <TableCell>{field.location_display || field.effective_district || '-'}</TableCell>
-                    <TableCell>{field.crop_type_name || '-'}</TableCell>
-                    <TableCell>{field.crop_variety_name || '-'}</TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#0284c7' }}>
-                          🌱 {field.calculated_crop_stage_display || (field.crop_stage ? field.crop_stage.charAt(0).toUpperCase() + field.crop_stage.slice(1) : 'Vegetative')}
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {field.crop_type_name || '-'}
                         </Typography>
-                        {field.days_after_planting !== null && field.days_after_planting !== undefined && (
+                        {field.crop_variety_name && (
                           <Typography variant="caption" sx={{ color: '#64748b' }}>
-                            Day {field.days_after_planting}{field.next_expected_stage_display ? ` • Next: ${field.next_expected_stage_display}` : ''}
+                            Var: {field.crop_variety_name}
                           </Typography>
                         )}
                       </Box>
                     </TableCell>
+                    <TableCell>
+                      {(field.crop_variety || field.crop_variety_name) ? (
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#0284c7' }}>
+                            🌱 {field.calculated_crop_stage_display || (field.crop_stage ? field.crop_stage.charAt(0).toUpperCase() + field.crop_stage.slice(1) : '')}
+                          </Typography>
+                          {field.days_after_planting !== null && field.days_after_planting !== undefined && (
+                            <Typography variant="caption" sx={{ color: '#64748b' }}>
+                              Day {field.days_after_planting}{field.next_expected_stage_display ? ` • Next: ${field.next_expected_stage_display}` : ''}
+                            </Typography>
+                          )}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>-</Typography>
+                      )}
+                    </TableCell>
                     <TableCell>{field.soil_type_name || '-'}</TableCell>
-                    <TableCell>{field.area}</TableCell>
-                    <TableCell>{field.status ? 'Active' : 'Inactive'}</TableCell>
+                    <TableCell>{field.area} Acres</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={field.status ? 'Active' : 'Inactive'}
+                        size="small"
+                        variant="outlined"
+                        color={field.status ? 'success' : 'default'}
+                      />
+                    </TableCell>
                     <TableCell align="right">
-                      <IconButton color="primary" onClick={() => handleOpen(field)}><EditIcon fontSize="small" /></IconButton>
-                      <IconButton color="error" onClick={() => handleDelete(field.id)}><DeleteIcon fontSize="small" /></IconButton>
+                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                        <IconButton color="primary" size="small" onClick={() => handleOpen(field)} title="Edit Field">
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton color="error" size="small" onClick={() => handleDelete(field.id)} title="Delete Field">
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -222,6 +260,7 @@ const FieldManagement = () => {
         )}
       </Card>
       
+      {/* Field Edit Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <form onSubmit={handleSubmit}>
           <DialogTitle>{isEditing ? 'Edit Field' : 'Add New Field'}</DialogTitle>
@@ -280,13 +319,13 @@ const FieldManagement = () => {
                   <Typography variant="subtitle2" sx={{ color: '#0369a1', fontWeight: 700, mb: 0.5 }}>
                     🤖 Automatic Crop Stage Engine
                   </Typography>
-                  {formData.planting_date ? (
+                  {formData.crop_variety && formData.planting_date ? (
                     <Typography variant="body2" sx={{ color: '#0f172a' }}>
-                      Stage is dynamically calculated based on <strong>Planting Date</strong> and <strong>Variety Duration Baseline</strong> in PostgreSQL.
+                      Stage is dynamically calculated based on <strong>Crop Variety</strong> and <strong>Planting Date</strong>.
                     </Typography>
                   ) : (
                     <Typography variant="body2" sx={{ color: '#64748b' }}>
-                      Select a <strong>Planting Date</strong> to enable automated daily stage progression (Germination → Vegetative → Flowering → Fruiting → Harvesting).
+                      Select a <strong>Crop Variety</strong> and <strong>Planting Date</strong> to enable automatic crop stage prediction.
                     </Typography>
                   )}
                 </Paper>
@@ -303,7 +342,7 @@ const FieldManagement = () => {
           </DialogActions>
         </form>
       </Dialog>
-      
+
       <Snackbar open={!!message.text} autoHideDuration={4000} onClose={() => setMessage({ type: '', text: '' })}>
         <Alert severity={message.type || 'info'} onClose={() => setMessage({ type: '', text: '' })}>{message.text}</Alert>
       </Snackbar>
@@ -312,4 +351,3 @@ const FieldManagement = () => {
 };
 
 export default FieldManagement;
-

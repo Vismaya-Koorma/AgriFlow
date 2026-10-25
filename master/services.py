@@ -25,9 +25,42 @@ DEFAULT_STAGE_DURATIONS = [
 def calculate_expected_crop_stage(crop_variety=None, planting_date=None, target_date=None, fallback_stage=None, crop_type=None):
     """
     Calculates the expected current crop stage based on planting date, target date,
-    and database-stored CropVarietyStageDuration records. Falls back gracefully to
-    crop type or baseline growth stage day ranges when variety data is missing.
+    and database-stored CropVarietyStageDuration records.
+    Requires crop_variety to accurately determine growth stage durations.
     """
+    # Parse dates safely
+    if isinstance(planting_date, str):
+        try:
+            planting_date = datetime.strptime(planting_date[:10], '%Y-%m-%d').date()
+        except Exception:
+            planting_date = None
+    elif isinstance(planting_date, datetime):
+        planting_date = planting_date.date()
+
+    if target_date is None:
+        target_date = timezone.now().date()
+    elif isinstance(target_date, datetime):
+        target_date = target_date.date()
+
+    # If no crop variety is assigned, do not predict crop stage
+    if not crop_variety:
+        days_after_planting = None
+        if planting_date:
+            days_after_planting = max(0, (target_date - planting_date).days)
+
+        return {
+            'days_after_planting': days_after_planting,
+            'current_expected_stage': None,
+            'current_expected_stage_display': None,
+            'next_expected_stage': None,
+            'next_expected_stage_display': None,
+            'days_until_next_stage': None,
+            'source_reference': '',
+            'has_stage_data': False,
+            'status': 'no_variety',
+            'message': 'No crop variety selected. Variety is required for crop stage prediction.'
+        }
+
     if not planting_date:
         if fallback_stage:
             fallback_display = str(fallback_stage).replace('_', ' ').title()
@@ -55,11 +88,6 @@ def calculate_expected_crop_stage(crop_variety=None, planting_date=None, target_
             'status': 'no_planting_date',
             'message': 'No planting date provided'
         }
-
-    if target_date is None:
-        target_date = timezone.now().date()
-    elif isinstance(target_date, datetime):
-        target_date = target_date.date()
 
     if planting_date > target_date:
         return {
@@ -137,5 +165,3 @@ def calculate_expected_crop_stage(crop_variety=None, planting_date=None, target_
         'status': 'success',
         'message': f"Expected current stage: {current_duration.get_stage_display() if current_duration else 'Germination'}"
     }
-
-

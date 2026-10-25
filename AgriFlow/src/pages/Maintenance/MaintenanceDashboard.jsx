@@ -17,7 +17,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import CheckIcon from '@mui/icons-material/Check';
 import EditIcon from '@mui/icons-material/Edit';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import api from '../../services/api';
+import api, { getImageUrl } from '../../services/api';
 
 const PRIORITIES = [
   { value: 'low', label: 'Low', color: 'default' },
@@ -294,9 +294,21 @@ const MaintenanceDashboard = ({ initialTab = 'all' }) => {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>{c.title}</Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
-                          {c.category?.replace('_', ' ')}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+                            {c.category?.replace('_', ' ')}
+                          </Typography>
+                          {c.complaint_image && (
+                            <Chip
+                              icon={<PhotoCameraIcon sx={{ fontSize: '12px !important' }} />}
+                              label="Photo"
+                              size="small"
+                              variant="outlined"
+                              color="info"
+                              sx={{ height: 18, fontSize: '0.65rem', px: 0.3 }}
+                            />
+                          )}
+                        </Box>
                       </TableCell>
                       <TableCell>
                         <Chip label={priorityObj.label} color={priorityObj.color} size="small" sx={{ fontWeight: 600 }} />
@@ -389,6 +401,20 @@ const MaintenanceDashboard = ({ initialTab = 'all' }) => {
               <Stack spacing={2.5}>
                 {actionError && <MuiAlert severity="error">{actionError}</MuiAlert>}
 
+                {selectedTask.complaint_image && (
+                  <Box sx={{ p: 1, bgcolor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <img
+                      src={getImageUrl(selectedTask.complaint_image)}
+                      alt="Reported problem"
+                      style={{ width: 48, height: 48, borderRadius: 6, objectFit: 'cover', border: '1px solid #cbd5e1' }}
+                    />
+                    <Box>
+                      <Typography variant="caption" fontWeight={700} color="#334155" display="block">Farmer Reported Photo</Typography>
+                      <Typography variant="caption" color="text.secondary">Attached to this complaint</Typography>
+                    </Box>
+                  </Box>
+                )}
+
                 <Box>
                   <Typography variant="subtitle2" fontWeight={600} gutterBottom>
                     Progress Percentage: {progressVal}%
@@ -450,6 +476,20 @@ const MaintenanceDashboard = ({ initialTab = 'all' }) => {
             <DialogContent sx={{ pt: 1 }}>
               <Stack spacing={2.5}>
                 {actionError && <MuiAlert severity="error">{actionError}</MuiAlert>}
+
+                {selectedTask.complaint_image && (
+                  <Box sx={{ p: 1, bgcolor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <img
+                      src={getImageUrl(selectedTask.complaint_image)}
+                      alt="Reported problem"
+                      style={{ width: 48, height: 48, borderRadius: 6, objectFit: 'cover', border: '1px solid #cbd5e1' }}
+                    />
+                    <Box>
+                      <Typography variant="caption" fontWeight={700} color="#334155" display="block">Farmer Reported Issue</Typography>
+                      <Typography variant="caption" color="text.secondary">{selectedTask.title}</Typography>
+                    </Box>
+                  </Box>
+                )}
 
                 <Typography variant="body2" color="text.secondary">
                   Please provide repair completion notes and upload a photo showing the finished maintenance work.
@@ -555,12 +595,42 @@ const MaintenanceDashboard = ({ initialTab = 'all' }) => {
                   </Typography>
                   {selectedTask.complaint_image && (
                     <Box sx={{ mt: 2 }}>
-                      <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 0.5 }}>FARMER REPORTED IMAGE</Typography>
-                      <img
-                        src={selectedTask.complaint_image}
-                        alt="Farmer reported image"
-                        style={{ maxWidth: '100%', maxHeight: 220, borderRadius: 8, border: '1px solid #cbd5e1' }}
-                      />
+                      <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 0.5 }}>
+                        FARMER REPORTED IMAGE (Click to open full view)
+                      </Typography>
+                      <Box
+                        component="a"
+                        href={getImageUrl(selectedTask.complaint_image)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ display: 'inline-block', position: 'relative', cursor: 'pointer' }}
+                      >
+                        <img
+                          src={getImageUrl(selectedTask.complaint_image)}
+                          alt="Farmer reported image"
+                          style={{ maxWidth: '100%', maxHeight: 280, borderRadius: 8, border: '1px solid #cbd5e1', objectFit: 'contain', display: 'block' }}
+                        />
+                      </Box>
+                    </Box>
+                  )}
+                  {selectedTask.completion_image && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="caption" color="#166534" fontWeight={600} display="block" sx={{ mb: 0.5 }}>
+                        COMPLETION PROOF IMAGE (Click to open full view)
+                      </Typography>
+                      <Box
+                        component="a"
+                        href={getImageUrl(selectedTask.completion_image)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ display: 'inline-block', position: 'relative', cursor: 'pointer' }}
+                      >
+                        <img
+                          src={getImageUrl(selectedTask.completion_image)}
+                          alt="Completion proof"
+                          style={{ maxWidth: '100%', maxHeight: 280, borderRadius: 8, border: '1px solid #86efac', objectFit: 'contain', display: 'block' }}
+                        />
+                      </Box>
                     </Box>
                   )}
                 </Paper>

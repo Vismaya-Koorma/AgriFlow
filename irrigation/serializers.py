@@ -36,8 +36,18 @@ class RainfallConfirmationSerializer(serializers.ModelSerializer):
     field_name = serializers.CharField(source='field.name', read_only=True)
     rainfall_option_display = serializers.CharField(source='get_rainfall_option_display', read_only=True)
 
-    def __str__(self):
-        return f"{self.field.name} — {self.get_rainfall_option_display()} on {self.confirmed_at.date()}"
+    class Meta:
+        model = RainfallConfirmation
+        fields = [
+            'id', 'field', 'field_name', 'rainfall_option', 'rainfall_option_display',
+            'rainfall_mm', 'confirmed_at', 'confirmed_by', 'notes',
+        ]
+        read_only_fields = ['id', 'confirmed_at', 'confirmed_by']
+        extra_kwargs = {
+            'rainfall_mm': {'required': False},
+            'rainfall_option': {'required': False},
+            'notes': {'required': False, 'allow_blank': True, 'allow_null': True},
+        }
 
 
 # ─── WATER RESOURCE MANAGER SERIALIZERS ───────────────────────────────────────
@@ -141,4 +151,3 @@ class WaterUsageSerializer(serializers.ModelSerializer):
             'recorded_by_username', 'notes'
         ]
         read_only_fields = ['id', 'used_at', 'recorded_by']
-
