@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "npm --prefix AgriFlow run dev",
-    "build": "npm --prefix AgriFlow run build"
+    "build": "npm --prefix AgriFlow run build && node -e \"const fs = require('fs'); fs.cpSync('AgriFlow/dist', 'dist', {recursive: true});\""
   }
 }
