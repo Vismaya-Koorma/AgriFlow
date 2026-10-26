@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from django.utils import timezone
 from django.db import transaction
 from django.core.exceptions import ValidationError
@@ -28,7 +28,8 @@ from .services import (
     validate_schedule_conflict,
     generate_scheduled_visits_for_window,
     mark_missed_visits,
-    create_visit_notification
+    create_visit_notification,
+    auto_assign_supervisor_if_needed
 )
 
 
@@ -47,6 +48,7 @@ class SupervisorFarmAssignmentViewSet(viewsets.ModelViewSet):
         if user.role in ['admin', 'manager'] or user.is_superuser:
             qs = SupervisorFarmAssignment.objects.all()
         elif user.role == 'supervisor':
+            auto_assign_supervisor_if_needed(user)
             qs = SupervisorFarmAssignment.objects.filter(supervisor=user)
         elif user.role == 'farmer':
             qs = SupervisorFarmAssignment.objects.filter(farmer=user)
@@ -288,6 +290,7 @@ class FarmVisitViewSet(viewsets.ModelViewSet):
         if user.role in ['admin', 'manager'] or user.is_superuser:
             qs = FarmVisit.objects.all()
         elif user.role == 'supervisor':
+            auto_assign_supervisor_if_needed(user)
             qs = FarmVisit.objects.filter(supervisor=user)
         elif user.role == 'farmer':
             qs = FarmVisit.objects.filter(farmer=user)
@@ -531,12 +534,33 @@ class FarmVisitViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
 
         weeks = int(request.data.get('weeks', 4))
+        if user.role == 'supervisor':
+            auto_assign_supervisor_if_needed(user)
+        else:
+            for sup in User.objects.filter(role='supervisor', is_active=True):
+                auto_assign_supervisor_if_needed(sup)
+
         count = generate_scheduled_visits_for_window(weeks_ahead=weeks)
         missed_count = mark_missed_visits()
 
+        today = timezone.localdate()
+        end_window = today + timedelta(weeks=weeks)
+        window_qs = FarmVisit.objects.filter(scheduled_date__gte=today, scheduled_date__lte=end_window)
+        if user.role == 'supervisor':
+            window_qs = window_qs.filter(supervisor=user)
+        total_window_visits = window_qs.count()
+
+        if count > 0:
+            msg = f"Generated {count} new scheduled visits for the next {weeks} weeks."
+        elif total_window_visits > 0:
+            msg = f"Schedule is already active with {total_window_visits} visits scheduled over the next {weeks} weeks."
+        else:
+            msg = "No active farm assignments available to generate visits."
+
         return Response({
-            'message': f"Generated {count} scheduled visits for the next {weeks} weeks.",
+            'message': msg,
             'generated_count': count,
+            'total_scheduled_count': total_window_visits,
             'missed_updated_count': missed_count
         })
 
@@ -544,6 +568,8 @@ class FarmVisitViewSet(viewsets.ModelViewSet):
     def stats(self, request):
         """Summary dashboard metrics scoped to user role."""
         user = request.user
+        if user.role == 'supervisor':
+            auto_assign_supervisor_if_needed(user)
         qs = self.get_queryset()
         today = timezone.localdate()
 

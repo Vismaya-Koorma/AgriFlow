@@ -109,28 +109,19 @@ def generate_scheduled_visits_for_window(assignment_id=None, weeks_ahead=4, refe
 
 def mark_missed_visits():
     """
-    Marks past SCHEDULED visits whose scheduled date/time has passed as MISSED.
+    Marks past SCHEDULED visits whose scheduled date has passed as MISSED.
     Does not mark future visits or already completed/cancelled visits.
     """
     today = timezone.localdate()
-    now_time = timezone.localtime().time()
 
-    # Past dates
+    # Past dates (prior to today) are marked MISSED
     past_visits = FarmVisit.objects.filter(
         status=FarmVisit.Status.SCHEDULED,
         scheduled_date__lt=today
     )
-    # Today's visits whose end_time has fully passed
-    today_overdue = FarmVisit.objects.filter(
-        status=FarmVisit.Status.SCHEDULED,
-        scheduled_date=today,
-        scheduled_end_time__lt=now_time
-    )
 
     missed_count = 0
-    all_overdue = list(past_visits) + list(today_overdue)
-
-    for visit in all_overdue:
+    for visit in past_visits:
         visit.status = FarmVisit.Status.MISSED
         visit.save(update_fields=['status', 'updated_at'])
         missed_count += 1
@@ -190,3 +181,85 @@ def create_visit_notification(user, visit, title, message, severity=Alert.Severi
     except Exception as e:
         logger.error(f"Failed to create alert notification: {e}")
         return None
+
+
+def auto_assign_supervisor_if_needed(supervisor, max_farms=10):
+    """
+    Ensures the supervisor is assigned to registered active farms.
+    If the supervisor is missing assignments for registered farms,
+    automatically links them and generates the 4-week rolling schedule.
+    """
+    if not supervisor or getattr(supervisor, 'role', '') != 'supervisor':
+        return 0
+
+    from farms.models import Farm, Field
+    from accounts.models import User
+
+    # Find active farms that have registered fields first, then any active farms
+    farms_with_fields = list(
+        Farm.objects.filter(fields__isnull=False, is_active=True).distinct().order_by('id')
+    )
+    if not farms_with_fields:
+        farms_with_fields = list(Farm.objects.filter(fields__isnull=False).distinct().order_by('id'))
+    if not farms_with_fields:
+        farms_with_fields = list(Farm.objects.filter(is_active=True).order_by('id'))
+    if not farms_with_fields:
+        farms_with_fields = list(Farm.objects.all().order_by('id'))
+
+    existing_assigned_farm_ids = set(
+        SupervisorFarmAssignment.objects.filter(
+            supervisor=supervisor,
+            is_active=True
+        ).values_list('farm_id', flat=True)
+    )
+
+    days = [0, 1, 2, 3, 4]  # Mon, Tue, Wed, Thu, Fri
+    time_slots = [
+        (time(9, 30), time(11, 30)),
+        (time(14, 0), time(16, 0)),
+    ]
+
+    created = 0
+    today = timezone.localdate()
+
+    for idx, farm in enumerate(farms_with_fields[:max_farms]):
+        if farm.id in existing_assigned_farm_ids:
+            continue
+
+        day = days[idx % len(days)]
+        slot = time_slots[(idx // len(days)) % len(time_slots)]
+        associated_field = farm.fields.first()
+        farmer_user = farm.user
+        if not farmer_user or getattr(farmer_user, 'role', '') != 'farmer':
+            fallback = User.objects.filter(role='farmer', is_active=True).first()
+            if fallback:
+                farmer_user = fallback
+
+        asgn = SupervisorFarmAssignment.objects.create(
+            supervisor=supervisor,
+            farmer=farmer_user,
+            farm=farm,
+            field=associated_field,
+            weekly_visit_day=day,
+            start_time=slot[0],
+            end_time=slot[1],
+            start_date=today,
+            is_active=True
+        )
+        RecurringFarmVisitSchedule.objects.get_or_create(
+            assignment=asgn,
+            defaults={
+                'weekly_visit_day': day,
+                'start_time': asgn.start_time,
+                'end_time': asgn.end_time,
+                'effective_from': asgn.start_date,
+                'is_active': True
+            }
+        )
+        existing_assigned_farm_ids.add(farm.id)
+        created += 1
+
+    if created > 0:
+        generate_scheduled_visits_for_window(weeks_ahead=4)
+
+    return created

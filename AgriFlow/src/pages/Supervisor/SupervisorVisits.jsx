@@ -588,33 +588,41 @@ const SupervisorVisits = () => {
         {/* Tab 2: Assigned Farms */}
         {activeTab === 2 && (
           <Box sx={{ p: 2.5 }}>
-            <Grid container spacing={2.5}>
-              {assignments.map((a) => (
-                <Grid item xs={12} sm={6} md={4} key={a.id}>
-                  <Card variant="outlined" sx={{ borderRadius: '12px', p: 2.5 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                      {a.farm_name}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
-                      Farmer: <strong>{a.farmer_name}</strong>
-                    </Typography>
-                    <Typography variant="caption" sx={{ display: 'block', color: '#475569', mb: 1.5 }}>
-                      📍 Location: {a.farm_location || 'N/A'}
-                    </Typography>
-                    <Divider sx={{ my: 1.5 }} />
-                    <Typography variant="body2" sx={{ color: '#1565C0', fontWeight: 600 }}>
-                      🗓️ Every {a.weekly_visit_day_display}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#475569' }}>
-                      ⏰ Time: {a.start_time?.slice(0, 5)} - {a.end_time?.slice(0, 5)}
-                    </Typography>
-                    <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#64748b' }}>
-                      Last actual visit: <strong>{a.last_actual_visit_date || 'None yet'}</strong>
-                    </Typography>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+            {assignments.length === 0 ? (
+              <Box sx={{ py: 6, textAlign: 'center', color: '#94a3b8' }}>
+                <AgricultureIcon sx={{ fontSize: 48, mb: 1.5, color: '#cbd5e1' }} />
+                <Typography variant="h6">No assigned farms found.</Typography>
+                <Typography variant="body2">Click "Generate 4-Week Visits" above to automatically assign farms and create scheduled visits.</Typography>
+              </Box>
+            ) : (
+              <Grid container spacing={2.5}>
+                {assignments.map((a) => (
+                  <Grid item xs={12} sm={6} md={4} key={a.id}>
+                    <Card variant="outlined" sx={{ borderRadius: '12px', p: 2.5 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b' }}>
+                        {a.farm_name}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
+                        Farmer: <strong>{a.farmer_name}</strong>
+                      </Typography>
+                      <Typography variant="caption" sx={{ display: 'block', color: '#475569', mb: 1.5 }}>
+                        📍 Location: {a.farm_location || 'N/A'}
+                      </Typography>
+                      <Divider sx={{ my: 1.5 }} />
+                      <Typography variant="body2" sx={{ color: '#1565C0', fontWeight: 600 }}>
+                        🗓️ Every {a.weekly_visit_day_display}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#475569' }}>
+                        ⏰ Time: {a.start_time?.slice(0, 5)} - {a.end_time?.slice(0, 5)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#64748b' }}>
+                        Last actual visit: <strong>{a.last_actual_visit_date || 'None yet'}</strong>
+                      </Typography>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
           </Box>
         )}
       </Card>
