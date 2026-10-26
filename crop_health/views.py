@@ -258,6 +258,13 @@ class CropHealthViewSet(viewsets.ModelViewSet):
         image_quality = image_result.get('image_quality', 'acceptable') if image_result else 'n/a'
         requires_clearer_image = (evidence_status in ["CONFLICTING", "INSUFFICIENT"]) or (image_result.get('requires_clearer_image', False) if image_result else False)
 
+        img_url = None
+        if log.image:
+            try:
+                img_url = log.image.url
+            except Exception:
+                img_url = None
+
         return Response({
             'success': True,
             'id': log.id,
@@ -266,6 +273,7 @@ class CropHealthViewSet(viewsets.ModelViewSet):
             'disease': log.predicted_disease,
             'disease_name': log.predicted_disease,
             'predicted_disease': log.predicted_disease,
+            'confidence': log.confidence,
             'status': log.status,
             'evidence_status': evidence_status,
             'uncertain': uncertain,
@@ -281,7 +289,7 @@ class CropHealthViewSet(viewsets.ModelViewSet):
             'nutrient_management': nutrient_management,
             'watering_advice': log.watering_advice,
             'prevention': log.prevention,
-            'image': log.image.url if log.image else None,
+            'image': img_url,
             'field_id': log.field_id,
             'field_name': log.field.name if log.field else None,
             'field_warning': field_warning,
